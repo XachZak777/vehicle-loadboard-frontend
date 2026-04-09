@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { useAuth } from '../context/AuthContext';
+import { useAppDispatch } from '../store/hooks';
+import { setCredentials } from '../store/slices/authSlice';
+import { useLoginUserMutation } from '../store/services/hauliusApi';
 import { UserProfile } from '../types/user';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -9,12 +11,12 @@ import { Label } from '../components/ui/label';
 import { Truck, ArrowLeft, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { ThemeToggle } from '../components/ThemeToggle';
-import * as api from '../services/apiClient';
-import { setAuth } from '../utils/authStorage';
+import { APP_NAME } from '../constants';
 
 export function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const dispatch = useAppDispatch();
+  const [loginUser] = useLoginUserMutation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,7 +29,6 @@ export function Login() {
     setIsLoading(true);
     setError('');
 
-    // Client-side validation
     if (!email.trim() || !password) {
       setIsLoading(false);
       setError('Email and password are required.');
@@ -47,14 +48,7 @@ export function Login() {
     }
 
     try {
-      const res = await api.login({ email: email.trim(), password });
-
-      setAuth({
-        token: res.token,
-        userId: res.userId,
-        email: res.email,
-        role: res.role,
-      });
+      const res = await loginUser({ email: email.trim(), password }).unwrap();
 
       const role = res.role?.toLowerCase() === 'broker' ? 'broker' : 'carrier';
 
@@ -80,7 +74,13 @@ export function Login() {
         createdAt: new Date().toISOString(),
       };
 
-      login(minimalUser);
+      dispatch(setCredentials({
+        user: minimalUser,
+        token: res.token,
+        userId: res.userId,
+        email: res.email,
+        role: res.role,
+      }));
 
       toast.success('Welcome back!', {
         description: `Logged in as ${res.email}`,
@@ -106,7 +106,7 @@ export function Login() {
             <div className="bg-amber-500 p-2 rounded-lg">
               <Truck className="size-8 text-white" />
             </div>
-            <span className="text-3xl font-bold">LoadBoard Pro</span>
+            <span className="text-3xl font-bold">{APP_NAME}</span>
           </Link>
           <ThemeToggle />
         </div>
@@ -115,7 +115,7 @@ export function Login() {
           <CardHeader>
             <CardTitle className="text-2xl">Welcome Back</CardTitle>
             <CardDescription>
-              Log in to your LoadBoard Pro account
+              Log in to your {APP_NAME} account
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -174,16 +174,6 @@ export function Login() {
               <Link to="/signup" className="text-amber-500 hover:text-amber-400 font-semibold">
                 Sign up
               </Link>
-            </div>
-
-            {/* Backend-connected auth note */}
-            <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-              <div className="text-sm">
-                <p className="text-amber-500 font-semibold mb-2">Note:</p>
-                <p className="text-foreground">
-                  Login uses your backend API (configured via <code className="bg-muted px-1 py-0.5 rounded text-amber-500">VITE_API_BASE_URL</code>).
-                </p>
-              </div>
             </div>
           </CardContent>
         </Card>

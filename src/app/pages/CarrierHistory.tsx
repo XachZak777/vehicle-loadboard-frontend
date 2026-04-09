@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
-import { useAuth } from '../context/AuthContext';
+import { useAppSelector } from '../store/hooks';
+import { useGetLoadsQuery, useGetLoadsForCarrierQuery, useGetBidsForLoadQuery } from '../store/services/hauliusApi';
+import type { LoadDto, BidDto } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
-import * as api from '../services/apiClient';
-import type { LoadDto, BidDto } from '../services/apiClient';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -23,62 +23,62 @@ import {
 
 type BidWithLoad = BidDto & { load?: LoadDto };
 
+// Sub-component: loads bids for a single load and collects the carrier's bids
+function LoadBidsCollector({
+  load,
+  carrierId,
+  onBids,
+}: {
+  load: LoadDto;
+  carrierId: string;
+  onBids: (bids: BidWithLoad[]) => void;
+}) {
+  const { data: bids = [] } = useGetBidsForLoadQuery(load.id);
+  const myBids: BidWithLoad[] = bids
+    .filter((b) => b.carrierId === carrierId)
+    .map((b) => ({ ...b, load }));
+  // Call parent once via render; this is a pure render-prop pattern
+  onBids(myBids);
+  return null;
+}
+
+// Main component
 export function CarrierHistory() {
-  const { user } = useAuth();
+  const user = useAppSelector((s) => s.auth.user);
   const navigate = useNavigate();
-  const [bidsWithLoads, setBidsWithLoads] = useState<BidWithLoad[]>([]);
-  const [fetching, setFetching] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: allLoads = [], isLoading: loadingAll } = useGetLoadsQuery();
+  const { data: carrierLoads = [], isLoading: loadingCarrier } = useGetLoadsForCarrierQuery(
+    user?.id ?? '',
+    { skip: !user?.id }
+  );
 
-  const fetchData = useCallback(async () => {
-    if (!user?.id) return;
-    setFetching(true);
-    setError(null);
-    try {
-      // Get all loads the carrier is associated with
-      const loads = await api.getLoads();
+  const fetching = loadingAll || loadingCarrier;
 
-      // Get all loads assigned to or bid on by this carrier
-      const carrierLoads = await api.getLoadsForCarrier(user.id);
-
-      // Build a combined picture: for each load the carrier can see, find their bids
-      const allLoads = [...carrierLoads];
-      // Also include any open loads that may have the carrier's bids
-      for (const l of loads) {
-        if (!allLoads.find(al => al.id === l.id)) {
-          if (l.assignedCarrierId === user.id || l.carrierId === user.id) {
-            allLoads.push(l);
-          }
-        }
+  // Combined unique loads for this carrier
+  const combinedLoads = useMemo(() => {
+    const seen = new Set<string>();
+    const result: LoadDto[] = [];
+    for (const l of [...carrierLoads, ...allLoads]) {
+      if (seen.has(l.id)) continue;
+      if (
+        carrierLoads.some((cl) => cl.id === l.id) ||
+        l.assignedCarrierId === user?.id ||
+        l.carrierId === user?.id
+      ) {
+        seen.add(l.id);
+        result.push(l);
       }
-
-      const bids: BidWithLoad[] = [];
-      for (const load of allLoads) {
-        try {
-          const loadBids = await api.getBidsForLoad(load.id);
-          const myBids = loadBids.filter(b => b.carrierId === user.id);
-          for (const bid of myBids) {
-            bids.push({ ...bid, load });
-          }
-        } catch {
-          // skip loads where bid fetch fails
-        }
-      }
-
-      setBidsWithLoads(bids);
-    } catch (err: any) {
-      setError(err?.message ?? 'Failed to load history');
-    } finally {
-      setFetching(false);
     }
-  }, [user?.id]);
+    return result;
+  }, [allLoads, carrierLoads, user?.id]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  // Collect bids from all relevant loads using a stateful aggregator
+  // We track this via render; each LoadBidsCollector calls back
+  const collected: BidWithLoad[] = [];
+  const collectBids = (bids: BidWithLoad[]) => { collected.push(...bids); };
 
-  const pendingBids = bidsWithLoads.filter(b => b.status === 'PENDING');
-  const approvedBids = bidsWithLoads.filter(b => b.status === 'APPROVED');
+  const pendingBids = collected.filter(b => b.status === 'PENDING');
+  const approvedBids = collected.filter(b => b.status === 'APPROVED');
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -112,21 +112,12 @@ export function CarrierHistory() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-16 text-center">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
-          <p className="text-lg font-semibold text-red-600">{error}</p>
-          <Button className="mt-4" onClick={fetchData}>Retry</Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
+      {/* Hidden bid collectors — run before JSX render */}
+      {user?.id && combinedLoads.map((load) => (
+        <LoadBidsCollector key={load.id} load={load} carrierId={user.id} onBids={collectBids} />
+      ))}
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
@@ -142,7 +133,7 @@ export function CarrierHistory() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Bids</p>
-                  <p className="text-3xl font-bold">{bidsWithLoads.length}</p>
+                  <p className="text-3xl font-bold">{collected.length}</p>
                 </div>
                 <Package className="w-8 h-8 text-muted-foreground" />
               </div>
@@ -198,7 +189,7 @@ export function CarrierHistory() {
               Approved ({approvedBids.length})
             </TabsTrigger>
             <TabsTrigger value="all">
-              All Bids ({bidsWithLoads.length})
+              All Bids ({collected.length})
             </TabsTrigger>
           </TabsList>
 
@@ -319,7 +310,7 @@ export function CarrierHistory() {
 
           {/* All */}
           <TabsContent value="all" className="space-y-4">
-            {bidsWithLoads.length === 0 ? (
+            {collected.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-muted-foreground">
                   <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -331,7 +322,7 @@ export function CarrierHistory() {
                 </CardContent>
               </Card>
             ) : (
-              bidsWithLoads.map(bid => (
+              collected.map(bid => (
                 <Card key={bid.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">

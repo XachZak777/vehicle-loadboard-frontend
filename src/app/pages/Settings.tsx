@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { updateUserProfile } from '../store/slices/authSlice';
 import { Navbar } from '../components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -16,7 +17,8 @@ import {
 import { toast } from 'sonner';
 
 export function Settings() {
-  const { user, updateUser } = useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((s) => s.auth.user);
   const [isUpdating, setIsUpdating] = useState(false);
   const [emailForm, setEmailForm] = useState({ email: user?.email || '' });
   const [phoneForm, setPhoneForm] = useState({ phone: user?.phoneNumber || '' });
@@ -33,17 +35,8 @@ export function Settings() {
     setIsUpdating(true);
 
     setTimeout(() => {
-      // Update email in user profile
-      const updatedUser = { ...user, email: emailForm.email };
-      updateUser(updatedUser);
-
-      // Update in registered users
-      const registeredUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
-      const updatedUsers = registeredUsers.map((u: any) => 
-        u.id === user.id ? updatedUser : u
-      );
-      localStorage.setItem('registered_users', JSON.stringify(updatedUsers));
-
+      const updatedUser = { ...user!, email: emailForm.email };
+      dispatch(updateUserProfile(updatedUser));
       setIsUpdating(false);
       toast.success('Email updated successfully!', {
         icon: <CheckCircle className="h-5 w-5 text-green-600" />
@@ -56,17 +49,8 @@ export function Settings() {
     setIsUpdating(true);
 
     setTimeout(() => {
-      // Update phone in user profile
-      const updatedUser = { ...user, phoneNumber: phoneForm.phone };
-      updateUser(updatedUser);
-
-      // Update in registered users
-      const registeredUsers = JSON.parse(localStorage.getItem('registered_users') || '[]');
-      const updatedUsers = registeredUsers.map((u: any) => 
-        u.id === user.id ? updatedUser : u
-      );
-      localStorage.setItem('registered_users', JSON.stringify(updatedUsers));
-
+      const updatedUser = { ...user!, phoneNumber: phoneForm.phone };
+      dispatch(updateUserProfile(updatedUser));
       setIsUpdating(false);
       toast.success('Phone number updated successfully!', {
         icon: <CheckCircle className="h-5 w-5 text-green-600" />

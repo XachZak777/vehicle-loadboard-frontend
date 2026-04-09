@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router';
-import { useAuth } from '../context/AuthContext';
+import { useAppSelector } from '../store/hooks';
 import { UserRole } from '../types/user';
 
 interface ProtectedRouteProps {
@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedRoles, requireAuth = true }: ProtectedRouteProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAppSelector((s) => s.auth);
 
   if (requireAuth && !isAuthenticated) {
     return <Navigate to="/" replace />;

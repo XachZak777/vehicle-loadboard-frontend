@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Outlet } from 'react-router';
 import { Welcome } from './pages/Welcome';
 import { LoadBoard } from './pages/LoadBoard';
 import { LoadDetail } from './pages/LoadDetail';
@@ -13,19 +13,10 @@ import { CarrierHistory } from './pages/CarrierHistory';
 import { CompanyProfile } from './pages/CompanyProfile';
 import { Settings } from './pages/Settings';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { ThemeProvider } from './context/ThemeContext';
-import { AuthProvider } from './context/AuthContext';
-import { Outlet } from 'react-router';
 
-// Root layout that provides context to all routes
+// Thin root layout – Redux Provider lives in App.tsx
 function RootLayout() {
-  return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Outlet />
-      </AuthProvider>
-    </ThemeProvider>
-  );
+  return <Outlet />;
 }
 
 export const router = createBrowserRouter([

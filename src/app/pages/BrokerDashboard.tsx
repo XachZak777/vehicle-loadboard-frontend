@@ -1,9 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router';
-import { useAuth } from '../context/AuthContext';
+import { useAppSelector } from '../store/hooks';
+import {
+  useGetLoadsQuery,
+  useGetBidsForLoadQuery,
+  useApproveBidMutation,
+  useCancelBookingMutation,
+  useDeleteLoadMutation,
+} from '../store/services/hauliusApi';
+import type { LoadDto, BidDto } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
-import * as api from '../services/apiClient';
-import type { LoadDto, BidDto } from '../services/apiClient';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -25,86 +31,52 @@ import { toast } from 'sonner';
 
 type LoadWithBids = LoadDto & { bids: BidDto[] };
 
+// Sub-component: loads a single load's bids and merges them
+function LoadWithBidsLoader({ load, children }: { load: LoadDto; children: (merged: LoadWithBids) => React.ReactNode }) {
+  const { data: bids = [] } = useGetBidsForLoadQuery(load.id);
+  return <>{children({ ...load, bids })}</>;
+}
+
 export function BrokerDashboard() {
-  const { user } = useAuth();
-  const [loads, setLoads] = useState<LoadWithBids[]>([]);
-  const [fetching, setFetching] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const user = useAppSelector((s) => s.auth.user);
+  const { data: loads = [], isLoading: fetching, isError, error, refetch } = useGetLoadsQuery();
+  const [approveBid, { isLoading: approving }] = useApproveBidMutation();
+  const [cancelBooking, { isLoading: cancelling }] = useCancelBookingMutation();
+  const [deleteLoad, { isLoading: deleting }] = useDeleteLoadMutation();
+  const actionLoading = approving || cancelling || deleting;
 
-  const fetchData = useCallback(async () => {
-    setFetching(true);
-    setError(null);
+  const handleApproveBid = async (load: LoadDto, bid: BidDto) => {
     try {
-      const allLoads = await api.getLoads();
-      const loadsWithBids = await Promise.all(
-        allLoads.map(async (load) => {
-          try {
-            const bids = await api.getBidsForLoad(load.id);
-            return { ...load, bids };
-          } catch {
-            return { ...load, bids: [] };
-          }
-        })
-      );
-      setLoads(loadsWithBids);
-    } catch (err: any) {
-      setError(err?.message ?? 'Failed to load dashboard data');
-    } finally {
-      setFetching(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const handleApproveBid = async (load: LoadWithBids, bid: BidDto) => {
-    setActionLoading(true);
-    try {
-      await api.approveBid(load.id, bid.id);
+      await approveBid({ loadId: load.id, bidId: bid.id }).unwrap();
       toast.success('Bid approved — load is now assigned');
-      fetchData();
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to approve bid');
-    } finally {
-      setActionLoading(false);
     }
   };
 
-  const handleCancelBooking = async (load: LoadWithBids) => {
-    setActionLoading(true);
+  const handleCancelBooking = async (load: LoadDto) => {
     try {
-      await api.cancelBooking(load.id);
+      await cancelBooking(load.id).unwrap();
       toast.success('Booking cancelled — load is open again');
-      fetchData();
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to cancel booking');
-    } finally {
-      setActionLoading(false);
     }
   };
 
-  const handleDeleteLoad = async (load: LoadWithBids) => {
+  const handleDeleteLoad = async (load: LoadDto) => {
     if (!confirm(`Delete load "${load.vehicleYear} ${load.vehicleMake} ${load.vehicleModel}"?`)) return;
-    setActionLoading(true);
     try {
-      await api.deleteLoad(load.id);
+      await deleteLoad(load.id).unwrap();
       toast.success('Load deleted');
-      fetchData();
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to delete load');
-    } finally {
-      setActionLoading(false);
     }
   };
 
   const openLoads = loads.filter(l => l.status === 'OPEN');
   const assignedLoads = loads.filter(l => l.status !== 'OPEN' && l.assignedCarrierId);
-  const pendingBidLoads = openLoads.filter(l => l.bids.some(b => b.status === 'PENDING'));
-  const totalBids = loads.reduce((n, l) => n + l.bids.length, 0);
 
-  const getStatusBadge = (load: LoadWithBids) => {
+  const getStatusBadge = (load: LoadDto) => {
     if (load.status === 'OPEN') {
       return <Badge className="bg-amber-500 text-white">Open</Badge>;
     }
@@ -125,14 +97,14 @@ export function BrokerDashboard() {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="container mx-auto px-4 py-16 text-center">
           <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
-          <p className="text-lg font-semibold text-red-600">{error}</p>
-          <Button className="mt-4" onClick={fetchData}>Retry</Button>
+          <p className="text-lg font-semibold text-red-600">{(error as any)?.message ?? 'Failed to load dashboard'}</p>
+          <Button className="mt-4" onClick={refetch}>Retry</Button>
         </div>
       </div>
     );
@@ -190,8 +162,8 @@ export function BrokerDashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Bids</p>
-                  <p className="text-3xl font-bold">{totalBids}</p>
+                  <p className="text-sm text-muted-foreground">Open Bids</p>
+                  <p className="text-3xl font-bold">{openLoads.length}</p>
                 </div>
                 <DollarSign className="w-8 h-8 text-green-500" />
               </div>
@@ -203,7 +175,7 @@ export function BrokerDashboard() {
         <Tabs defaultValue="pending" className="space-y-4">
           <TabsList>
             <TabsTrigger value="pending">
-              Pending Bids ({pendingBidLoads.length})
+              Pending Bids
             </TabsTrigger>
             <TabsTrigger value="assigned">
               Assigned ({assignedLoads.length})
@@ -215,7 +187,7 @@ export function BrokerDashboard() {
 
           {/* Pending Bids */}
           <TabsContent value="pending" className="space-y-4">
-            {pendingBidLoads.length === 0 ? (
+            {openLoads.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-muted-foreground">
                   <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -223,59 +195,64 @@ export function BrokerDashboard() {
                 </CardContent>
               </Card>
             ) : (
-              pendingBidLoads.map(load => {
-                const pendingBids = load.bids.filter(b => b.status === 'PENDING');
-                return (
-                  <Card key={load.id}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-lg">
-                            {load.vehicleYear} {load.vehicleMake} {load.vehicleModel}
-                          </CardTitle>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                            <MapPin className="w-4 h-4" />
-                            {load.pickupCity}, {load.pickupState} → {load.dropCity}, {load.dropState}
-                          </div>
-                        </div>
-                        {getStatusBadge(load)}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <h4 className="font-semibold text-sm">Incoming Bids</h4>
-                      {pendingBids.map(bid => (
-                        <div key={bid.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-sm">
-                              <DollarSign className="w-4 h-4 text-green-600" />
-                              <span className="font-semibold">${bid.amount.toLocaleString()}</span>
-                              {bid.bookNow && (
-                                <Badge variant="outline" className="text-xs">Book Now</Badge>
-                              )}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Carrier ID: {bid.carrierId.slice(0, 8)}…
-                            </div>
-                            {bid.createdAt && (
-                              <div className="text-xs text-muted-foreground">
-                                Submitted: {new Date(bid.createdAt).toLocaleDateString()}
+              openLoads.map(load => (
+                <LoadWithBidsLoader key={load.id} load={load}>
+                  {(loadWithBids) => {
+                    const pendingBids = loadWithBids.bids.filter(b => b.status === 'PENDING');
+                    if (pendingBids.length === 0) return null;
+                    return (
+                      <Card>
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <CardTitle className="text-lg">
+                                {load.vehicleYear} {load.vehicleMake} {load.vehicleModel}
+                              </CardTitle>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                <MapPin className="w-4 h-4" />
+                                {load.pickupCity}, {load.pickupState} → {load.dropCity}, {load.dropState}
                               </div>
-                            )}
+                            </div>
+                            {getStatusBadge(load)}
                           </div>
-                          <Button
-                            size="sm"
-                            onClick={() => handleApproveBid(load, bid)}
-                            disabled={actionLoading}
-                          >
-                            <Check className="w-4 h-4 mr-1" />
-                            Approve
-                          </Button>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                );
-              })
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <h4 className="font-semibold text-sm">Incoming Bids</h4>
+                          {pendingBids.map(bid => (
+                            <div key={bid.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-sm">
+                                  <DollarSign className="w-4 h-4 text-green-600" />
+                                  <span className="font-semibold">${bid.amount.toLocaleString()}</span>
+                                  {bid.bookNow && (
+                                    <Badge variant="outline" className="text-xs">Book Now</Badge>
+                                  )}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Carrier ID: {bid.carrierId.slice(0, 8)}…
+                                </div>
+                                {bid.createdAt && (
+                                  <div className="text-xs text-muted-foreground">
+                                    Submitted: {new Date(bid.createdAt).toLocaleDateString()}
+                                  </div>
+                                )}
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={() => handleApproveBid(load, bid)}
+                                disabled={actionLoading}
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  }}
+                </LoadWithBidsLoader>
+              ))
             )}
           </TabsContent>
 
@@ -345,52 +322,56 @@ export function BrokerDashboard() {
               </Card>
             ) : (
               loads.map(load => (
-                <Card key={load.id}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">
-                          {load.vehicleYear} {load.vehicleMake} {load.vehicleModel}
-                        </CardTitle>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {load.pickupCity}, {load.pickupState} → {load.dropCity}, {load.dropState}
-                        </p>
-                      </div>
-                      {getStatusBadge(load)}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-sm">
-                        {load.createdAt && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <span>{new Date(load.createdAt).toLocaleDateString()}</span>
+                <LoadWithBidsLoader key={load.id} load={load}>
+                  {(loadWithBids) => (
+                    <Card>
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle className="text-lg">
+                              {load.vehicleYear} {load.vehicleMake} {load.vehicleModel}
+                            </CardTitle>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {load.pickupCity}, {load.pickupState} → {load.dropCity}, {load.dropState}
+                            </p>
                           </div>
-                        )}
-                        {load.price != null && (
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-semibold">${load.price.toLocaleString()}</span>
+                          {getStatusBadge(load)}
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 text-sm">
+                            {load.createdAt && (
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4 text-muted-foreground" />
+                                <span>{new Date(load.createdAt).toLocaleDateString()}</span>
+                              </div>
+                            )}
+                            {load.price != null && (
+                              <div className="flex items-center gap-1">
+                                <DollarSign className="w-4 h-4 text-muted-foreground" />
+                                <span className="font-semibold">${load.price.toLocaleString()}</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm text-muted-foreground">
-                          {load.bids.length} {load.bids.length === 1 ? 'bid' : 'bids'}
-                        </span>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteLoad(load)}
-                          disabled={actionLoading}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm text-muted-foreground">
+                              {loadWithBids.bids.length} {loadWithBids.bids.length === 1 ? 'bid' : 'bids'}
+                            </span>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteLoad(load)}
+                              disabled={actionLoading}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </LoadWithBidsLoader>
               ))
             )}
           </TabsContent>

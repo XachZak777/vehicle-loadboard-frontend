@@ -4,14 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/badge';
 import { Truck, MapPin, DollarSign, Shield, Clock, Users, CheckCircle, ArrowRight, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useTheme } from '../context/ThemeContext';
+import { useAppSelector } from '../store/hooks';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { mockLoads } from '../data/mockLoads';
+import { APP_NAME, APP_TAGLINE } from '../constants';
 
 export function Welcome() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const { theme } = useTheme();
+  const theme = useAppSelector((s) => s.theme.theme);
 
   const backgroundImages = [
     'https://images.unsplash.com/photo-1772852336286-933f5b460e33?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2ZWhpY2xlJTIwdHJhbnNwb3J0JTIwdHJhaWxlcnxlbnwxfHx8fDE3NzQzNzgxNDV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
@@ -56,8 +57,8 @@ export function Welcome() {
                 <Truck className="size-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold">LoadBoard Pro</h1>
-                <p className="text-xs text-muted-foreground">Vehicle Transport Network</p>
+                <h1 className="text-lg font-bold">{APP_NAME}</h1>
+                <p className="text-xs text-muted-foreground">{APP_TAGLINE}</p>
               </div>
             </div>
 
@@ -75,13 +76,13 @@ export function Welcome() {
               >
                 How It Works
               </a>
-              <a 
+              {/* <a 
                 href="#pricing" 
                 onClick={scrollToPricing}
                 className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
               >
                 Pricing
-              </a>
+              </a> */}
               <ThemeToggle />
               <Link to="/login">
                 <Button variant="outline" size="sm">
@@ -125,13 +126,13 @@ export function Welcome() {
               >
                 How It Works
               </a>
-              <a 
+              {/* <a 
                 href="#pricing" 
                 onClick={(e) => { scrollToPricing(e); setMobileMenuOpen(false); }}
                 className="block text-sm font-medium text-foreground hover:text-amber-500"
               >
                 Pricing
-              </a>
+              </a> */}
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm text-muted-foreground">Theme</span>
                 <ThemeToggle />
@@ -195,22 +196,6 @@ export function Welcome() {
                     Post a Load
                   </Button>
                 </Link>
-              </div>
-              <div className="mt-10 flex items-center gap-8">
-                <div>
-                  <div className="text-2xl font-bold text-amber-400">10,000+</div>
-                  <div className="text-sm text-foreground/70">Active Loads</div>
-                </div>
-                <div className="h-10 w-px bg-border"></div>
-                <div>
-                  <div className="text-2xl font-bold text-amber-400">5,000+</div>
-                  <div className="text-sm text-foreground/70">Verified Carriers</div>
-                </div>
-                <div className="h-10 w-px bg-border"></div>
-                <div>
-                  <div className="text-2xl font-bold text-amber-400">99.8%</div>
-                  <div className="text-sm text-foreground/70">Success Rate</div>
-                </div>
               </div>
             </div>
 
@@ -365,7 +350,7 @@ export function Welcome() {
               </div>
               <h4 className="text-lg font-bold mb-2">Create Account</h4>
               <p className="text-sm text-muted-foreground">
-                Complete FMCSA verification and phone confirmation
+                Complete FMCSA verification and email confirmation
               </p>
             </div>
 
@@ -393,7 +378,7 @@ export function Welcome() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-16 bg-muted/30">
+      {/* <section id="pricing" className="py-16 bg-muted/30">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <Badge className="mb-3 bg-amber-500 text-white border-0">Pricing</Badge>
@@ -468,7 +453,7 @@ export function Welcome() {
             </Card>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA Section */}
       <section className="py-16 bg-background border-y border-border">
@@ -477,7 +462,7 @@ export function Welcome() {
             Ready to Get Started?
           </h3>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of carriers and brokers who trust LoadBoard Pro for their vehicle transportation needs
+            Join thousands of carriers and brokers who trust {APP_NAME} for their vehicle transportation needs
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/signup">
@@ -503,7 +488,7 @@ export function Welcome() {
                 <div className="bg-amber-500 p-1.5 rounded-lg">
                   <Truck className="size-5 text-white" />
                 </div>
-                <span className="text-base font-bold">LoadBoard Pro</span>
+                <span className="text-base font-bold">{APP_NAME}</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 Professional vehicle transport marketplace connecting carriers and brokers nationwide.
@@ -537,7 +522,7 @@ export function Welcome() {
             </div>
           </div>
           <div className="border-t border-border pt-6 text-center text-sm text-muted-foreground">
-            <p>© 2026 LoadBoard Pro. All rights reserved.</p>
+            <p>© 2026 {APP_NAME}. All rights reserved.</p>
           </div>
         </div>
       </footer>

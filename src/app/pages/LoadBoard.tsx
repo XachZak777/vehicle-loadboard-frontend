@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router';
-import { useAuth } from '../context/AuthContext';
+import { useAppSelector } from '../store/hooks';
+import { useGetLoadsQuery } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -8,29 +9,14 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Truck, MapPin, Filter, Loader2 } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
-import * as api from '../services/apiClient';
-import type { LoadDto } from '../services/apiClient';
 
 export function LoadBoard() {
-  const { theme } = useTheme();
-  const { user } = useAuth();
-  const [loads, setLoads] = useState<LoadDto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState('');
+  const theme = useAppSelector((s) => s.theme.theme);
+  const { data: loads = [], isLoading, isError, error, refetch } = useGetLoadsQuery();
   const [searchTerm, setSearchTerm] = useState('');
   const [stateFilter, setStateFilter] = useState<string>('all');
 
-  useEffect(() => {
-    let cancelled = false;
-    setIsLoading(true);
-    setFetchError('');
-    api.getLoads()
-      .then(data => { if (!cancelled) setLoads(data); })
-      .catch(err => { if (!cancelled) setFetchError(err?.message || 'Failed to load data.'); })
-      .finally(() => { if (!cancelled) setIsLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+  const fetchError = isError ? ((error as any)?.message || 'Failed to load data.') : '';
 
   const filteredLoads = useMemo(() => {
     const q = searchTerm.toLowerCase();
@@ -117,7 +103,7 @@ export function LoadBoard() {
           <Card className={theme === 'dark' ? 'mb-6 bg-red-900/20 border-red-500/30' : 'mb-6 bg-red-50 border-red-200'}>
             <CardContent className="p-6 text-center">
               <p className="text-red-500 font-medium">{fetchError}</p>
-              <Button onClick={() => window.location.reload()} className="mt-4 bg-amber-500 hover:bg-amber-600 text-white">Retry</Button>
+              <Button onClick={() => refetch()} className="mt-4 bg-amber-500 hover:bg-amber-600 text-white">Retry</Button>
             </CardContent>
           </Card>
         )}

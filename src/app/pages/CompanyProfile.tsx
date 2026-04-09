@@ -1,4 +1,4 @@
-import { useAuth } from '../context/AuthContext';
+import { useAppSelector } from '../store/hooks';
 import { Navbar } from '../components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export function CompanyProfile() {
-  const { user } = useAuth();
+  const user = useAppSelector((s) => s.auth.user);
 
   if (!user) return null;
 

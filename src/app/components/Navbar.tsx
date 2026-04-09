@@ -1,28 +1,31 @@
 import { Link, useNavigate, useLocation } from 'react-router';
-import { useAuth } from '../context/AuthContext';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { logout } from '../store/slices/authSlice';
 import { Button } from './ui/button';
-import { 
-  Truck, 
-  LayoutDashboard, 
-  History, 
-  Building2, 
-  Settings, 
-  LogOut, 
+import {
+  Truck,
+  LayoutDashboard,
+  History,
+  Building2,
+  Settings,
+  LogOut,
   Plus,
   Menu,
-  X
+  X,
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { useState } from 'react';
+import { APP_NAME } from '../constants';
 
 export function Navbar() {
-  const { user, logout } = useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((s) => s.auth.user);
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    logout();
+    dispatch(logout());
     navigate('/');
   };
 
@@ -56,7 +59,7 @@ export function Navbar() {
               <Truck className="h-6 w-6 text-white" />
             </div>
             <div className="hidden sm:block">
-              <span className="text-xl font-bold">LoadBoard Pro</span>
+              <span className="text-xl font-bold">{APP_NAME}</span>
               <p className="text-xs text-muted-foreground">
                 {user.role === 'carrier' ? 'Carrier Portal' : 'Broker Portal'}
               </p>

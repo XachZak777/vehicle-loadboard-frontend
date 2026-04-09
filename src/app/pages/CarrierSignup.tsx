@@ -8,17 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ArrowLeft, Truck, Loader2, CheckCircle, AlertCircle, Upload, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { verifyFMCSACarrier, sendSMSVerification, verifySMSCode } from '../services/fmcsaService';
-import { useAuth } from '../context/AuthContext';
+import { useAppDispatch } from '../store/hooks';
+import { setCredentials } from '../store/slices/authSlice';
+import { useRegisterMutation } from '../store/services/hauliusApi';
 import { UserProfile } from '../types/user';
 import { ThemeToggle } from '../components/ThemeToggle';
-import * as api from '../services/apiClient';
-import { setAuth } from '../utils/authStorage';
+import { APP_NAME, US_STATES } from '../constants';
 
 type SignupStep = 'company-info' | 'fmcsa-verification' | 'insurance-info' | 'w9-upload' | 'sms-verification' | 'complete';
 
 export function CarrierSignup() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const dispatch = useAppDispatch();
+  const [registerUser] = useRegisterMutation();
   const [currentStep, setCurrentStep] = useState<SignupStep>('company-info');
   const [isLoading, setIsLoading] = useState(false);
   const [fmcsaVerified, setFmcsaVerified] = useState(false);
@@ -68,13 +70,11 @@ export function CarrierSignup() {
     // Backend-driven registration (no OTP/email verification endpoint in BE).
     setIsLoading(true);
     try {
-      const res = await api.register({
+      const res = await registerUser({
         email: formData.email.trim(),
         password: formData.password,
         role: 'CARRIER',
-      });
-
-      setAuth({ token: res.token, userId: res.userId, email: res.email, role: res.role });
+      }).unwrap();
 
       const userProfile: UserProfile = {
         id: res.userId,
@@ -100,7 +100,13 @@ export function CarrierSignup() {
         createdAt: new Date().toISOString(),
       };
 
-      login(userProfile);
+      dispatch(setCredentials({
+        user: userProfile,
+        token: res.token,
+        userId: res.userId,
+        email: res.email,
+        role: res.role,
+      }));
       toast.success('Account created!', { description: `Registered as ${res.email}` });
 
       // Go straight into the app.
@@ -254,7 +260,7 @@ export function CarrierSignup() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold">Carrier Registration</h1>
-                <p className="text-sm text-muted-foreground">Join LoadBoard Pro's carrier network</p>
+                <p className="text-sm text-muted-foreground">Join {APP_NAME}'s carrier network</p>
               </div>
             </Link>
             <ThemeToggle />
@@ -595,7 +601,7 @@ export function CarrierSignup() {
               </div>
               <h2 className="text-3xl font-bold text-gray-900 mb-4">Registration Complete!</h2>
               <p className="text-lg text-gray-600 mb-6">
-                Welcome to AutoHaul, {formData.companyName}! You now have access to the load board.
+                Welcome to {APP_NAME}, {formData.companyName}! You now have access to the load board.
               </p>
               <p className="text-sm text-gray-500">
                 Redirecting to load board...

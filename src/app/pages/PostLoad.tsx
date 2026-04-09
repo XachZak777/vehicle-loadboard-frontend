@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { useAuth } from '../context/AuthContext';
+import { useAppSelector } from '../store/hooks';
+import { useCreateLoadMutation } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -10,11 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../components/ui/textarea';
 import { ArrowLeft, Truck, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import * as api from '../services/apiClient';
+import { US_STATES, VEHICLE_TYPES, VEHICLE_CONDITIONS } from '../constants';
 
 export function PostLoad() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const user = useAppSelector((s) => s.auth.user);
+  const [createLoad] = useCreateLoadMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     vehicleType: '',
@@ -53,7 +55,7 @@ export function PostLoad() {
 
     setIsSubmitting(true);
     try {
-      await api.createLoad({
+      await createLoad({
         vehicleMake: formData.make,
         vehicleModel: formData.model,
         vehicleYear: parseInt(formData.year),
@@ -78,14 +80,6 @@ export function PostLoad() {
       setIsSubmitting(false);
     }
   };
-
-  const states = [
-    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
-    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
-    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
-    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
-    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -214,7 +208,7 @@ export function PostLoad() {
                         <SelectValue placeholder="Select state" />
                       </SelectTrigger>
                       <SelectContent>
-                        {states.map(state => (
+                        {US_STATES.map(state => (
                           <SelectItem key={state} value={state}>{state}</SelectItem>
                         ))}
                       </SelectContent>
@@ -264,7 +258,7 @@ export function PostLoad() {
                         <SelectValue placeholder="Select state" />
                       </SelectTrigger>
                       <SelectContent>
-                        {states.map(state => (
+                        {US_STATES.map(state => (
                           <SelectItem key={state} value={state}>{state}</SelectItem>
                         ))}
                       </SelectContent>
