@@ -47,7 +47,14 @@ export function Navbar() {
     { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
-  const navItems = user.role === 'carrier' ? carrierNavItems : brokerNavItems;
+  const adminNavItems = [
+    { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  ];
+
+  const navItems =
+    user.role === 'carrier' ? carrierNavItems :
+    user.role === 'admin'   ? adminNavItems   :
+    brokerNavItems;
 
   return (
     <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
@@ -61,7 +68,7 @@ export function Navbar() {
             <div className="hidden sm:block">
               <span className="text-xl font-bold">{APP_NAME}</span>
               <p className="text-xs text-muted-foreground">
-                {user.role === 'carrier' ? 'Carrier Portal' : 'Broker Portal'}
+                {user.role === 'carrier' ? 'Carrier Portal' : user.role === 'admin' ? 'Admin Panel' : 'Broker Portal'}
               </p>
             </div>
           </Link>

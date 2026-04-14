@@ -1,4 +1,4 @@
-export type UserRole = 'carrier' | 'broker';
+export type UserRole = 'carrier' | 'broker' | 'admin';
 
 export type LoadStatus = 'available' | 'requested' | 'booked' | 'picked-up' | 'in-transit' | 'delivered' | 'paid';
 
@@ -6,6 +6,8 @@ export interface UserProfile {
   id: string;
   role: UserRole;
   email: string;
+  /** Whether an admin has approved this account. False until admin acts. */
+  adminApproved?: boolean;
   phoneNumber: string;
   phoneVerified: boolean;
   companyName: string;

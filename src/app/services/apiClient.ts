@@ -11,7 +11,7 @@ type RequestOptions = Omit<RequestInit, 'headers' | 'body'> & {
 };
 
 function getBaseUrl() {
-  const base = import.meta.env.VITE_API_BASE_URL as string | undefined;
+  const base = ((import.meta as any).env?.VITE_API_BASE_URL) as string | undefined;
   return (base || '').replace(/\/$/, '');
 }
 
@@ -97,6 +97,7 @@ export type AuthResponse = {
   userId: string;
   email: string;
   role: string;
+  adminApproved: boolean;
 };
 
 export async function register(payload: { email: string; password: string; role: AuthRole }) {

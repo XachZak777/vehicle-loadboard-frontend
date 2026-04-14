@@ -257,7 +257,7 @@ export function Welcome() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="border border-border hover:border-amber-500 transition-all hover:shadow-md">
+            <Card className="min-h-[180px] border border-border hover:border-amber-500 transition-all hover:shadow-md">
               <CardHeader>
                 <div className="bg-amber-500 p-2.5 rounded-lg w-fit mb-3">
                   <MapPin className="size-5 text-white" />
@@ -293,7 +293,7 @@ export function Welcome() {
               </CardHeader>
             </Card>
 
-            <Card className="border border-border hover:border-amber-500 transition-all hover:shadow-md">
+            <Card className="min-h-[180px] border border-border hover:border-amber-500 transition-all hover:shadow-md">
               <CardHeader>
                 <div className="bg-amber-500 p-2.5 rounded-lg w-fit mb-3">
                   <Clock className="size-5 text-white" />

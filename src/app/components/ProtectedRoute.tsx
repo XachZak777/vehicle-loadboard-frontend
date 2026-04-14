@@ -6,16 +6,23 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: UserRole[];
   requireAuth?: boolean;
+  /** Set to true on the /pending-approval route itself to avoid redirect loop */
+  skipApprovalCheck?: boolean;
 }
 
-export function ProtectedRoute({ children, allowedRoles, requireAuth = true }: ProtectedRouteProps) {
-  const { user, isAuthenticated } = useAppSelector((s) => s.auth);
+export function ProtectedRoute({ children, allowedRoles, requireAuth = true, skipApprovalCheck = false }: ProtectedRouteProps) {
+  const { user, isAuthenticated, adminApproved } = useAppSelector((s) => s.auth);
 
   if (requireAuth && !isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+  // Non-admin users who are not yet approved can only see /pending-approval
+  if (!skipApprovalCheck && isAuthenticated && !adminApproved && user?.role !== 'admin') {
+    return <Navigate to="/pending-approval" replace />;
+  }
+
+  if (allowedRoles && user && !allowedRoles.includes(user.role) && user.role !== 'admin') {
     return <Navigate to="/loads" replace />;
   }
 

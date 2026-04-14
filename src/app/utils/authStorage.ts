@@ -1,4 +1,4 @@
-import type { AuthResponse } from '../services/apiClient';
+import type { AuthResponse } from '../store/services/hauliusApi';
 
 const AUTH_STORAGE_KEY = 'auth';
 

@@ -12,6 +12,8 @@ import { BrokerDashboard } from './pages/BrokerDashboard';
 import { CarrierHistory } from './pages/CarrierHistory';
 import { CompanyProfile } from './pages/CompanyProfile';
 import { Settings } from './pages/Settings';
+import { PendingApproval } from './pages/PendingApproval';
+import { AdminDashboard } from './pages/AdminDashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Thin root layout – Redux Provider lives in App.tsx
@@ -88,6 +90,22 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/admin/dashboard',
+        element: (
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/pending-approval',
+        element: (
+          <ProtectedRoute skipApprovalCheck>
+            <PendingApproval />
           </ProtectedRoute>
         ),
       },

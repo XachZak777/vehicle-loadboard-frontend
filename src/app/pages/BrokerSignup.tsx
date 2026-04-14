@@ -5,15 +5,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { ArrowLeft, Truck, Loader2, CheckCircle, AlertCircle, Upload, ShieldCheck, Building2 } from 'lucide-react';
+import { Truck, Loader2, CheckCircle, Upload, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { verifyFMCSABroker, sendSMSVerification, verifySMSCode } from '../services/fmcsaService';
+import { verifyFMCSABroker, sendSMSVerification } from '../services/fmcsaService';
 import { useAppDispatch } from '../store/hooks';
 import { setCredentials } from '../store/slices/authSlice';
-import { useRegisterMutation } from '../store/services/hauliusApi';
+import {
+  useRegisterMutation,
+  useUpdateBrokerProfileMutation,
+  useUploadBrokerW9Mutation,
+} from '../store/services/hauliusApi';
 import { UserProfile } from '../types/user';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { APP_NAME, US_STATES } from '../constants';
+import { APP_NAME } from '../constants';
+import {
+  PageWrapper, PageHeader, HeaderInner, LogoIcon, LogoText,
+  ContentWrapper, StepIndicatorWrapper, StepList, StepItem,
+  StepCircleWrapper, StepCircle, StepLabel, StepConnector,
+  FormGrid, HintText, InfoBox, SuccessBox, SuccessBoxHeader,
+  SuccessBoxText, DropZone, DropZoneUploadLabel, DropZoneHint,
+  DropZoneSuccess, CompleteIconWrapper, CompleteTitle,
+  CompleteSubtext, CompleteHint,
+} from '../styles/signup.styles';
 
 type SignupStep = 'company-info' | 'fmcsa-verification' | 'insurance-info' | 'w9-upload' | 'sms-verification' | 'complete';
 
@@ -21,6 +34,8 @@ export function BrokerSignup() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [registerUser] = useRegisterMutation();
+  const [updateProfile] = useUpdateBrokerProfileMutation();
+  const [uploadW9] = useUploadBrokerW9Mutation();
   const [currentStep, setCurrentStep] = useState<SignupStep>('company-info');
   const [isLoading, setIsLoading] = useState(false);
   const [fmcsaVerified, setFmcsaVerified] = useState(false);
@@ -106,9 +121,11 @@ export function BrokerSignup() {
         userId: res.userId,
         email: res.email,
         role: res.role,
+        adminApproved: res.adminApproved,
       }));
       toast.success('Account created!', { description: `Registered as ${res.email}` });
-      navigate('/broker/dashboard');
+      // Advance to next step instead of navigating away
+      setCurrentStep('fmcsa-verification');
       return;
     } catch (error: any) {
       const message = error?.message || 'Registration failed. Please try again.';
@@ -198,145 +215,155 @@ export function BrokerSignup() {
   };
 
   const handleSMSVerification = async () => {
-    toast.info('Verification is not required. Continuing...');
-    navigate('/broker/dashboard');
+    setIsLoading(true);
+    try {
+      // 1. Update profile with all collected data
+      await updateProfile({
+        companyName: formData.companyName,
+        dotNumber: formData.dotNumber,
+        mcNumber: formData.mcNumber,
+        phoneNumber: formData.phoneNumber,
+        insuranceCompany: formData.insuranceCompany,
+        cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : undefined,
+        liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : undefined,
+        taxIdType: formData.taxIdType,
+        taxId: formData.taxId,
+        mailingAddress: formData.mailingAddress,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+      }).unwrap();
+
+      // 2. Upload W9 document if provided
+      if (w9File) {
+        const formDataW9 = new FormData();
+        formDataW9.append('file', w9File);
+        await uploadW9(formDataW9).unwrap();
+      }
+
+      toast.success('Profile completed!', { description: 'Your account is pending admin approval.' });
+      navigate('/pending-approval');
+    } catch (error: any) {
+      const message = error?.message || 'Failed to save profile. Please try again.';
+      toast.error('Profile update failed', { description: message });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const renderStepIndicator = () => {
-    const steps = [
-      { id: 'company-info', label: 'Company Info' },
-      { id: 'fmcsa-verification', label: 'FMCSA Verify' },
-      { id: 'insurance-info', label: 'Insurance' },
-      { id: 'w9-upload', label: 'W9 Upload' },
-      { id: 'sms-verification', label: 'Phone Verify' },
-    ];
+  const STEPS = [
+    { id: 'company-info', label: 'Company Info' },
+    { id: 'fmcsa-verification', label: 'FMCSA Verify' },
+    { id: 'insurance-info', label: 'Insurance' },
+    { id: 'w9-upload', label: 'W9 Upload' },
+    { id: 'sms-verification', label: 'Phone Verify' },
+  ] as const;
 
-    const currentIndex = steps.findIndex(s => s.id === currentStep);
-
-    return (
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center flex-1">
-              <div className="flex flex-col items-center flex-1">
-                <div className={`size-10 rounded-full flex items-center justify-center font-semibold ${
-                  index <= currentIndex 
-                    ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-500'
-                }`}>
-                  {index < currentIndex ? <CheckCircle className="size-6" /> : index + 1}
-                </div>
-                <div className={`text-xs mt-2 text-center ${
-                  index <= currentIndex 
-                    ? 'text-gray-900 font-medium' : 'text-gray-400'
-                }`}>
-                  {step.label}
-                </div>
-              </div>
-              {index < steps.length - 1 && (
-                <div className={`h-1 flex-1 mx-2 ${
-                  index < currentIndex 
-                    ? 'bg-amber-500' : 'bg-gray-200'
-                }`} />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  const currentIndex = STEPS.findIndex(s => s.id === currentStep);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="bg-amber-500 p-2 rounded-lg">
-                <Truck className="size-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">Broker Registration</h1>
-                <p className="text-sm text-muted-foreground">Join {APP_NAME}'s broker network</p>
-              </div>
-            </Link>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+    <PageWrapper>
+      <PageHeader>
+        <HeaderInner>
+          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <LogoIcon>
+              <Truck className="size-8 text-white" />
+            </LogoIcon>
+            <LogoText>
+              <h1>Broker Registration</h1>
+              <p>Join {APP_NAME}'s broker network</p>
+            </LogoText>
+          </Link>
+          <ThemeToggle />
+        </HeaderInner>
+      </PageHeader>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {currentStep !== 'complete' && renderStepIndicator()}
+      <ContentWrapper>
+        {currentStep !== 'complete' && (
+          <StepIndicatorWrapper>
+            <StepList>
+              {STEPS.map((step, index) => (
+                <StepItem key={step.id}>
+                  <StepCircleWrapper>
+                    <StepCircle active={index <= currentIndex}>
+                      {index < currentIndex ? <CheckCircle className="size-5" /> : index + 1}
+                    </StepCircle>
+                    <StepLabel active={index <= currentIndex}>{step.label}</StepLabel>
+                  </StepCircleWrapper>
+                  {index < STEPS.length - 1 && (
+                    <StepConnector completed={index < currentIndex} />
+                  )}
+                </StepItem>
+              ))}
+            </StepList>
+          </StepIndicatorWrapper>
+        )}
 
         {/* Company Information Step */}
         {currentStep === 'company-info' && (
-          <Card className="bg-white border-gray-200">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-gray-900">Company Information</CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardTitle>Company Information</CardTitle>
+              <CardDescription>
                 Enter your company details to begin registration
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="email" className="text-gray-700">Email Address *</Label>
+                <Label htmlFor="email">Email Address *</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="bg-white border-gray-300 text-gray-900"
                   placeholder="your@email.com"
                 />
               </div>
               <div>
-                <Label htmlFor="password" className="text-gray-700">Password *</Label>
+                <Label htmlFor="password">Password *</Label>
                 <Input
                   id="password"
                   type="password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="bg-white border-gray-300 text-gray-900"
                   placeholder="Create a password"
                 />
-                <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
+                <HintText>Minimum 6 characters</HintText>
               </div>
               <div>
-                <Label htmlFor="companyName" className="text-gray-700">Company Name *</Label>
+                <Label htmlFor="companyName">Company Name *</Label>
                 <Input
                   id="companyName"
                   value={formData.companyName}
                   onChange={(e) => handleInputChange('companyName', e.target.value)}
-                  className="bg-white border-gray-300 text-gray-900"
                   placeholder="ABC Transport LLC"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <FormGrid>
                 <div>
-                  <Label htmlFor="dotNumber" className="text-gray-700">DOT Number *</Label>
+                  <Label htmlFor="dotNumber">DOT Number *</Label>
                   <Input
                     id="dotNumber"
                     value={formData.dotNumber}
                     onChange={(e) => handleInputChange('dotNumber', e.target.value)}
-                    className="bg-white border-gray-300 text-gray-900"
                     placeholder="123456"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Demo: Use 123456 or 789012</p>
+                  <HintText>Demo: Use 123456 or 789012</HintText>
                 </div>
                 <div>
-                  <Label htmlFor="mcNumber" className="text-gray-700">MC Number (Optional)</Label>
+                  <Label htmlFor="mcNumber">MC Number (Optional)</Label>
                   <Input
                     id="mcNumber"
                     value={formData.mcNumber}
                     onChange={(e) => handleInputChange('mcNumber', e.target.value)}
-                    className="bg-white border-gray-300 text-gray-900"
                     placeholder="MC-123456"
                   />
                 </div>
-              </div>
-              <Button 
-                onClick={handleCompanyInfoSubmit} 
+              </FormGrid>
+              <Button
+                onClick={handleCompanyInfoSubmit}
                 disabled={isLoading}
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
               >
                 {isLoading ? (
                   <>
@@ -353,34 +380,28 @@ export function BrokerSignup() {
 
         {/* FMCSA Verification Step */}
         {currentStep === 'fmcsa-verification' && (
-          <Card className="bg-white border-gray-200">
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-gray-900">
+              <CardTitle className="flex items-center gap-2">
                 <ShieldCheck className="size-6" />
                 FMCSA Verification
               </CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardDescription>
                 We'll verify your broker information with the FMCSA database
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-700 mb-2">
-                  <strong>DOT Number:</strong> {formData.dotNumber}
-                </p>
-                {formData.mcNumber && (
-                  <p className="text-sm text-gray-700">
-                    <strong>MC Number:</strong> {formData.mcNumber}
-                  </p>
-                )}
-              </div>
-              
+              <InfoBox>
+                <p><strong>DOT Number:</strong> {formData.dotNumber}</p>
+                {formData.mcNumber && <p><strong>MC Number:</strong> {formData.mcNumber}</p>}
+              </InfoBox>
+
               {!fmcsaVerified && (
                 <div className="space-y-2">
-                  <Button 
-                    onClick={handleFMCSAVerification} 
+                  <Button
+                    onClick={handleFMCSAVerification}
                     disabled={isLoading}
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                    className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
                   >
                     {isLoading ? (
                       <>
@@ -404,15 +425,13 @@ export function BrokerSignup() {
               )}
 
               {fmcsaVerified && (
-                <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-600 mb-2">
+                <SuccessBox>
+                  <SuccessBoxHeader>
                     <CheckCircle className="size-5" />
-                    <span className="font-semibold">Verification Successful!</span>
-                  </div>
-                  <p className="text-sm text-gray-700">
-                    Your broker information has been verified with FMCSA.
-                  </p>
-                </div>
+                    Verification Successful!
+                  </SuccessBoxHeader>
+                  <SuccessBoxText>Your broker information has been verified with FMCSA.</SuccessBoxText>
+                </SuccessBox>
               )}
             </CardContent>
           </Card>
@@ -420,53 +439,48 @@ export function BrokerSignup() {
 
         {/* Insurance Information Step */}
         {currentStep === 'insurance-info' && (
-          <Card className="bg-white border-gray-200">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-gray-900">Insurance Information</CardTitle>
-              <CardDescription className="text-gray-600">
-                Provide your insurance coverage details
-              </CardDescription>
+              <CardTitle>Insurance Information</CardTitle>
+              <CardDescription>Provide your insurance coverage details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="insuranceCompany" className="text-gray-700">Insurance Company Name *</Label>
+                <Label htmlFor="insuranceCompany">Insurance Company Name *</Label>
                 <Input
                   id="insuranceCompany"
                   value={formData.insuranceCompany}
                   onChange={(e) => handleInputChange('insuranceCompany', e.target.value)}
-                  className="bg-white border-gray-300 text-gray-900"
                   placeholder="ABC Insurance Co."
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <FormGrid>
                 <div>
-                  <Label htmlFor="cargoInsurance" className="text-gray-700">Cargo Insurance Coverage *</Label>
+                  <Label htmlFor="cargoInsurance">Cargo Insurance Coverage *</Label>
                   <Input
                     id="cargoInsurance"
                     type="number"
                     value={formData.cargoInsurance}
                     onChange={(e) => handleInputChange('cargoInsurance', e.target.value)}
-                    className="bg-white border-gray-300 text-gray-900"
                     placeholder="100000"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Amount in USD</p>
+                  <HintText>Amount in USD</HintText>
                 </div>
                 <div>
-                  <Label htmlFor="liabilityInsurance" className="text-gray-700">Liability Insurance Coverage *</Label>
+                  <Label htmlFor="liabilityInsurance">Liability Insurance Coverage *</Label>
                   <Input
                     id="liabilityInsurance"
                     type="number"
                     value={formData.liabilityInsurance}
                     onChange={(e) => handleInputChange('liabilityInsurance', e.target.value)}
-                    className="bg-white border-gray-300 text-gray-900"
                     placeholder="1000000"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Amount in USD</p>
+                  <HintText>Amount in USD</HintText>
                 </div>
-              </div>
-              <Button 
-                onClick={handleInsuranceSubmit} 
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+              </FormGrid>
+              <Button
+                onClick={handleInsuranceSubmit}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
               >
                 Continue to W9 Upload
               </Button>
@@ -476,43 +490,38 @@ export function BrokerSignup() {
 
         {/* W9 Upload Step */}
         {currentStep === 'w9-upload' && (
-          <Card className="bg-white border-gray-200">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-gray-900">W9 Information</CardTitle>
-              <CardDescription className="text-gray-600">
-                Upload your W9 form and provide tax information
-              </CardDescription>
+              <CardTitle>W9 Information</CardTitle>
+              <CardDescription>Upload your W9 form and provide tax information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="taxIdType" className="text-gray-700">Tax ID Type *</Label>
+                <Label htmlFor="taxIdType">Tax ID Type *</Label>
                 <Select value={formData.taxIdType} onValueChange={(value: 'SSN' | 'EIN') => handleInputChange('taxIdType', value)}>
-                  <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border-gray-200">
+                  <SelectContent>
                     <SelectItem value="EIN">EIN (Employer Identification Number)</SelectItem>
                     <SelectItem value="SSN">SSN (Social Security Number)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="taxId" className="text-gray-700">
-                  {formData.taxIdType === 'EIN' ? 'EIN' : 'SSN'} *
-                </Label>
+                <Label htmlFor="taxId">{formData.taxIdType === 'EIN' ? 'EIN' : 'SSN'} *</Label>
                 <Input
                   id="taxId"
                   type="password"
                   value={formData.taxId}
                   onChange={(e) => handleInputChange('taxId', e.target.value)}
-                  className="bg-white border-gray-300 text-gray-900"
                   placeholder={formData.taxIdType === 'EIN' ? '12-3456789' : '123-45-6789'}
                 />
               </div>
               <div>
-                <Label htmlFor="w9File" className="text-gray-700">Upload W9 Document *</Label>
-                <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white">
-                  <Upload className="size-10 mx-auto mb-4 text-gray-400" />
+                <Label>Upload W9 Document *</Label>
+                <DropZone>
+                  <Upload className="size-10 mx-auto mb-4 text-muted-foreground" />
                   <input
                     id="w9File"
                     type="file"
@@ -520,25 +529,23 @@ export function BrokerSignup() {
                     onChange={handleW9Upload}
                     className="hidden"
                   />
-                  <label htmlFor="w9File" className="cursor-pointer">
-                    <span className="text-amber-600 hover:text-amber-700 font-semibold">
-                      Click to upload
-                    </span>
-                    <span className="text-gray-600"> or drag and drop</span>
-                  </label>
-                  <p className="text-xs text-gray-500 mt-2">PDF, DOC, or DOCX (max 5MB)</p>
+                  <DropZoneUploadLabel htmlFor="w9File">
+                    <span className="upload-link">Click to upload</span>
+                    <span className="upload-or"> or drag and drop</span>
+                  </DropZoneUploadLabel>
+                  <DropZoneHint>PDF, DOC, or DOCX (max 5MB)</DropZoneHint>
                   {w9File && (
-                    <div className="mt-4 flex items-center justify-center gap-2 text-green-600">
+                    <DropZoneSuccess>
                       <CheckCircle className="size-4" />
-                      <span className="text-sm">{w9File.name}</span>
-                    </div>
+                      <span>{w9File.name}</span>
+                    </DropZoneSuccess>
                   )}
-                </div>
+                </DropZone>
               </div>
-              <Button 
-                onClick={handleW9Submit} 
+              <Button
+                onClick={handleW9Submit}
                 disabled={!w9File}
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
               >
                 Continue to Phone Verification
               </Button>
@@ -548,29 +555,29 @@ export function BrokerSignup() {
 
         {/* SMS Verification Step */}
         {currentStep === 'sms-verification' && (
-          <Card className="bg-white border-gray-200">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-gray-900">Phone Verification</CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardTitle>Phone Verification</CardTitle>
+              <CardDescription>
                 Enter the verification code sent to {formData.phoneNumber}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="smsCode" className="text-gray-700">Verification Code *</Label>
+                <Label htmlFor="smsCode">Verification Code *</Label>
                 <Input
                   id="smsCode"
                   value={smsCode}
                   onChange={(e) => setSmsCode(e.target.value)}
-                  className="bg-white border-gray-300 text-gray-900 text-center text-2xl tracking-widest"
+                  className="text-center text-2xl tracking-widest"
                   placeholder="000000"
                   maxLength={6}
                 />
               </div>
-              <Button 
-                onClick={handleSMSVerification} 
+              <Button
+                onClick={handleSMSVerification}
                 disabled={isLoading}
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
               >
                 {isLoading ? (
                   <>
@@ -581,11 +588,11 @@ export function BrokerSignup() {
                   'Verify Phone Number'
                 )}
               </Button>
-              <Button 
-                onClick={handleSendSMS} 
+              <Button
+                onClick={handleSendSMS}
                 variant="ghost"
                 disabled={isLoading}
-                className="w-full text-gray-600"
+                className="w-full"
               >
                 Resend Code
               </Button>
@@ -595,22 +602,20 @@ export function BrokerSignup() {
 
         {/* Complete Step */}
         {currentStep === 'complete' && (
-          <Card className="bg-white border-gray-200">
+          <Card>
             <CardContent className="p-12 text-center">
-              <div className="size-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CompleteIconWrapper>
                 <CheckCircle className="size-12 text-green-600" />
-              </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Registration Complete!</h2>
-              <p className="text-lg text-gray-600 mb-6">
+              </CompleteIconWrapper>
+              <CompleteTitle>Registration Complete!</CompleteTitle>
+              <CompleteSubtext>
                 Welcome to {APP_NAME}, {formData.companyName}! You can now post loads and manage bookings.
-              </p>
-              <p className="text-sm text-gray-500">
-                Redirecting to load board...
-              </p>
+              </CompleteSubtext>
+              <CompleteHint>Redirecting to load board...</CompleteHint>
             </CardContent>
           </Card>
         )}
-      </div>
-    </div>
+      </ContentWrapper>
+    </PageWrapper>
   );
 }

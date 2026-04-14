@@ -50,7 +50,9 @@ export function Login() {
     try {
       const res = await loginUser({ email: email.trim(), password }).unwrap();
 
-      const role = res.role?.toLowerCase() === 'broker' ? 'broker' : 'carrier';
+      const rawRole = res.role?.toLowerCase() ?? '';
+      const role: import('../types/user').UserRole =
+        rawRole === 'broker' ? 'broker' : rawRole === 'admin' ? 'admin' : 'carrier';
 
       const minimalUser: UserProfile = {
         id: res.userId,
@@ -58,7 +60,7 @@ export function Login() {
         email: res.email,
         phoneNumber: '',
         phoneVerified: true,
-        companyName: role === 'broker' ? 'Broker' : 'Carrier',
+        companyName: role === 'broker' ? 'Broker' : role === 'admin' ? 'Admin' : 'Carrier',
         mcNumber: '',
         dotNumber: '',
         insuranceCompany: '',
@@ -80,13 +82,22 @@ export function Login() {
         userId: res.userId,
         email: res.email,
         role: res.role,
+        adminApproved: res.adminApproved,
       }));
 
       toast.success('Welcome back!', {
         description: `Logged in as ${res.email}`,
       });
 
-      navigate(role === 'broker' ? '/broker/dashboard' : '/loads');
+      if (!res.adminApproved && role !== 'admin') {
+        navigate('/pending-approval');
+      } else if (role === 'broker') {
+        navigate('/broker/dashboard');
+      } else if (role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/loads');
+      }
     } catch (e: any) {
       const message = (e && typeof e === 'object' && 'message' in e ? String(e.message) : 'Login failed.');
       setError(message);

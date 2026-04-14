@@ -8,6 +8,39 @@ export type AuthResponse = {
   userId: string;
   email: string;
   role: string;
+  adminApproved: boolean;
+};
+
+export type MeResponse = {
+  userId: string;
+  email: string;
+  role: string;
+  adminApproved: boolean;
+  emailVerified: boolean;
+  profileComplete: boolean;
+};
+
+export type ProfileUpdatePayload = {
+  companyName?: string;
+  dotNumber?: string;
+  mcNumber?: string;
+  phoneNumber?: string;
+  insuranceCompany?: string;
+  cargoInsurance?: number;
+  liabilityInsurance?: number;
+  taxIdType?: 'EIN' | 'SSN';
+  taxId?: string;
+  mailingAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+};
+
+export type DocumentUploadResponse = {
+  fileId: string;
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: string;
 };
 
 export type CreateLoadPayload = {
@@ -96,6 +129,39 @@ export type CarrierProfile = {
   email?: string;
 };
 
+export type AdminDocumentDto = {
+  documentId: string;
+  documentType: string;
+  originalName: string;
+  fileUrl: string;
+  uploadedAt: string;
+};
+
+export type AdminUserDto = {
+  userId: string;
+  email: string;
+  role: string;
+  adminApproved: boolean;
+  adminApprovedAt?: string;
+  emailVerified: boolean;
+  createdAt?: string;
+  profileId?: string;
+  companyName?: string;
+  dotNumber?: string;
+  mcNumber?: string;
+  phoneNumber?: string;
+  mailingAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  insuranceCompany?: string;
+  cargoInsurance?: string;
+  liabilityInsurance?: string;
+  taxIdType?: string;
+  taxId?: string;
+  documents: AdminDocumentDto[];
+};
+
 export const hauliusApi = createApi({
   reducerPath: 'hauliusApi',
   baseQuery: fetchBaseQuery({
@@ -158,7 +224,49 @@ export const hauliusApi = createApi({
       invalidatesTags: ['Load', 'Bid'],
     }),
 
+    // ── Admin — user management ───────────────────────────────────────────
+    getAdminUsers: builder.query<AdminUserDto[], void>({
+      query: () => '/api/admin/users',
+      providesTags: ['Profile'],
+    }),
+    getAdminUser: builder.query<AdminUserDto, string>({
+      query: (id) => `/api/admin/users/${id}`,
+      providesTags: (_result, _error, id) => [{ type: 'Profile', id }],
+    }),
+    deleteAdminUser: builder.mutation<void, string>({
+      query: (id) => ({ url: `/api/admin/users/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Profile'],
+    }),
+    approveCarrier: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/admin/carriers/${id}/approve`, method: 'POST' }),
+      invalidatesTags: ['Profile'],
+    }),
+    declineCarrier: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/admin/carriers/${id}/decline`, method: 'POST' }),
+      invalidatesTags: ['Profile'],
+    }),
+    deleteAdminCarrier: builder.mutation<void, string>({
+      query: (id) => ({ url: `/api/admin/carriers/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Profile'],
+    }),
+    approveBroker: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/admin/brokers/${id}/approve`, method: 'POST' }),
+      invalidatesTags: ['Profile'],
+    }),
+    declineBroker: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/admin/brokers/${id}/decline`, method: 'POST' }),
+      invalidatesTags: ['Profile'],
+    }),
+    deleteAdminBroker: builder.mutation<void, string>({
+      query: (id) => ({ url: `/api/admin/brokers/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Profile'],
+    }),
+
     // ── Profiles ──────────────────────────────────────────────────────────
+    getMe: builder.query<MeResponse, void>({
+      query: () => '/api/auth/me',
+      providesTags: ['Profile'],
+    }),
     getMyBrokerProfile: builder.query<BrokerProfile, void>({
       query: () => '/api/brokers/me',
       providesTags: ['Profile'],
@@ -167,12 +275,40 @@ export const hauliusApi = createApi({
       query: () => '/api/carriers/me',
       providesTags: ['Profile'],
     }),
+    updateBrokerProfile: builder.mutation<{ message: string }, ProfileUpdatePayload>({
+      query: (body) => ({ url: '/api/brokers/profile', method: 'PATCH', body }),
+      invalidatesTags: ['Profile'],
+    }),
+    updateCarrierProfile: builder.mutation<{ message: string }, ProfileUpdatePayload>({
+      query: (body) => ({ url: '/api/carriers/profile', method: 'PATCH', body }),
+      invalidatesTags: ['Profile'],
+    }),
+    uploadBrokerW9: builder.mutation<DocumentUploadResponse, FormData>({
+      query: (body) => ({
+        url: '/api/brokers/documents/w9',
+        method: 'POST',
+        body,
+        // Do NOT set Content-Type — browser sets multipart boundary automatically
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
+    uploadCarrierW9: builder.mutation<DocumentUploadResponse, FormData>({
+      query: (body) => ({
+        url: '/api/carriers/documents/w9',
+        method: 'POST',
+        body,
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
   }),
 });
 
 export const {
   useRegisterMutation,
   useLoginUserMutation,
+  useGetMeQuery,
   useGetLoadsQuery,
   useGetLoadsForCarrierQuery,
   useCreateLoadMutation,
@@ -184,4 +320,18 @@ export const {
   useCancelBookingMutation,
   useGetMyBrokerProfileQuery,
   useGetMyCarrierProfileQuery,
+  useUpdateBrokerProfileMutation,
+  useUpdateCarrierProfileMutation,
+  useUploadBrokerW9Mutation,
+  useUploadCarrierW9Mutation,
+  // Admin — user management
+  useGetAdminUsersQuery,
+  useGetAdminUserQuery,
+  useDeleteAdminUserMutation,
+  useApproveCarrierMutation,
+  useDeclineCarrierMutation,
+  useDeleteAdminCarrierMutation,
+  useApproveBrokerMutation,
+  useDeclineBrokerMutation,
+  useDeleteAdminBrokerMutation,
 } = hauliusApi;
