@@ -11,30 +11,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../components/ui/textarea';
 import { ArrowLeft, Truck, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { US_STATES, VEHICLE_TYPES, VEHICLE_CONDITIONS } from '../constants';
+import { US_STATES } from '../constants';
+
+// Must match backend PickupType / DropType enums
+const LOCATION_TYPES = ['BUSINESS', 'RESIDENCE', 'AUCTION', 'PORT', 'OTHER'] as const;
 
 export function PostLoad() {
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
   const [createLoad] = useCreateLoadMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [formData, setFormData] = useState({
-    vehicleType: '',
+    // Vehicle
     make: '',
     model: '',
     year: '',
+    condition: '',
+    // Pickup
+    pickupStreet: '',
     pickupCity: '',
     pickupState: '',
-    deliveryCity: '',
-    deliveryState: '',
-    pickupDate: '',
-    deliveryDate: '',
+    pickupZip: '',
+    pickupType: 'BUSINESS',
+    // Drop / Delivery
+    dropStreet: '',
+    dropCity: '',
+    dropState: '',
+    dropZip: '',
+    dropType: 'RESIDENCE',
+    // Load details
+    weight: '',
     price: '',
-    condition: '',
-    contactName: '',
-    contactPhone: '',
-    contactEmail: '',
-    notes: ''
+    description: '',
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -48,24 +57,45 @@ export function PostLoad() {
       toast.error('Please fill in the vehicle make, model, and year.');
       return;
     }
-    if (!formData.pickupCity || !formData.pickupState || !formData.deliveryCity || !formData.deliveryState) {
-      toast.error('Please fill in pickup and delivery locations.');
+    if (!formData.pickupCity || !formData.pickupState) {
+      toast.error('Please fill in the pickup city and state.');
+      return;
+    }
+    if (!formData.dropCity || !formData.dropState) {
+      toast.error('Please fill in the delivery city and state.');
+      return;
+    }
+    if (!formData.price) {
+      toast.error('Please enter a price.');
       return;
     }
 
     setIsSubmitting(true);
     try {
       await createLoad({
+        // Vehicle
         vehicleMake: formData.make,
         vehicleModel: formData.model,
-        vehicleYear: parseInt(formData.year),
+        vehicleYear: parseInt(formData.year, 10),
+        // Pickup
+        pickupStreet: formData.pickupStreet || undefined,
         pickupCity: formData.pickupCity,
         pickupState: formData.pickupState,
-        dropCity: formData.deliveryCity,
-        dropState: formData.deliveryState,
-        price: formData.price ? parseFloat(formData.price) : undefined,
-        description: formData.notes || undefined,
-      });
+        pickupZip: formData.pickupZip || undefined,
+        pickupCountry: 'US',
+        pickupType: formData.pickupType,
+        // Drop
+        dropStreet: formData.dropStreet || undefined,
+        dropCity: formData.dropCity,
+        dropState: formData.dropState,
+        dropZip: formData.dropZip || undefined,
+        dropCountry: 'US',
+        dropType: formData.dropType,
+        // Load details
+        price: parseFloat(formData.price),
+        weight: formData.weight ? parseFloat(formData.weight) : undefined,
+        description: formData.description || undefined,
+      }).unwrap();
 
       toast.success('Load posted successfully!', {
         description: 'Your load has been added to the board and is now visible to carriers.',
@@ -74,7 +104,8 @@ export function PostLoad() {
 
       navigate('/loads');
     } catch (error: any) {
-      const message = error?.message || 'Failed to post load. Please try again.';
+      const message =
+        error?.data?.message || error?.message || 'Failed to post load. Please try again.';
       toast.error('Failed to post load', { description: message });
     } finally {
       setIsSubmitting(false);
@@ -87,60 +118,30 @@ export function PostLoad() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold">Post a Load</h1>
-            <p className="text-muted-foreground">Add a new vehicle transport request</p>
+
+          <div className="mb-8 flex items-center gap-4">
+            <Link to="/loads">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="size-4 mr-1" /> Back
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-3xl font-bold flex items-center gap-2">
+                <Truck className="size-7 text-amber-500" /> Post a Load
+              </h1>
+              <p className="text-muted-foreground">Add a new vehicle transport request</p>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit}>
+
             {/* Vehicle Information */}
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Vehicle Information</CardTitle>
-                <CardDescription>Provide details about the vehicle to be transported</CardDescription>
+                <CardDescription>Details about the vehicle to be transported</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="vehicleType">Vehicle Type *</Label>
-                    <Select 
-                      value={formData.vehicleType} 
-                      onValueChange={(value) => handleInputChange('vehicleType', value)}
-                      required
-                    >
-                      <SelectTrigger id="vehicleType">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sedan">Sedan</SelectItem>
-                        <SelectItem value="suv">SUV</SelectItem>
-                        <SelectItem value="truck">Truck</SelectItem>
-                        <SelectItem value="van">Van</SelectItem>
-                        <SelectItem value="motorcycle">Motorcycle</SelectItem>
-                        <SelectItem value="rv">RV</SelectItem>
-                        <SelectItem value="boat">Boat</SelectItem>
-                        <SelectItem value="atv">ATV</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="condition">Condition *</Label>
-                    <Select 
-                      value={formData.condition} 
-                      onValueChange={(value) => handleInputChange('condition', value)}
-                      required
-                    >
-                      <SelectTrigger id="condition">
-                        <SelectValue placeholder="Select condition" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="running">Running</SelectItem>
-                        <SelectItem value="non-running">Non-Running</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="make">Make *</Label>
@@ -169,29 +170,84 @@ export function PostLoad() {
                       type="number"
                       placeholder="e.g., 2022"
                       min="1900"
-                      max="2026"
+                      max="2030"
                       value={formData.year}
                       onChange={(e) => handleInputChange('year', e.target.value)}
                       required
                     />
                   </div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="condition">Condition</Label>
+                    <Select
+                      value={formData.condition}
+                      onValueChange={(v) => handleInputChange('condition', v)}
+                    >
+                      <SelectTrigger id="condition">
+                        <SelectValue placeholder="Select condition" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="running">Running</SelectItem>
+                        <SelectItem value="non-running">Non-Running</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="weight">Weight (lbs)</Label>
+                    <Input
+                      id="weight"
+                      type="number"
+                      placeholder="e.g., 3500"
+                      min="0"
+                      value={formData.weight}
+                      onChange={(e) => handleInputChange('weight', e.target.value)}
+                    />
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Pickup Information */}
+            {/* Pickup */}
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle>Pickup Information</CardTitle>
+                <CardTitle>Pickup Location</CardTitle>
                 <CardDescription>Where will the vehicle be picked up?</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
+                    <Label htmlFor="pickupStreet">Street Address</Label>
+                    <Input
+                      id="pickupStreet"
+                      placeholder="e.g., 100 Main St"
+                      value={formData.pickupStreet}
+                      onChange={(e) => handleInputChange('pickupStreet', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="pickupType">Location Type</Label>
+                    <Select
+                      value={formData.pickupType}
+                      onValueChange={(v) => handleInputChange('pickupType', v)}
+                    >
+                      <SelectTrigger id="pickupType">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LOCATION_TYPES.map(t => (
+                          <SelectItem key={t} value={t}>{t.charAt(0) + t.slice(1).toLowerCase()}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
                     <Label htmlFor="pickupCity">City *</Label>
                     <Input
                       id="pickupCity"
-                      placeholder="e.g., Los Angeles"
+                      placeholder="e.g., Chicago"
                       value={formData.pickupCity}
                       onChange={(e) => handleInputChange('pickupCity', e.target.value)}
                       required
@@ -199,91 +255,113 @@ export function PostLoad() {
                   </div>
                   <div>
                     <Label htmlFor="pickupState">State *</Label>
-                    <Select 
-                      value={formData.pickupState} 
-                      onValueChange={(value) => handleInputChange('pickupState', value)}
+                    <Select
+                      value={formData.pickupState}
+                      onValueChange={(v) => handleInputChange('pickupState', v)}
                       required
                     >
                       <SelectTrigger id="pickupState">
                         <SelectValue placeholder="Select state" />
                       </SelectTrigger>
                       <SelectContent>
-                        {US_STATES.map(state => (
-                          <SelectItem key={state} value={state}>{state}</SelectItem>
+                        {US_STATES.map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                <div>
-                  <Label htmlFor="pickupDate">Pickup Date *</Label>
-                  <Input
-                    id="pickupDate"
-                    type="date"
-                    value={formData.pickupDate}
-                    onChange={(e) => handleInputChange('pickupDate', e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    required
-                  />
+                  <div>
+                    <Label htmlFor="pickupZip">ZIP Code</Label>
+                    <Input
+                      id="pickupZip"
+                      placeholder="e.g., 60601"
+                      value={formData.pickupZip}
+                      onChange={(e) => handleInputChange('pickupZip', e.target.value)}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Delivery Information */}
+            {/* Delivery */}
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle>Delivery Information</CardTitle>
+                <CardTitle>Delivery Location</CardTitle>
                 <CardDescription>Where should the vehicle be delivered?</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="deliveryCity">City *</Label>
+                    <Label htmlFor="dropStreet">Street Address</Label>
                     <Input
-                      id="deliveryCity"
-                      placeholder="e.g., Phoenix"
-                      value={formData.deliveryCity}
-                      onChange={(e) => handleInputChange('deliveryCity', e.target.value)}
-                      required
+                      id="dropStreet"
+                      placeholder="e.g., 200 Freight Ave"
+                      value={formData.dropStreet}
+                      onChange={(e) => handleInputChange('dropStreet', e.target.value)}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="deliveryState">State *</Label>
-                    <Select 
-                      value={formData.deliveryState} 
-                      onValueChange={(value) => handleInputChange('deliveryState', value)}
-                      required
+                    <Label htmlFor="dropType">Location Type</Label>
+                    <Select
+                      value={formData.dropType}
+                      onValueChange={(v) => handleInputChange('dropType', v)}
                     >
-                      <SelectTrigger id="deliveryState">
-                        <SelectValue placeholder="Select state" />
+                      <SelectTrigger id="dropType">
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {US_STATES.map(state => (
-                          <SelectItem key={state} value={state}>{state}</SelectItem>
+                        {LOCATION_TYPES.map(t => (
+                          <SelectItem key={t} value={t}>{t.charAt(0) + t.slice(1).toLowerCase()}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="deliveryDate">Delivery Date *</Label>
-                  <Input
-                    id="deliveryDate"
-                    type="date"
-                    value={formData.deliveryDate}
-                    onChange={(e) => handleInputChange('deliveryDate', e.target.value)}
-                    min={formData.pickupDate || new Date().toISOString().split('T')[0]}
-                    required
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="dropCity">City *</Label>
+                    <Input
+                      id="dropCity"
+                      placeholder="e.g., Los Angeles"
+                      value={formData.dropCity}
+                      onChange={(e) => handleInputChange('dropCity', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="dropState">State *</Label>
+                    <Select
+                      value={formData.dropState}
+                      onValueChange={(v) => handleInputChange('dropState', v)}
+                      required
+                    >
+                      <SelectTrigger id="dropState">
+                        <SelectValue placeholder="Select state" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {US_STATES.map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="dropZip">ZIP Code</Label>
+                    <Input
+                      id="dropZip"
+                      placeholder="e.g., 90001"
+                      value={formData.dropZip}
+                      onChange={(e) => handleInputChange('dropZip', e.target.value)}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Pricing & Contact */}
+            {/* Pricing & Notes */}
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle>Pricing & Contact</CardTitle>
-                <CardDescription>Set your price and provide contact information</CardDescription>
+                <CardTitle>Pricing & Notes</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -291,7 +369,7 @@ export function PostLoad() {
                   <Input
                     id="price"
                     type="number"
-                    placeholder="e.g., 450"
+                    placeholder="e.g., 1500"
                     min="0"
                     step="10"
                     value={formData.price}
@@ -299,65 +377,28 @@ export function PostLoad() {
                     required
                   />
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="contactName">Contact Name *</Label>
-                    <Input
-                      id="contactName"
-                      placeholder="Your full name"
-                      value={formData.contactName}
-                      onChange={(e) => handleInputChange('contactName', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="contactPhone">Phone Number *</Label>
-                    <Input
-                      id="contactPhone"
-                      type="tel"
-                      placeholder="(555) 123-4567"
-                      value={formData.contactPhone}
-                      onChange={(e) => handleInputChange('contactPhone', e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
                 <div>
-                  <Label htmlFor="contactEmail">Email Address *</Label>
-                  <Input
-                    id="contactEmail"
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={formData.contactEmail}
-                    onChange={(e) => handleInputChange('contactEmail', e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="notes">Additional Notes (Optional)</Label>
+                  <Label htmlFor="description">Additional Notes</Label>
                   <Textarea
-                    id="notes"
-                    placeholder="Any special requirements, preferred trailer type, or other important information..."
-                    rows={4}
-                    value={formData.notes}
-                    onChange={(e) => handleInputChange('notes', e.target.value)}
+                    id="description"
+                    placeholder="Special instructions, trailer type preference, etc."
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
                   />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Action Buttons */}
+            {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
-                type="submit" 
-                size="lg" 
+              <Button
+                type="submit"
+                size="lg"
                 className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Posting Load...' : 'Post Load'}
+                {isSubmitting ? 'Posting...' : 'Post Load'}
               </Button>
               <Link to="/loads" className="flex-1">
                 <Button type="button" variant="outline" size="lg" className="w-full">
@@ -365,6 +406,7 @@ export function PostLoad() {
                 </Button>
               </Link>
             </div>
+
           </form>
         </div>
       </div>

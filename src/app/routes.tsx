@@ -14,6 +14,10 @@ import { CompanyProfile } from './pages/CompanyProfile';
 import { Settings } from './pages/Settings';
 import { PendingApproval } from './pages/PendingApproval';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { CheckEmail } from './pages/CheckEmail';
+import { VerifyEmail } from './pages/VerifyEmail';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Thin root layout – Redux Provider lives in App.tsx
@@ -128,6 +132,22 @@ export const router = createBrowserRouter([
       {
         path: '/signup/broker',
         Component: BrokerSignup,
+      },
+      {
+        path: '/check-email',
+        Component: CheckEmail,
+      },
+      {
+        path: '/verify-email',
+        Component: VerifyEmail,
+      },
+      {
+        path: '/forgot-password',
+        Component: ForgotPassword,
+      },
+      {
+        path: '/reset-password',
+        Component: ResetPassword,
       },
     ],
   },

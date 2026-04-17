@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useLocation } from 'react-router';
 import { useAppDispatch } from '../store/hooks';
 import { setCredentials } from '../store/slices/authSlice';
 import { useLoginUserMutation } from '../store/services/hauliusApi';
@@ -8,19 +8,24 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Truck, ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { ThemeToggle } from '../components/ThemeToggle';
+import { AuthNavbar } from '../components/AuthNavbar';
 import { APP_NAME } from '../constants';
 
 export function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
   const [loginUser] = useLoginUserMutation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showResend, setShowResend] = useState(false);
+
+  const justVerified = (location.state as any)?.verified === true;
+  const justResetPassword = (location.state as any)?.passwordReset === true;
 
   const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
@@ -28,6 +33,7 @@ export function Login() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setShowResend(false);
 
     if (!email.trim() || !password) {
       setIsLoading(false);
@@ -99,37 +105,49 @@ export function Login() {
         navigate('/loads');
       }
     } catch (e: any) {
-      const message = (e && typeof e === 'object' && 'message' in e ? String(e.message) : 'Login failed.');
+      const status = e?.status ?? e?.originalStatus;
+      const message =
+        e?.data?.message ??
+        (e && typeof e === 'object' && 'message' in e ? String(e.message) : 'Login failed.');
+
       setError(message);
-      toast.error('Login failed', {
-        description: message,
-      });
+
+      if (status === 403) {
+        setShowResend(true);
+      }
+
+      toast.error('Login failed', { description: message });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="flex items-center justify-between mb-8">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="bg-amber-500 p-2 rounded-lg">
-              <Truck className="size-8 text-white" />
-            </div>
-            <span className="text-3xl font-bold">{APP_NAME}</span>
-          </Link>
-          <ThemeToggle />
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>
-              Log in to your {APP_NAME} account
-            </CardDescription>
-          </CardHeader>
+    <div className="min-h-screen bg-background">
+      <AuthNavbar showSignup={true} />
+      <div className="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">
+        <div className="w-full max-w-md">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl">Welcome Back</CardTitle>
+              <CardDescription>
+                Log in to your {APP_NAME} account
+              </CardDescription>
+            </CardHeader>
           <CardContent>
+            {justVerified && (
+              <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-400">
+                <CheckCircle className="size-4 shrink-0" />
+                Email verified successfully! You can now log in.
+              </div>
+            )}
+            {justResetPassword && (
+              <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-400">
+                <CheckCircle className="size-4 shrink-0" />
+                Password reset successfully! Please log in with your new password.
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="email">Email Address</Label>
@@ -159,9 +177,9 @@ export function Login() {
                   <input type="checkbox" className="rounded" />
                   Remember me
                 </label>
-                <a href="#" className="text-amber-500 hover:text-amber-400">
+                <Link to="/forgot-password" className="text-amber-500 hover:text-amber-400">
                   Forgot password?
-                </a>
+                </Link>
               </div>
 
               <Button
@@ -174,9 +192,21 @@ export function Login() {
             </form>
 
             {error && (
-              <div className="mt-4 text-sm text-red-500 flex items-center gap-2">
-                <AlertCircle className="size-4" />
-                {error}
+              <div className="mt-4 space-y-2">
+                <div className="text-sm text-red-500 flex items-center gap-2">
+                  <AlertCircle className="size-4 shrink-0" />
+                  {error}
+                </div>
+                {showResend && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-amber-500 border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/10"
+                    onClick={() => navigate('/check-email', { state: { email: email.trim() } })}
+                  >
+                    Resend verification email
+                  </Button>
+                )}
               </div>
             )}
 
@@ -196,6 +226,7 @@ export function Login() {
               Back to Home
             </Button>
           </Link>
+        </div>
         </div>
       </div>
     </div>

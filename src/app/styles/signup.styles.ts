@@ -79,13 +79,18 @@ export const ContentWrapper = styled.div`
 // ─── Step Indicator ───────────────────────────────────────────────────────────
 
 export const StepIndicatorWrapper = styled.div`
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
+  padding: 1.5rem 0.5rem;
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
 `;
 
 export const StepList = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  padding: 0 1rem;
 `;
 
 export const StepItem = styled.div`
@@ -99,6 +104,7 @@ export const StepCircleWrapper = styled.div`
   flex-direction: column;
   align-items: center;
   flex: 1;
+  gap: 0.375rem;
 `;
 
 export const StepCircle = styled.div<{ active: boolean }>`
@@ -115,9 +121,10 @@ export const StepCircle = styled.div<{ active: boolean }>`
 `;
 
 export const StepLabel = styled.div<{ active: boolean }>`
-  font-size: 0.75rem;
-  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  margin-top: 0.25rem;
   text-align: center;
+  white-space: nowrap;
   color: ${({ active }) => (active ? 'var(--foreground)' : 'var(--muted-foreground)')};
   font-weight: ${({ active }) => (active ? '600' : '400')};
   transition: color 0.2s;
@@ -126,7 +133,8 @@ export const StepLabel = styled.div<{ active: boolean }>`
 export const StepConnector = styled.div<{ completed: boolean }>`
   height: 0.25rem;
   flex: 1;
-  margin: 0 0.5rem;
+  margin: 0 0.25rem;
+  margin-bottom: 1.25rem;
   background-color: ${({ completed }) => (completed ? '#f59e0b' : 'var(--muted)')};
   transition: background-color 0.2s;
 `;

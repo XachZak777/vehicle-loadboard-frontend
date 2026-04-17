@@ -1,5 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+
+const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL ?? '';
+
+/** Turns a relative backend path like "/uploads/w9/foo.pdf" into an absolute URL. */
+function toAbsoluteUrl(url: string): string {
+  if (!url) return url;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+}
 import {
   useGetAdminUsersQuery,
   useApproveCarrierMutation,
@@ -35,6 +44,9 @@ import {
   Truck,
   Building2,
   Clock,
+  ShieldCheck,
+  Mail,
+  MapPin,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -91,11 +103,20 @@ function UserDetailDialog({
         </DialogHeader>
 
         <div className="space-y-5">
-          {/* Status */}
-          <div className="flex items-center gap-3">
+          {/* Status row */}
+          <div className="flex flex-wrap items-center gap-2">
             <ApprovalBadge approved={user.adminApproved} />
+            {user.emailVerified
+              ? <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1"><Mail className="size-3" />Email Verified</Badge>
+              : <Badge variant="outline" className="text-muted-foreground flex items-center gap-1"><Mail className="size-3" />Email Unverified</Badge>
+            }
+            {user.fmcsaVerified && (
+              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+                <ShieldCheck className="size-3" />FMCSA Verified
+              </Badge>
+            )}
             {user.adminApprovedAt && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground ml-auto">
                 {user.adminApproved ? 'Approved' : 'Updated'} {new Date(user.adminApprovedAt).toLocaleDateString()}
               </span>
             )}
@@ -104,14 +125,49 @@ function UserDetailDialog({
           {/* Company / profile fields */}
           <Card>
             <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm font-semibold">Company Profile</CardTitle>
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Building2 className="size-4 text-amber-500" />
+                Company Profile
+              </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4 space-y-0">
               {infoRow('Company Name', user.companyName)}
+              {infoRow('DBA Name', user.dbaName)}
               {infoRow('DOT Number', user.dotNumber)}
               {infoRow('MC Number', user.mcNumber)}
               {infoRow('Phone', user.phoneNumber)}
-              {infoRow('Address', [user.mailingAddress, user.city, user.state, user.zipCode].filter(Boolean).join(', '))}
+              {infoRow('Carrier Operation', user.carrierOperation)}
+            </CardContent>
+          </Card>
+
+          {/* Address */}
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <MapPin className="size-4 text-amber-500" />
+                Address
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4 space-y-0">
+              {infoRow('Street', user.mailingAddress)}
+              {infoRow('City', user.city)}
+              {infoRow('State', user.state)}
+              {infoRow('Zip Code', user.zipCode)}
+              {(!user.mailingAddress && !user.city) && (
+                <p className="text-sm text-muted-foreground">No address on file.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Insurance */}
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <ShieldCheck className="size-4 text-amber-500" />
+                Insurance & Tax
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4 space-y-0">
               {infoRow('Insurance Company', user.insuranceCompany)}
               {infoRow('Cargo Insurance', user.cargoInsurance ? `$${Number(user.cargoInsurance).toLocaleString()}` : null)}
               {infoRow('Liability Insurance', user.liabilityInsurance ? `$${Number(user.liabilityInsurance).toLocaleString()}` : null)}
@@ -120,10 +176,31 @@ function UserDetailDialog({
             </CardContent>
           </Card>
 
+          {/* Account */}
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Mail className="size-4 text-amber-500" />
+                Account Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4 space-y-0">
+              {infoRow('Email', user.email)}
+              {infoRow('Role', user.role)}
+              {infoRow('Email Verified', user.emailVerified ? 'Yes' : 'No')}
+              {infoRow('FMCSA Verified', user.fmcsaVerified ? 'Yes' : 'No')}
+              {infoRow('Verification Date', user.verificationDate ? new Date(user.verificationDate).toLocaleDateString() : null)}
+              {infoRow('Registered', user.createdAt ? new Date(user.createdAt).toLocaleDateString() : null)}
+            </CardContent>
+          </Card>
+
           {/* Documents */}
           <Card>
             <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm font-semibold">Uploaded Documents</CardTitle>
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <FileText className="size-4 text-amber-500" />
+                Uploaded Documents
+              </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4">
               {user.documents.length === 0 ? (
@@ -142,9 +219,10 @@ function UserDetailDialog({
                           {new Date(doc.uploadedAt).toLocaleDateString()}
                         </span>
                         <a
-                          href={doc.fileUrl}
+                          href={toAbsoluteUrl(doc.fileUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
+                          title={`View ${doc.originalName}`}
                           className="text-amber-500 hover:text-amber-600"
                         >
                           <Eye className="size-4" />

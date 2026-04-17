@@ -1,34 +1,20 @@
 import { Link } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Truck, ArrowLeft, Building2, TruckIcon } from 'lucide-react';
-import { ThemeToggle } from '../components/ThemeToggle';
+import { ArrowLeft, Building2, TruckIcon } from 'lucide-react';
+import { AuthNavbar } from '../components/AuthNavbar';
+import { APP_NAME } from '../constants';
 
 export function Signup() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="bg-amber-500 p-2 rounded-lg">
-                <Truck className="size-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">LoadBoard Pro</h1>
-                <p className="text-sm text-muted-foreground">Choose Your Account Type</p>
-              </div>
-            </Link>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      <AuthNavbar subtitle="Choose Your Account Type" showLogin={true} />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex items-center justify-center min-h-[calc(100vh-200px)]">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex items-center justify-center min-h-[calc(100vh-64px)]">
         <div className="w-full">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4">
-              Join LoadBoard Pro Today
+              Join {APP_NAME} Today
             </h2>
             <p className="text-xl text-muted-foreground">
               Select the account type that best describes your business

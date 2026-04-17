@@ -43,6 +43,92 @@ export type DocumentUploadResponse = {
   uploadedAt: string;
 };
 
+export type LookupRequest = {
+  lookupValue: string;
+  lookupType: 'DOT' | 'MC';
+};
+
+export type FmcsaInspectionStats = {
+  inspections?: string;
+  outOfService?: string;
+  outOfServicePercent?: string;
+  nationalAverage?: string;
+};
+
+export type FmcsaInspections = {
+  vehicle?: FmcsaInspectionStats;
+  driver?: FmcsaInspectionStats;
+  hazmat?: FmcsaInspectionStats;
+  iep?: FmcsaInspectionStats;
+};
+
+export type FmcsaCrashes = {
+  tow?: number;
+  fatal?: number;
+  injury?: number;
+  total?: number;
+};
+
+export type LookupResponse = {
+  // Session
+  validationId: string;
+  lookupType: string;
+  lookupValue: string;
+  // Identity
+  dotNumber: string;
+  mcNumber: string;
+  legalName: string;
+  dbaName?: string;
+  entityType?: string;
+  // Status
+  operatingStatus?: string;
+  allowedToOperate?: string;
+  outOfServiceDate?: string;
+  latestUpdate?: string;
+  // Physical address
+  phyStreet?: string;
+  phyCity?: string;
+  phyState?: string;
+  phyZip?: string;
+  phyCountry?: string;
+  // Mailing address
+  mailingStreet?: string;
+  mailingCity?: string;
+  mailingState?: string;
+  mailingZip?: string;
+  mailingCountry?: string;
+  // Contact / Fleet
+  phone?: string;
+  totalDrivers?: number;
+  totalPowerUnits?: number;
+  // Operation
+  operationClassification?: string[];
+  carrierOperation?: string[];
+  cargoCarried?: string[];
+  // MCS-150
+  mcs150Date?: string;
+  mcs150Mileage?: number;
+  mcs150Year?: number;
+  // Safety
+  safetyRating?: string;
+  safetyRatingDate?: string;
+  safetyReviewDate?: string;
+  safetyType?: string;
+  // Inspections & Crashes
+  usInspections?: FmcsaInspections;
+  canadaInspections?: FmcsaInspections;
+  usCrashes?: FmcsaCrashes;
+  canadaCrashes?: FmcsaCrashes;
+  // Broker-specific
+  brokerAuthorityActive?: boolean;
+};
+
+export type SaveFromValidationRequest = {
+  validationId: string;
+  email: string;
+  password: string;
+};
+
 export type CreateLoadPayload = {
   pickupCity: string;
   pickupState: string;
@@ -144,9 +230,12 @@ export type AdminUserDto = {
   adminApproved: boolean;
   adminApprovedAt?: string;
   emailVerified: boolean;
+  fmcsaVerified?: boolean;
+  verificationDate?: string;
   createdAt?: string;
   profileId?: string;
   companyName?: string;
+  dbaName?: string;
   dotNumber?: string;
   mcNumber?: string;
   phoneNumber?: string;
@@ -159,6 +248,7 @@ export type AdminUserDto = {
   liabilityInsurance?: string;
   taxIdType?: string;
   taxId?: string;
+  carrierOperation?: string;
   documents: AdminDocumentDto[];
 };
 
@@ -182,6 +272,32 @@ export const hauliusApi = createApi({
     }),
     loginUser: builder.mutation<AuthResponse, { email: string; password: string }>({
       query: (body) => ({ url: '/api/auth/login', method: 'POST', body }),
+    }),
+
+    // ── FMCSA Validation ──────────────────────────────────────────────────
+    validateCarrier: builder.mutation<LookupResponse, LookupRequest>({
+      query: (body) => ({ url: '/api/validate/carrier', method: 'POST', body }),
+    }),
+    validateBroker: builder.mutation<LookupResponse, LookupRequest>({
+      query: (body) => ({ url: '/api/validate/broker', method: 'POST', body }),
+    }),
+    saveCarrierFromValidation: builder.mutation<AuthResponse, SaveFromValidationRequest>({
+      query: (body) => ({ url: '/api/validate/carrier/save', method: 'POST', body }),
+    }),
+    saveBrokerFromValidation: builder.mutation<AuthResponse, SaveFromValidationRequest>({
+      query: (body) => ({ url: '/api/validate/broker/save', method: 'POST', body }),
+    }),
+    verifyEmail: builder.query<void, string>({
+      query: (token) => `/api/auth/verify-email?token=${token}`,
+    }),
+    resendVerification: builder.mutation<void, { email: string }>({
+      query: (body) => ({ url: '/api/auth/resend-verification', method: 'POST', body }),
+    }),
+    forgotPassword: builder.mutation<void, { email: string }>({
+      query: (body) => ({ url: '/api/auth/forgot-password', method: 'POST', body }),
+    }),
+    resetPassword: builder.mutation<void, { token: string; newPassword: string }>({
+      query: (body) => ({ url: '/api/auth/reset-password', method: 'POST', body }),
     }),
 
     // ── Loads ─────────────────────────────────────────────────────────────
@@ -302,12 +418,38 @@ export const hauliusApi = createApi({
       }),
       invalidatesTags: ['Profile'],
     }),
+    uploadCarrierInsurance: builder.mutation<DocumentUploadResponse, FormData>({
+      query: (body) => ({
+        url: '/api/carriers/documents/insurance',
+        method: 'POST',
+        body,
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
+    uploadCarrierMcAuthority: builder.mutation<DocumentUploadResponse, FormData>({
+      query: (body) => ({
+        url: '/api/carriers/documents/mc-authority',
+        method: 'POST',
+        body,
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
   }),
 });
 
 export const {
   useRegisterMutation,
   useLoginUserMutation,
+  useValidateCarrierMutation,
+  useValidateBrokerMutation,
+  useSaveCarrierFromValidationMutation,
+  useSaveBrokerFromValidationMutation,
+  useVerifyEmailQuery,
+  useResendVerificationMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
   useGetMeQuery,
   useGetLoadsQuery,
   useGetLoadsForCarrierQuery,
@@ -324,6 +466,8 @@ export const {
   useUpdateCarrierProfileMutation,
   useUploadBrokerW9Mutation,
   useUploadCarrierW9Mutation,
+  useUploadCarrierInsuranceMutation,
+  useUploadCarrierMcAuthorityMutation,
   // Admin — user management
   useGetAdminUsersQuery,
   useGetAdminUserQuery,

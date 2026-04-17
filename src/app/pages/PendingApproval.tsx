@@ -1,11 +1,9 @@
-import { Link } from 'react-router';
 import { useAppDispatch } from '../store/hooks';
 import { logout } from '../store/slices/authSlice';
-import { Truck, Clock, LogOut, Mail } from 'lucide-react';
+import { Clock, LogOut, Mail } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { ThemeToggle } from '../components/ThemeToggle';
-import { APP_NAME } from '../constants';
+import { AuthNavbar } from '../components/AuthNavbar';
 
 export function PendingApproval() {
   const dispatch = useAppDispatch();
@@ -15,18 +13,10 @@ export function PendingApproval() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background">
+      <AuthNavbar />
+      <div className="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">
       <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="bg-amber-500 p-2 rounded-lg">
-              <Truck className="size-8 text-white" />
-            </div>
-            <span className="text-3xl font-bold">{APP_NAME}</span>
-          </Link>
-          <ThemeToggle />
-        </div>
 
         <Card>
           <CardHeader className="text-center pb-4">
@@ -74,6 +64,7 @@ export function PendingApproval() {
           </CardContent>
         </Card>
       </div>
+    </div>
     </div>
   );
 }

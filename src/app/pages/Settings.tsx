@@ -29,35 +29,7 @@ export function Settings() {
   });
 
   if (!user) return null;
-
-  const handleUpdateEmail = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsUpdating(true);
-
-    setTimeout(() => {
-      const updatedUser = { ...user!, email: emailForm.email };
-      dispatch(updateUserProfile(updatedUser));
-      setIsUpdating(false);
-      toast.success('Email updated successfully!', {
-        icon: <CheckCircle className="h-5 w-5 text-green-600" />
-      });
-    }, 1000);
-  };
-
-  const handleUpdatePhone = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsUpdating(true);
-
-    setTimeout(() => {
-      const updatedUser = { ...user!, phoneNumber: phoneForm.phone };
-      dispatch(updateUserProfile(updatedUser));
-      setIsUpdating(false);
-      toast.success('Phone number updated successfully!', {
-        icon: <CheckCircle className="h-5 w-5 text-green-600" />
-      });
-    }, 1000);
-  };
-
+  
   const handleUpdatePassword = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -106,63 +78,23 @@ export function Settings() {
             </div>
           </div>
 
-          {/* Update Email */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Email Address
-              </CardTitle>
-              <CardDescription>Update your email address for login and notifications</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUpdateEmail} className="space-y-4">
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={emailForm.email}
-                    onChange={(e) => setEmailForm({ email: e.target.value })}
-                    placeholder="your.email@example.com"
-                    required
-                  />
+          {/* Account Info */}
+          <Card className="border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
+            <CardContent className="pt-6">
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Account Information</p>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>• Company: <span className="font-medium text-foreground">{user.companyName}</span></p>
+                  <p>• Account Type: <span className="font-medium text-foreground capitalize">{user.role}</span></p>
+                  <p>• DOT Number: <span className="font-medium text-foreground">{user.dotNumber}</span></p>
+                  <p>• Member since: <span className="font-medium text-foreground">
+                    {new Date(user.createdAt).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long' 
+                    })}
+                  </span></p>
                 </div>
-                <Button type="submit" disabled={isUpdating || emailForm.email === user.email}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {isUpdating ? 'Updating...' : 'Update Email'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Update Phone */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="h-5 w-5" />
-                Phone Number
-              </CardTitle>
-              <CardDescription>Update your phone number for verification and contact</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUpdatePhone} className="space-y-4">
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={phoneForm.phone}
-                    onChange={(e) => setPhoneForm({ phone: e.target.value })}
-                    placeholder="(555) 123-4567"
-                    required
-                  />
-                </div>
-                <Button type="submit" disabled={isUpdating || phoneForm.phone === user.phoneNumber}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {isUpdating ? 'Updating...' : 'Update Phone'}
-                </Button>
-              </form>
+              </div>
             </CardContent>
           </Card>
 
@@ -217,26 +149,6 @@ export function Settings() {
                   {isUpdating ? 'Updating...' : 'Change Password'}
                 </Button>
               </form>
-            </CardContent>
-          </Card>
-
-          {/* Account Info */}
-          <Card className="border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
-            <CardContent className="pt-6">
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Account Information</p>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>• Company: <span className="font-medium text-foreground">{user.companyName}</span></p>
-                  <p>• Account Type: <span className="font-medium text-foreground capitalize">{user.role}</span></p>
-                  <p>• DOT Number: <span className="font-medium text-foreground">{user.dotNumber}</span></p>
-                  <p>• Member since: <span className="font-medium text-foreground">
-                    {new Date(user.createdAt).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long' 
-                    })}
-                  </span></p>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>
