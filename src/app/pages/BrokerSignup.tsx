@@ -12,6 +12,8 @@ import { setCredentials } from '../store/slices/authSlice';
 import {
   useUpdateBrokerProfileMutation,
   useUploadBrokerW9Mutation,
+  useUploadBrokerInsuranceMutation,
+  useUploadBrokerMcAuthorityMutation,
   useValidateBrokerMutation,
   useSaveBrokerFromValidationMutation,
   LookupResponse,
@@ -41,12 +43,16 @@ export function BrokerSignup() {
   const [saveBroker] = useSaveBrokerFromValidationMutation();
   const [updateProfile] = useUpdateBrokerProfileMutation();
   const [uploadW9] = useUploadBrokerW9Mutation();
+  const [uploadInsurance] = useUploadBrokerInsuranceMutation();
+  const [uploadMcAuthority] = useUploadBrokerMcAuthorityMutation();
   const [currentStep, setCurrentStep] = useState<SignupStep>('company-info');
   const [isLoading, setIsLoading] = useState(false);
   const [validationId, setValidationId] = useState<string | null>(null);
   const [fmcsaVerified, setFmcsaVerified] = useState(false);
   const [fmcsaData, setFmcsaData] = useState<LookupResponse | null>(null);
   const [w9File, setW9File] = useState<File | null>(null);
+  const [insuranceFile, setInsuranceFile] = useState<File | null>(null);
+  const [mcAuthorityFile, setMcAuthorityFile] = useState<File | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const [formData, setFormData] = useState({
@@ -77,7 +83,7 @@ export function BrokerSignup() {
   const handleCompanyInfoSubmit = () => {
     const errs = buildErrors([
       [!formData.mcNumber.trim(), 'mcNumber', 'MC number is required.'],
-      [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. MC-123456 or 123456).'],
+      [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
       [!!formData.dotNumber.trim() && !isValidDotNumber(formData.dotNumber), 'dotNumber', 'DOT number must be 1–8 digits with no letters.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
@@ -141,6 +147,30 @@ export function BrokerSignup() {
     }
   };
 
+  const handleInsuranceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
+      setInsuranceFile(file);
+      toast.success('Insurance certificate uploaded successfully');
+    }
+  };
+
+  const handleMcAuthorityUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
+      setMcAuthorityFile(file);
+      toast.success('MC Authority document uploaded successfully');
+    }
+  };
+
   const handleW9Submit = () => {
     const taxId = formData.taxId.trim();
     const errs = buildErrors([
@@ -148,6 +178,8 @@ export function BrokerSignup() {
       [!!taxId && formData.taxIdType === 'EIN' && !isValidEIN(taxId), 'taxId', 'EIN must be in the format XX-XXXXXXX (9 digits).'],
       [!!taxId && formData.taxIdType === 'SSN' && !isValidSSN(taxId), 'taxId', 'SSN must be in the format XXX-XX-XXXX (9 digits).'],
       [!w9File, 'w9File', 'W9 document is required.'],
+      [!insuranceFile, 'insuranceFile', 'Insurance certificate is required.'],
+      [!mcAuthorityFile, 'mcAuthorityFile', 'MC Authority document is required.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
@@ -246,6 +278,28 @@ export function BrokerSignup() {
         }
       }
 
+      // 4. Upload Insurance Certificate if provided
+      if (insuranceFile) {
+        try {
+          const fd = new FormData();
+          fd.append('file', insuranceFile);
+          await uploadInsurance(fd).unwrap();
+        } catch {
+          toast.warning('Insurance certificate upload will be available once your email is verified.');
+        }
+      }
+
+      // 5. Upload MC Authority if provided
+      if (mcAuthorityFile) {
+        try {
+          const fd = new FormData();
+          fd.append('file', mcAuthorityFile);
+          await uploadMcAuthority(fd).unwrap();
+        } catch {
+          toast.warning('MC Authority upload will be available once your email is verified.');
+        }
+      }
+
       toast.success('Account created! Please check your email to verify your address.');
       navigate('/check-email', { state: { email: formData.email.trim() } });
     } catch (error: any) {
@@ -260,7 +314,7 @@ export function BrokerSignup() {
     { id: 'company-info',       label: 'MC / DOT'      },
     { id: 'fmcsa-verification', label: 'Verify'        },
     { id: 'insurance-info',     label: 'Insurance'     },
-    { id: 'w9-upload',          label: 'W9 Upload'     },
+    { id: 'w9-upload',          label: 'Documents'     },
     { id: 'create-account',     label: 'Create Account'},
   ] as const;
 
@@ -274,17 +328,19 @@ export function BrokerSignup() {
         <StepIndicatorWrapper>
           <StepList>
             {STEPS.map((step, index) => (
-              <StepItem key={step.id}>
-                <StepCircleWrapper>
-                  <StepCircle active={index <= currentIndex}>
-                    {index < currentIndex ? <CheckCircle className="size-5" /> : index + 1}
-                  </StepCircle>
-                  <StepLabel active={index <= currentIndex}>{step.label}</StepLabel>
-                </StepCircleWrapper>
+              <>
+                <StepItem key={step.id}>
+                  <StepCircleWrapper>
+                    <StepCircle active={index <= currentIndex}>
+                      {index < currentIndex ? <CheckCircle className="size-5" /> : index + 1}
+                    </StepCircle>
+                    <StepLabel active={index <= currentIndex}>{step.label}</StepLabel>
+                  </StepCircleWrapper>
+                </StepItem>
                 {index < STEPS.length - 1 && (
-                  <StepConnector completed={index < currentIndex} />
+                  <StepConnector key={`connector-${index}`} completed={index < currentIndex} />
                 )}
-              </StepItem>
+              </>
             ))}
           </StepList>
         </StepIndicatorWrapper>
@@ -306,13 +362,13 @@ export function BrokerSignup() {
                     id="mcNumber"
                     value={formData.mcNumber}
                     onChange={(e) => handleInputChange('mcNumber', e.target.value)}
-                    placeholder="MC-123456"
+                    placeholder="123456"
                     maxLength={10}
                     aria-invalid={!!fieldErrors.mcNumber}
                   />
                   {fieldErrors.mcNumber
                     ? <p className="text-xs text-destructive mt-1">{fieldErrors.mcNumber}</p>
-                    : <HintText>Your MC authority number (e.g. MC-123456)</HintText>
+                    : <HintText>Your MC authority number (e.g. 123456)</HintText>
                   }
                 </div>
                 <div>
@@ -641,10 +697,10 @@ export function BrokerSignup() {
         {currentStep === 'w9-upload' && (
           <Card>
             <CardHeader>
-              <CardTitle>W9 Information</CardTitle>
-              <CardDescription>Upload your W9 form and provide tax information</CardDescription>
+              <CardTitle>Required Documents</CardTitle>
+              <CardDescription>Upload your W9, Insurance Certificate, and MC Authority documents</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div>
                 <Label htmlFor="taxIdType">Tax ID Type *</Label>
                 <Select value={formData.taxIdType} onValueChange={(value: 'SSN' | 'EIN') => { handleInputChange('taxIdType', value); handleInputChange('taxId', ''); }}>
@@ -674,13 +730,15 @@ export function BrokerSignup() {
                   : <HintText>{formData.taxIdType === 'EIN' ? 'Format: XX-XXXXXXX' : 'Format: XXX-XX-XXXX'}</HintText>
                 }
               </div>
+
+              {/* W9 Upload */}
               <div>
-                <Label>Upload W9 Document *</Label>
+                <Label>W9 Document *</Label>
                 <DropZone className={fieldErrors.w9File ? 'border-destructive' : ''}>
                   <Upload className="size-10 mx-auto mb-4 text-muted-foreground" />
                   <input id="w9File" type="file" accept=".pdf,.doc,.docx" onChange={handleW9Upload} className="hidden" />
                   <DropZoneUploadLabel htmlFor="w9File">
-                    <span className="upload-link">Click to upload</span>
+                    <span className="upload-link">Click to upload W9</span>
                     <span className="upload-or"> or drag and drop</span>
                   </DropZoneUploadLabel>
                   <DropZoneHint>PDF, DOC, or DOCX (max 5MB)</DropZoneHint>
@@ -690,6 +748,61 @@ export function BrokerSignup() {
                 </DropZone>
                 {fieldErrors.w9File && <p className="text-xs text-destructive mt-1">{fieldErrors.w9File}</p>}
               </div>
+
+              {/* Insurance Certificate Upload */}
+              <div>
+                <Label>Insurance Certificate *</Label>
+                <DropZone className={fieldErrors.insuranceFile ? 'border-destructive' : ''}>
+                  <Upload className="size-10 mx-auto mb-4 text-muted-foreground" />
+                  <input
+                    id="insuranceFile"
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleInsuranceUpload}
+                    className="hidden"
+                  />
+                  <DropZoneUploadLabel htmlFor="insuranceFile">
+                    <span className="upload-link">Click to upload Insurance Certificate</span>
+                    <span className="upload-or"> or drag and drop</span>
+                  </DropZoneUploadLabel>
+                  <DropZoneHint>PDF, DOC, or DOCX (max 5MB)</DropZoneHint>
+                  {insuranceFile && (
+                    <DropZoneSuccess>
+                      <CheckCircle className="size-4" />
+                      <span>{insuranceFile.name}</span>
+                    </DropZoneSuccess>
+                  )}
+                </DropZone>
+                {fieldErrors.insuranceFile && <p className="text-xs text-destructive mt-1">{fieldErrors.insuranceFile}</p>}
+              </div>
+
+              {/* MC Authority Upload */}
+              <div>
+                <Label>MC Authority *</Label>
+                <DropZone className={fieldErrors.mcAuthorityFile ? 'border-destructive' : ''}>
+                  <Upload className="size-10 mx-auto mb-4 text-muted-foreground" />
+                  <input
+                    id="mcAuthorityFile"
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleMcAuthorityUpload}
+                    className="hidden"
+                  />
+                  <DropZoneUploadLabel htmlFor="mcAuthorityFile">
+                    <span className="upload-link">Click to upload MC Authority</span>
+                    <span className="upload-or"> or drag and drop</span>
+                  </DropZoneUploadLabel>
+                  <DropZoneHint>PDF, DOC, or DOCX (max 5MB)</DropZoneHint>
+                  {mcAuthorityFile && (
+                    <DropZoneSuccess>
+                      <CheckCircle className="size-4" />
+                      <span>{mcAuthorityFile.name}</span>
+                    </DropZoneSuccess>
+                  )}
+                </DropZone>
+                {fieldErrors.mcAuthorityFile && <p className="text-xs text-destructive mt-1">{fieldErrors.mcAuthorityFile}</p>}
+              </div>
+
               <Button
                 onClick={handleW9Submit}
                 className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
@@ -722,7 +835,7 @@ export function BrokerSignup() {
                 {formData.mcNumber && <p className="text-sm text-muted-foreground"><strong>MC:</strong> {formData.mcNumber}</p>}
                 {formData.dotNumber && <p className="text-sm text-muted-foreground"><strong>DOT:</strong> {formData.dotNumber}</p>}
                 <p className="text-sm text-muted-foreground mt-1">
-                  ✓ Broker Verified &nbsp;·&nbsp; ✓ Insurance entered &nbsp;·&nbsp; ✓ W9 uploaded
+                  ✓ Broker Verified &nbsp;·&nbsp; ✓ Insurance entered &nbsp;·&nbsp; ✓ Documents uploaded
                 </p>
               </InfoBox>
               <div>

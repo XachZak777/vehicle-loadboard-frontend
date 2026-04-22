@@ -64,7 +64,7 @@ export const LogoText = styled.div`
 export const ContentWrapper = styled.div`
   max-width: 56rem;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
 
   @media (min-width: 640px) {
     padding-left: 1.5rem;
@@ -79,8 +79,8 @@ export const ContentWrapper = styled.div`
 // ─── Step Indicator ───────────────────────────────────────────────────────────
 
 export const StepIndicatorWrapper = styled.div`
-  margin-bottom: 2.5rem;
-  padding: 1.5rem 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 0.75rem;
   background-color: var(--card);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
@@ -89,21 +89,21 @@ export const StepIndicatorWrapper = styled.div`
 export const StepList = styled.div`
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  padding: 0 1rem;
+  justify-content: center;
+  padding: 0 0.25rem;
 `;
 
 export const StepItem = styled.div`
   display: flex;
+  flex-direction: column;
   align-items: center;
-  flex: 1;
+  flex-shrink: 0;
 `;
 
 export const StepCircleWrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
   gap: 0.375rem;
 `;
 
@@ -131,10 +131,11 @@ export const StepLabel = styled.div<{ active: boolean }>`
 `;
 
 export const StepConnector = styled.div<{ completed: boolean }>`
-  height: 0.25rem;
+  height: 0.125rem;
   flex: 1;
-  margin: 0 0.25rem;
-  margin-bottom: 1.25rem;
+  min-width: 1.5rem;
+  margin: 0 0.375rem;
+  margin-top: 1.25rem;
   background-color: ${({ completed }) => (completed ? '#f59e0b' : 'var(--muted)')};
   transition: background-color 0.2s;
 `;

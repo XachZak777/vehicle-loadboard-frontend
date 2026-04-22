@@ -82,12 +82,12 @@ export function CarrierSignup() {
     if (fieldErrors[field]) setFieldErrors(prev => { const e = { ...prev }; delete e[field]; return e; });
   };
 
-  // Step 1 – enter DOT (and optionally MC)
+  // Step 1 – enter MC (and optionally DOT)
   const handleCompanyInfoSubmit = () => {
     const errs = buildErrors([
-      [!formData.dotNumber.trim(), 'dotNumber', 'DOT number is required.'],
+      [!formData.mcNumber.trim(), 'mcNumber', 'MC number is required.'],
+      [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
       [!!formData.dotNumber.trim() && !isValidDotNumber(formData.dotNumber), 'dotNumber', 'DOT number must be 1–8 digits with no letters.'],
-      [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. MC-123456 or 123456).'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
@@ -98,9 +98,9 @@ export function CarrierSignup() {
   const handleCarrierVerification = async () => {
     setIsLoading(true);
     try {
-      // Determine lookup type: if user entered a DOT number, use DOT; if only MC, use MC
-      const lookupType = formData.dotNumber.trim() ? 'DOT' : 'MC';
-      const lookupValue = lookupType === 'DOT' ? formData.dotNumber.trim() : formData.mcNumber.trim();
+      // Determine lookup type: MC is required, use MC; fall back to DOT if provided
+      const lookupType = formData.mcNumber.trim() ? 'MC' : 'DOT';
+      const lookupValue = lookupType === 'MC' ? formData.mcNumber.trim() : formData.dotNumber.trim();
       const result = await validateCarrier({ lookupValue, lookupType }).unwrap();
 
       setValidationId(result.validationId);
@@ -320,7 +320,7 @@ export function CarrierSignup() {
   };
 
   const STEPS = [
-    { id: 'company-info',       label: 'DOT / MC'      },
+    { id: 'company-info',       label: 'MC / DOT'      },
     { id: 'fmcsa-verification', label: 'Verify'        },
     { id: 'insurance-info',     label: 'Insurance'     },
     { id: 'w9-upload',          label: 'Documents'     },
@@ -337,34 +337,51 @@ export function CarrierSignup() {
         <StepIndicatorWrapper>
           <StepList>
             {STEPS.map((step, index) => (
-              <StepItem key={step.id}>
-                <StepCircleWrapper>
-                  <StepCircle active={index <= currentIndex}>
-                    {index < currentIndex ? <CheckCircle className="size-5" /> : index + 1}
-                  </StepCircle>
-                  <StepLabel active={index <= currentIndex}>{step.label}</StepLabel>
-                </StepCircleWrapper>
+              <>
+                <StepItem key={step.id}>
+                  <StepCircleWrapper>
+                    <StepCircle active={index <= currentIndex}>
+                      {index < currentIndex ? <CheckCircle className="size-5" /> : index + 1}
+                    </StepCircle>
+                    <StepLabel active={index <= currentIndex}>{step.label}</StepLabel>
+                  </StepCircleWrapper>
+                </StepItem>
                 {index < STEPS.length - 1 && (
-                  <StepConnector completed={index < currentIndex} />
+                  <StepConnector key={`connector-${index}`} completed={index < currentIndex} />
                 )}
-              </StepItem>
+              </>
             ))}
           </StepList>
         </StepIndicatorWrapper>
 
-        {/* Step 1 – DOT / MC Entry */}
+        {/* Step 1 – MC / DOT Entry */}
         {currentStep === 'company-info' && (
           <Card>
             <CardHeader>
-              <CardTitle>Enter Your DOT / MC Number</CardTitle>
+              <CardTitle>Enter Your MC / DOT Number</CardTitle>
               <CardDescription>
-                Provide your DOT number (required) and MC number (optional) to look up your carrier information.
+                Provide your MC number (required) and DOT number (optional) to look up your carrier information.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormGrid>
                 <div>
-                  <Label htmlFor="dotNumber">DOT Number *</Label>
+                  <Label htmlFor="mcNumber">MC Number *</Label>
+                  <Input
+                    id="mcNumber"
+                    value={formData.mcNumber}
+                    onChange={(e) => handleInputChange('mcNumber', e.target.value)}
+                    placeholder="123456"
+                    maxLength={10}
+                    aria-invalid={!!fieldErrors.mcNumber}
+                  />
+                  {fieldErrors.mcNumber
+                    ? <p className="text-xs text-destructive mt-1">{fieldErrors.mcNumber}</p>
+                    : <HintText>Your MC authority number (e.g. 123456)</HintText>
+                  }
+                </div>
+                <div>
+                  <Label htmlFor="dotNumber">DOT Number (Optional)</Label>
                   <Input
                     id="dotNumber"
                     value={formData.dotNumber}
@@ -374,22 +391,7 @@ export function CarrierSignup() {
                     inputMode="numeric"
                     aria-invalid={!!fieldErrors.dotNumber}
                   />
-                  {fieldErrors.dotNumber
-                    ? <p className="text-xs text-destructive mt-1">{fieldErrors.dotNumber}</p>
-                    : <HintText>Your USDOT number (e.g. 123456)</HintText>
-                  }
-                </div>
-                <div>
-                  <Label htmlFor="mcNumber">MC Number (Optional)</Label>
-                  <Input
-                    id="mcNumber"
-                    value={formData.mcNumber}
-                    onChange={(e) => handleInputChange('mcNumber', e.target.value)}
-                    placeholder="MC-123456"
-                    maxLength={10}
-                    aria-invalid={!!fieldErrors.mcNumber}
-                  />
-                  {fieldErrors.mcNumber && <p className="text-xs text-destructive mt-1">{fieldErrors.mcNumber}</p>}
+                  {fieldErrors.dotNumber && <p className="text-xs text-destructive mt-1">{fieldErrors.dotNumber}</p>}
                 </div>
               </FormGrid>
               <Button

@@ -472,6 +472,24 @@ export const hauliusApi = createApi({
       }),
       invalidatesTags: ['Profile'],
     }),
+    uploadBrokerInsurance: builder.mutation<DocumentUploadResponse, FormData>({
+      query: (body) => ({
+        url: '/api/brokers/documents/insurance',
+        method: 'POST',
+        body,
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
+    uploadBrokerMcAuthority: builder.mutation<DocumentUploadResponse, FormData>({
+      query: (body) => ({
+        url: '/api/brokers/documents/mc-authority',
+        method: 'POST',
+        body,
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
     uploadCarrierW9: builder.mutation<DocumentUploadResponse, FormData>({
       query: (body) => ({
         url: '/api/carriers/documents/w9',
@@ -531,6 +549,8 @@ export const {
   useUpdateBrokerProfileMutation,
   useUpdateCarrierProfileMutation,
   useUploadBrokerW9Mutation,
+  useUploadBrokerInsuranceMutation,
+  useUploadBrokerMcAuthorityMutation,
   useUploadCarrierW9Mutation,
   useUploadCarrierInsuranceMutation,
   useUploadCarrierMcAuthorityMutation,

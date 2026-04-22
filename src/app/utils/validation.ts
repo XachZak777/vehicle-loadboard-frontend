@@ -20,10 +20,10 @@ export const isValidDotNumber = (v: string) =>
 
 /**
  * MC (Motor Carrier) number.
- * Accepts bare digits (1–7) or "MC-XXXXXX" / "MC XXXXXX" prefixed forms.
+ * Accepts bare digits only (1–7 digits).
  */
 export const isValidMcNumber = (v: string) =>
-  /^(MC[-\s]?)?\d{1,7}$/i.test(v.trim());
+  /^\d{1,7}$/.test(v.trim());
 
 /**
  * EIN: XX-XXXXXXX (9 digits total, formatted or bare)
