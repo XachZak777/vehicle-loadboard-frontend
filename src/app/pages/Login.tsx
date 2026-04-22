@@ -27,10 +27,16 @@ export function Login() {
   const [showResend, setShowResend] = useState(false);
 
   // If an authenticated user navigates back to the login page, clear their session
+  // and replace the history entry so the forward button no longer leads to the dashboard.
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(logout());
       dispatch(hauliusApi.util.resetApiState());
+      // Replace the current history entry to cut off forward navigation to protected pages
+      navigate('/login', { replace: true });
+      toast.info('Session cleared', {
+        description: 'You were signed out. Please log in again to continue.',
+      });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
