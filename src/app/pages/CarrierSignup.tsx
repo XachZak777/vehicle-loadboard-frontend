@@ -27,6 +27,12 @@ import {
   SuccessBoxText, DropZone, DropZoneUploadLabel, DropZoneHint,
   DropZoneSuccess,
 } from '../styles/signup.styles';
+import {
+  isValidDotNumber, isValidMcNumber, isValidPhone, isValidEmail,
+  isValidCompanyName, isValidInsuranceAmount, isValidEIN, isValidSSN,
+  isValidZip, isValidCity, isValidStreetAddress, isStrongPassword,
+  passwordRequirementsText, buildErrors, type FieldErrors,
+} from '../utils/validation';
 
 type SignupStep = 'company-info' | 'fmcsa-verification' | 'insurance-info' | 'w9-upload' | 'create-account';
 
@@ -47,6 +53,7 @@ export function CarrierSignup() {
   const [w9File, setW9File] = useState<File | null>(null);
   const [insuranceFile, setInsuranceFile] = useState<File | null>(null);
   const [mcAuthorityFile, setMcAuthorityFile] = useState<File | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const [formData, setFormData] = useState({
     email: '',
@@ -71,14 +78,19 @@ export function CarrierSignup() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear per-field error as user types
+    if (fieldErrors[field]) setFieldErrors(prev => { const e = { ...prev }; delete e[field]; return e; });
   };
 
   // Step 1 – enter DOT (and optionally MC)
   const handleCompanyInfoSubmit = () => {
-    if (!formData.dotNumber.trim()) {
-      toast.error('Please enter your DOT number');
-      return;
-    }
+    const errs = buildErrors([
+      [!formData.dotNumber.trim(), 'dotNumber', 'DOT number is required.'],
+      [!!formData.dotNumber.trim() && !isValidDotNumber(formData.dotNumber), 'dotNumber', 'DOT number must be 1–8 digits with no letters.'],
+      [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. MC-123456 or 123456).'],
+    ]);
+    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
+    setFieldErrors({});
     setCurrentStep('fmcsa-verification');
   };
 
@@ -118,10 +130,16 @@ export function CarrierSignup() {
   };
 
   const handleInsuranceSubmit = () => {
-    if (!formData.insuranceCompany || !formData.cargoInsurance || !formData.liabilityInsurance) {
-      toast.error('Please fill in all insurance information');
-      return;
-    }
+    const errs = buildErrors([
+      [!formData.insuranceCompany.trim(), 'insuranceCompany', 'Insurance company name is required.'],
+      [!!formData.insuranceCompany.trim() && !isValidCompanyName(formData.insuranceCompany), 'insuranceCompany', 'Insurance company name must be 2–100 characters.'],
+      [!formData.cargoInsurance.trim(), 'cargoInsurance', 'Cargo insurance amount is required.'],
+      [!!formData.cargoInsurance.trim() && !isValidInsuranceAmount(formData.cargoInsurance), 'cargoInsurance', 'Enter a valid amount between $1 and $999,999,999.'],
+      [!formData.liabilityInsurance.trim(), 'liabilityInsurance', 'Liability insurance amount is required.'],
+      [!!formData.liabilityInsurance.trim() && !isValidInsuranceAmount(formData.liabilityInsurance), 'liabilityInsurance', 'Enter a valid amount between $1 and $999,999,999.'],
+    ]);
+    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
+    setFieldErrors({});
     setCurrentStep('w9-upload');
   };
 
@@ -162,40 +180,32 @@ export function CarrierSignup() {
   };
 
   const handleDocumentsSubmit = () => {
-    if (!w9File || !formData.taxId) {
-      toast.error('Please upload W9 document and enter Tax ID');
-      return;
-    }
-    if (!insuranceFile) {
-      toast.error('Please upload your Insurance Certificate');
-      return;
-    }
-    if (!mcAuthorityFile) {
-      toast.error('Please upload your MC Authority document');
-      return;
-    }
+    const taxId = formData.taxId.trim();
+    const errs = buildErrors([
+      [!formData.taxId.trim(), 'taxId', `${formData.taxIdType} is required.`],
+      [!!taxId && formData.taxIdType === 'EIN' && !isValidEIN(taxId), 'taxId', 'EIN must be in the format XX-XXXXXXX (9 digits).'],
+      [!!taxId && formData.taxIdType === 'SSN' && !isValidSSN(taxId), 'taxId', 'SSN must be in the format XXX-XX-XXXX (9 digits).'],
+      [!w9File, 'w9File', 'W9 document is required.'],
+      [!insuranceFile, 'insuranceFile', 'Insurance certificate is required.'],
+      [!mcAuthorityFile, 'mcAuthorityFile', 'MC Authority document is required.'],
+    ]);
+    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
+    setFieldErrors({});
     setCurrentStep('create-account');
   };
 
   // Step 5 – create account (register API call happens here, then email verification)
   const handleCreateAccount = async () => {
-    if (!formData.email || !formData.password) {
-      toast.error('Please enter email and password');
-      return;
-    }
-    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
-    if (!isValidEmail) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
+    const errs = buildErrors([
+      [!formData.email.trim(), 'email', 'Email address is required.'],
+      [!!formData.email.trim() && !isValidEmail(formData.email), 'email', 'Please enter a valid email address.'],
+      [!formData.password, 'password', 'Password is required.'],
+      [!!formData.password && !isStrongPassword(formData.password), 'password', passwordRequirementsText],
+      [!formData.confirmPassword, 'confirmPassword', 'Please confirm your password.'],
+      [!!formData.confirmPassword && formData.password !== formData.confirmPassword, 'confirmPassword', 'Passwords do not match.'],
+    ]);
+    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
+    setFieldErrors({});
 
     setIsLoading(true);
     try {
@@ -360,8 +370,14 @@ export function CarrierSignup() {
                     value={formData.dotNumber}
                     onChange={(e) => handleInputChange('dotNumber', e.target.value)}
                     placeholder="123456"
+                    maxLength={8}
+                    inputMode="numeric"
+                    aria-invalid={!!fieldErrors.dotNumber}
                   />
-                <HintText>Your USDOT number (e.g. 123456)</HintText>
+                  {fieldErrors.dotNumber
+                    ? <p className="text-xs text-destructive mt-1">{fieldErrors.dotNumber}</p>
+                    : <HintText>Your USDOT number (e.g. 123456)</HintText>
+                  }
                 </div>
                 <div>
                   <Label htmlFor="mcNumber">MC Number (Optional)</Label>
@@ -370,7 +386,10 @@ export function CarrierSignup() {
                     value={formData.mcNumber}
                     onChange={(e) => handleInputChange('mcNumber', e.target.value)}
                     placeholder="MC-123456"
+                    maxLength={10}
+                    aria-invalid={!!fieldErrors.mcNumber}
                   />
+                  {fieldErrors.mcNumber && <p className="text-xs text-destructive mt-1">{fieldErrors.mcNumber}</p>}
                 </div>
               </FormGrid>
               <Button
@@ -640,6 +659,9 @@ export function CarrierSignup() {
                   >
                     This is correct – Continue to Insurance
                   </Button>
+                  <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => { setFmcsaVerified(false); setCurrentStep('company-info'); }}>
+                    ← Back to DOT / MC
+                  </Button>
                 </>
               )}
             </CardContent>
@@ -661,7 +683,10 @@ export function CarrierSignup() {
                   value={formData.insuranceCompany}
                   onChange={(e) => handleInputChange('insuranceCompany', e.target.value)}
                   placeholder="ABC Insurance Co."
+                  maxLength={100}
+                  aria-invalid={!!fieldErrors.insuranceCompany}
                 />
+                {fieldErrors.insuranceCompany && <p className="text-xs text-destructive mt-1">{fieldErrors.insuranceCompany}</p>}
               </div>
               <FormGrid>
                 <div>
@@ -672,8 +697,15 @@ export function CarrierSignup() {
                     value={formData.cargoInsurance}
                     onChange={(e) => handleInputChange('cargoInsurance', e.target.value)}
                     placeholder="100000"
+                    min="1"
+                    max="999999999"
+                    step="1"
+                    aria-invalid={!!fieldErrors.cargoInsurance}
                   />
-                  <HintText>Amount in USD</HintText>
+                  {fieldErrors.cargoInsurance
+                    ? <p className="text-xs text-destructive mt-1">{fieldErrors.cargoInsurance}</p>
+                    : <HintText>Amount in USD</HintText>
+                  }
                 </div>
                 <div>
                   <Label htmlFor="liabilityInsurance">Liability Insurance Coverage *</Label>
@@ -683,8 +715,15 @@ export function CarrierSignup() {
                     value={formData.liabilityInsurance}
                     onChange={(e) => handleInputChange('liabilityInsurance', e.target.value)}
                     placeholder="1000000"
+                    min="1"
+                    max="999999999"
+                    step="1"
+                    aria-invalid={!!fieldErrors.liabilityInsurance}
                   />
-                  <HintText>Amount in USD</HintText>
+                  {fieldErrors.liabilityInsurance
+                    ? <p className="text-xs text-destructive mt-1">{fieldErrors.liabilityInsurance}</p>
+                    : <HintText>Amount in USD</HintText>
+                  }
                 </div>
               </FormGrid>
               <Button
@@ -692,6 +731,9 @@ export function CarrierSignup() {
                 className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
               >
                 Continue to W9 Upload
+              </Button>
+              <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => setCurrentStep('fmcsa-verification')}>
+                ← Back
               </Button>
             </CardContent>
           </Card>
@@ -707,7 +749,7 @@ export function CarrierSignup() {
             <CardContent className="space-y-6">
               <div>
                 <Label htmlFor="taxIdType">Tax ID Type *</Label>
-                <Select value={formData.taxIdType} onValueChange={(value: 'SSN' | 'EIN') => handleInputChange('taxIdType', value)}>
+                <Select value={formData.taxIdType} onValueChange={(value: 'SSN' | 'EIN') => { handleInputChange('taxIdType', value); handleInputChange('taxId', ''); }}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -722,16 +764,23 @@ export function CarrierSignup() {
                 <Input
                   id="taxId"
                   type="password"
+                  autoComplete="off"
                   value={formData.taxId}
                   onChange={(e) => handleInputChange('taxId', e.target.value)}
                   placeholder={formData.taxIdType === 'EIN' ? '12-3456789' : '123-45-6789'}
+                  maxLength={11}
+                  aria-invalid={!!fieldErrors.taxId}
                 />
+                {fieldErrors.taxId
+                  ? <p className="text-xs text-destructive mt-1">{fieldErrors.taxId}</p>
+                  : <HintText>{formData.taxIdType === 'EIN' ? 'Format: XX-XXXXXXX' : 'Format: XXX-XX-XXXX'}</HintText>
+                }
               </div>
 
               {/* W9 Upload */}
               <div>
                 <Label>W9 Document *</Label>
-                <DropZone>
+                <DropZone className={fieldErrors.w9File ? 'border-destructive' : ''}>
                   <Upload className="size-10 mx-auto mb-4 text-muted-foreground" />
                   <input
                     id="w9File"
@@ -752,12 +801,13 @@ export function CarrierSignup() {
                     </DropZoneSuccess>
                   )}
                 </DropZone>
+                {fieldErrors.w9File && <p className="text-xs text-destructive mt-1">{fieldErrors.w9File}</p>}
               </div>
 
               {/* Insurance Certificate Upload */}
               <div>
                 <Label>Insurance Certificate *</Label>
-                <DropZone>
+                <DropZone className={fieldErrors.insuranceFile ? 'border-destructive' : ''}>
                   <Upload className="size-10 mx-auto mb-4 text-muted-foreground" />
                   <input
                     id="insuranceFile"
@@ -778,12 +828,13 @@ export function CarrierSignup() {
                     </DropZoneSuccess>
                   )}
                 </DropZone>
+                {fieldErrors.insuranceFile && <p className="text-xs text-destructive mt-1">{fieldErrors.insuranceFile}</p>}
               </div>
 
               {/* MC Authority Upload */}
               <div>
                 <Label>MC Authority *</Label>
-                <DropZone>
+                <DropZone className={fieldErrors.mcAuthorityFile ? 'border-destructive' : ''}>
                   <Upload className="size-10 mx-auto mb-4 text-muted-foreground" />
                   <input
                     id="mcAuthorityFile"
@@ -804,14 +855,17 @@ export function CarrierSignup() {
                     </DropZoneSuccess>
                   )}
                 </DropZone>
+                {fieldErrors.mcAuthorityFile && <p className="text-xs text-destructive mt-1">{fieldErrors.mcAuthorityFile}</p>}
               </div>
 
               <Button
                 onClick={handleDocumentsSubmit}
-                disabled={!w9File || !formData.taxId || !insuranceFile || !mcAuthorityFile}
                 className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
               >
                 Continue to Create Account
+              </Button>
+              <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => setCurrentStep('insurance-info')}>
+                ← Back
               </Button>
             </CardContent>
           </Card>
@@ -844,31 +898,45 @@ export function CarrierSignup() {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder="your@email.com"
+                  maxLength={254}
+                  aria-invalid={!!fieldErrors.email}
                 />
+                {fieldErrors.email && <p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>}
               </div>
               <div>
                 <Label htmlFor="password">Password *</Label>
                 <Input
                   id="password"
                   type="password"
+                  autoComplete="new-password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  placeholder="Create a password"
+                  placeholder="Create a strong password"
+                  maxLength={128}
+                  aria-invalid={!!fieldErrors.password}
                 />
-                <HintText>Minimum 6 characters.</HintText>
+                {fieldErrors.password
+                  ? <p className="text-xs text-destructive mt-1">{fieldErrors.password}</p>
+                  : <HintText>Min. 8 characters, one uppercase letter, and one number.</HintText>
+                }
               </div>
               <div>
                 <Label htmlFor="confirmPassword">Confirm Password *</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
+                  autoComplete="new-password"
                   value={formData.confirmPassword}
                   onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                   placeholder="Repeat your password"
+                  maxLength={128}
+                  aria-invalid={!!fieldErrors.confirmPassword}
                 />
+                {fieldErrors.confirmPassword && <p className="text-xs text-destructive mt-1">{fieldErrors.confirmPassword}</p>}
               </div>
               <Button
                 onClick={handleCreateAccount}
@@ -880,6 +948,9 @@ export function CarrierSignup() {
                 ) : (
                   'Create Account & Verify Email'
                 )}
+              </Button>
+              <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => setCurrentStep('w9-upload')} disabled={isLoading}>
+                ← Back
               </Button>
               <p className="text-xs text-muted-foreground text-center">
                 After verifying your email, your account will be reviewed by our team for final approval.

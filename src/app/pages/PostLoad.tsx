@@ -9,9 +9,13 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
-import { ArrowLeft, Truck, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Truck, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { US_STATES } from '../constants';
+import {
+  isValidVehicleYear, isValidPrice, isValidWeight, isValidZip, isValidCity,
+  buildErrors, type FieldErrors,
+} from '../utils/validation';
 
 // Must match backend PickupType / DropType enums
 const LOCATION_TYPES = ['BUSINESS', 'RESIDENCE', 'AUCTION', 'PORT', 'OTHER'] as const;
@@ -21,6 +25,7 @@ export function PostLoad() {
   const user = useAppSelector((s) => s.auth.user);
   const [createLoad] = useCreateLoadMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const [formData, setFormData] = useState({
     // Vehicle
@@ -44,31 +49,52 @@ export function PostLoad() {
     weight: '',
     price: '',
     description: '',
+    pickupDate: '',
+    deliveryDate: '',
   });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (fieldErrors[field]) setFieldErrors(prev => { const e = { ...prev }; delete e[field]; return e; });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.make || !formData.model || !formData.year) {
-      toast.error('Please fill in the vehicle make, model, and year.');
+    const currentYear = new Date().getFullYear();
+    const errs = buildErrors([
+      // Vehicle
+      [!formData.make.trim(), 'make', 'Vehicle make is required.'],
+      [!!formData.make.trim() && formData.make.trim().length > 50, 'make', 'Make must be 50 characters or fewer.'],
+      [!formData.model.trim(), 'model', 'Vehicle model is required.'],
+      [!!formData.model.trim() && formData.model.trim().length > 50, 'model', 'Model must be 50 characters or fewer.'],
+      [!formData.year.trim(), 'year', 'Vehicle year is required.'],
+      [!!formData.year.trim() && !isValidVehicleYear(formData.year), 'year', `Year must be between 1900 and ${currentYear + 2}.`],
+      [!!formData.weight.trim() && !isValidWeight(formData.weight), 'weight', 'Weight must be between 1 and 100,000 lbs.'],
+      // Pickup
+      [!!formData.pickupStreet.trim() && formData.pickupStreet.trim().length < 5, 'pickupStreet', 'Street address must be at least 5 characters.'],
+      [!formData.pickupCity.trim(), 'pickupCity', 'Pickup city is required.'],
+      [!!formData.pickupCity.trim() && !isValidCity(formData.pickupCity), 'pickupCity', 'Enter a valid city name (letters and spaces only).'],
+      [!formData.pickupState, 'pickupState', 'Pickup state is required.'],
+      [!!formData.pickupZip.trim() && !isValidZip(formData.pickupZip), 'pickupZip', 'ZIP code must be 5 digits (e.g. 60601).'],
+      // Delivery
+      [!!formData.dropStreet.trim() && formData.dropStreet.trim().length < 5, 'dropStreet', 'Street address must be at least 5 characters.'],
+      [!formData.dropCity.trim(), 'dropCity', 'Delivery city is required.'],
+      [!!formData.dropCity.trim() && !isValidCity(formData.dropCity), 'dropCity', 'Enter a valid city name (letters and spaces only).'],
+      [!formData.dropState, 'dropState', 'Delivery state is required.'],
+      [!!formData.dropZip.trim() && !isValidZip(formData.dropZip), 'dropZip', 'ZIP code must be 5 digits (e.g. 90001).'],
+      // Price
+      [!formData.price.trim(), 'price', 'Price is required.'],
+      [!!formData.price.trim() && !isValidPrice(formData.price), 'price', 'Price must be between $1 and $999,999.'],
+      // Description
+      [!!formData.description.trim() && formData.description.trim().length > 1000, 'description', 'Notes must be 1,000 characters or fewer.'],
+    ]);
+    if (Object.keys(errs).length) {
+      setFieldErrors(errs);
+      toast.error('Please fix the highlighted fields before submitting.');
       return;
     }
-    if (!formData.pickupCity || !formData.pickupState) {
-      toast.error('Please fill in the pickup city and state.');
-      return;
-    }
-    if (!formData.dropCity || !formData.dropState) {
-      toast.error('Please fill in the delivery city and state.');
-      return;
-    }
-    if (!formData.price) {
-      toast.error('Please enter a price.');
-      return;
-    }
+    setFieldErrors({});
 
     setIsSubmitting(true);
     try {
@@ -95,6 +121,8 @@ export function PostLoad() {
         price: parseFloat(formData.price),
         weight: formData.weight ? parseFloat(formData.weight) : undefined,
         description: formData.description || undefined,
+        pickupDate: formData.pickupDate || undefined,
+        deliveryDate: formData.deliveryDate || undefined,
       }).unwrap();
 
       toast.success('Load posted successfully!', {
@@ -150,8 +178,10 @@ export function PostLoad() {
                       placeholder="e.g., Toyota"
                       value={formData.make}
                       onChange={(e) => handleInputChange('make', e.target.value)}
-                      required
+                      maxLength={50}
+                      aria-invalid={!!fieldErrors.make}
                     />
+                    {fieldErrors.make && <p className="text-xs text-destructive mt-1">{fieldErrors.make}</p>}
                   </div>
                   <div>
                     <Label htmlFor="model">Model *</Label>
@@ -160,8 +190,10 @@ export function PostLoad() {
                       placeholder="e.g., Camry"
                       value={formData.model}
                       onChange={(e) => handleInputChange('model', e.target.value)}
-                      required
+                      maxLength={50}
+                      aria-invalid={!!fieldErrors.model}
                     />
+                    {fieldErrors.model && <p className="text-xs text-destructive mt-1">{fieldErrors.model}</p>}
                   </div>
                   <div>
                     <Label htmlFor="year">Year *</Label>
@@ -170,11 +202,12 @@ export function PostLoad() {
                       type="number"
                       placeholder="e.g., 2022"
                       min="1900"
-                      max="2030"
+                      max={new Date().getFullYear() + 2}
                       value={formData.year}
                       onChange={(e) => handleInputChange('year', e.target.value)}
-                      required
+                      aria-invalid={!!fieldErrors.year}
                     />
+                    {fieldErrors.year && <p className="text-xs text-destructive mt-1">{fieldErrors.year}</p>}
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -199,10 +232,14 @@ export function PostLoad() {
                       id="weight"
                       type="number"
                       placeholder="e.g., 3500"
-                      min="0"
+                      min="1"
+                      max="100000"
+                      step="1"
                       value={formData.weight}
                       onChange={(e) => handleInputChange('weight', e.target.value)}
+                      aria-invalid={!!fieldErrors.weight}
                     />
+                    {fieldErrors.weight && <p className="text-xs text-destructive mt-1">{fieldErrors.weight}</p>}
                   </div>
                 </div>
               </CardContent>
@@ -223,7 +260,10 @@ export function PostLoad() {
                       placeholder="e.g., 100 Main St"
                       value={formData.pickupStreet}
                       onChange={(e) => handleInputChange('pickupStreet', e.target.value)}
+                      maxLength={200}
+                      aria-invalid={!!fieldErrors.pickupStreet}
                     />
+                    {fieldErrors.pickupStreet && <p className="text-xs text-destructive mt-1">{fieldErrors.pickupStreet}</p>}
                   </div>
                   <div>
                     <Label htmlFor="pickupType">Location Type</Label>
@@ -250,17 +290,18 @@ export function PostLoad() {
                       placeholder="e.g., Chicago"
                       value={formData.pickupCity}
                       onChange={(e) => handleInputChange('pickupCity', e.target.value)}
-                      required
+                      maxLength={100}
+                      aria-invalid={!!fieldErrors.pickupCity}
                     />
+                    {fieldErrors.pickupCity && <p className="text-xs text-destructive mt-1">{fieldErrors.pickupCity}</p>}
                   </div>
                   <div>
                     <Label htmlFor="pickupState">State *</Label>
                     <Select
                       value={formData.pickupState}
                       onValueChange={(v) => handleInputChange('pickupState', v)}
-                      required
                     >
-                      <SelectTrigger id="pickupState">
+                      <SelectTrigger id="pickupState" aria-invalid={!!fieldErrors.pickupState}>
                         <SelectValue placeholder="Select state" />
                       </SelectTrigger>
                       <SelectContent>
@@ -269,6 +310,7 @@ export function PostLoad() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {fieldErrors.pickupState && <p className="text-xs text-destructive mt-1">{fieldErrors.pickupState}</p>}
                   </div>
                   <div>
                     <Label htmlFor="pickupZip">ZIP Code</Label>
@@ -277,7 +319,11 @@ export function PostLoad() {
                       placeholder="e.g., 60601"
                       value={formData.pickupZip}
                       onChange={(e) => handleInputChange('pickupZip', e.target.value)}
+                      maxLength={10}
+                      inputMode="numeric"
+                      aria-invalid={!!fieldErrors.pickupZip}
                     />
+                    {fieldErrors.pickupZip && <p className="text-xs text-destructive mt-1">{fieldErrors.pickupZip}</p>}
                   </div>
                 </div>
               </CardContent>
@@ -298,7 +344,10 @@ export function PostLoad() {
                       placeholder="e.g., 200 Freight Ave"
                       value={formData.dropStreet}
                       onChange={(e) => handleInputChange('dropStreet', e.target.value)}
+                      maxLength={200}
+                      aria-invalid={!!fieldErrors.dropStreet}
                     />
+                    {fieldErrors.dropStreet && <p className="text-xs text-destructive mt-1">{fieldErrors.dropStreet}</p>}
                   </div>
                   <div>
                     <Label htmlFor="dropType">Location Type</Label>
@@ -325,17 +374,18 @@ export function PostLoad() {
                       placeholder="e.g., Los Angeles"
                       value={formData.dropCity}
                       onChange={(e) => handleInputChange('dropCity', e.target.value)}
-                      required
+                      maxLength={100}
+                      aria-invalid={!!fieldErrors.dropCity}
                     />
+                    {fieldErrors.dropCity && <p className="text-xs text-destructive mt-1">{fieldErrors.dropCity}</p>}
                   </div>
                   <div>
                     <Label htmlFor="dropState">State *</Label>
                     <Select
                       value={formData.dropState}
                       onValueChange={(v) => handleInputChange('dropState', v)}
-                      required
                     >
-                      <SelectTrigger id="dropState">
+                      <SelectTrigger id="dropState" aria-invalid={!!fieldErrors.dropState}>
                         <SelectValue placeholder="Select state" />
                       </SelectTrigger>
                       <SelectContent>
@@ -344,6 +394,7 @@ export function PostLoad() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {fieldErrors.dropState && <p className="text-xs text-destructive mt-1">{fieldErrors.dropState}</p>}
                   </div>
                   <div>
                     <Label htmlFor="dropZip">ZIP Code</Label>
@@ -352,7 +403,11 @@ export function PostLoad() {
                       placeholder="e.g., 90001"
                       value={formData.dropZip}
                       onChange={(e) => handleInputChange('dropZip', e.target.value)}
+                      maxLength={10}
+                      inputMode="numeric"
+                      aria-invalid={!!fieldErrors.dropZip}
                     />
+                    {fieldErrors.dropZip && <p className="text-xs text-destructive mt-1">{fieldErrors.dropZip}</p>}
                   </div>
                 </div>
               </CardContent>
@@ -370,12 +425,34 @@ export function PostLoad() {
                     id="price"
                     type="number"
                     placeholder="e.g., 1500"
-                    min="0"
-                    step="10"
+                    min="1"
+                    max="999999"
+                    step="1"
                     value={formData.price}
                     onChange={(e) => handleInputChange('price', e.target.value)}
-                    required
+                    aria-invalid={!!fieldErrors.price}
                   />
+                  {fieldErrors.price && <p className="text-xs text-destructive mt-1">{fieldErrors.price}</p>}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="pickupDate">Pickup Date</Label>
+                    <Input
+                      id="pickupDate"
+                      type="date"
+                      value={formData.pickupDate}
+                      onChange={(e) => handleInputChange('pickupDate', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="deliveryDate">Delivery Date</Label>
+                    <Input
+                      id="deliveryDate"
+                      type="date"
+                      value={formData.deliveryDate}
+                      onChange={(e) => handleInputChange('deliveryDate', e.target.value)}
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="description">Additional Notes</Label>
@@ -383,9 +460,13 @@ export function PostLoad() {
                     id="description"
                     placeholder="Special instructions, trailer type preference, etc."
                     rows={3}
+                    maxLength={1000}
                     value={formData.description}
                     onChange={(e) => handleInputChange('description', e.target.value)}
+                    aria-invalid={!!fieldErrors.description}
                   />
+                  <p className="text-xs text-muted-foreground mt-1 text-right">{formData.description.length}/1000</p>
+                  {fieldErrors.description && <p className="text-xs text-destructive mt-1">{fieldErrors.description}</p>}
                 </div>
               </CardContent>
             </Card>

@@ -3,6 +3,7 @@ import { Welcome } from './pages/Welcome';
 import { LoadBoard } from './pages/LoadBoard';
 import { LoadDetail } from './pages/LoadDetail';
 import { PostLoad } from './pages/PostLoad';
+import { EditLoad } from './pages/EditLoad';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { CarrierSignup } from './pages/CarrierSignup';
@@ -19,6 +20,11 @@ import { VerifyEmail } from './pages/VerifyEmail';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { TermsOfService } from './pages/TermsOfService';
+import { CookiePolicy } from './pages/CookiePolicy';
+import { AboutUs } from './pages/AboutUs';
+import { Contact } from './pages/Contact';
 
 // Thin root layout – Redux Provider lives in App.tsx
 function RootLayout() {
@@ -54,6 +60,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['broker']}>
             <PostLoad />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/broker/edit-load/:id',
+        element: (
+          <ProtectedRoute allowedRoles={['broker']}>
+            <EditLoad />
           </ProtectedRoute>
         ),
       },
@@ -148,6 +162,26 @@ export const router = createBrowserRouter([
       {
         path: '/reset-password',
         Component: ResetPassword,
+      },
+      {
+        path: '/privacy',
+        Component: PrivacyPolicy,
+      },
+      {
+        path: '/terms',
+        Component: TermsOfService,
+      },
+      {
+        path: '/cookies',
+        Component: CookiePolicy,
+      },
+      {
+        path: '/about',
+        Component: AboutUs,
+      },
+      {
+        path: '/contact',
+        Component: Contact,
       },
     ],
   },

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
-import { useAppDispatch } from '../store/hooks';
-import { setCredentials } from '../store/slices/authSlice';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { setCredentials, logout } from '../store/slices/authSlice';
 import { useLoginUserMutation } from '../store/services/hauliusApi';
+import { hauliusApi } from '../store/services/hauliusApi';
 import { UserProfile } from '../types/user';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -17,12 +18,21 @@ export function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const [loginUser] = useLoginUserMutation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showResend, setShowResend] = useState(false);
+
+  // If an authenticated user navigates back to the login page, clear their session
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(logout());
+      dispatch(hauliusApi.util.resetApiState());
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const justVerified = (location.state as any)?.verified === true;
   const justResetPassword = (location.state as any)?.passwordReset === true;

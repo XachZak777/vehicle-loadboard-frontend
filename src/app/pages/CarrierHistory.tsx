@@ -1,8 +1,7 @@
-import { useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { useAppSelector } from '../store/hooks';
-import { useGetLoadsQuery, useGetLoadsForCarrierQuery, useGetBidsForLoadQuery } from '../store/services/hauliusApi';
-import type { LoadDto, BidDto } from '../store/services/hauliusApi';
+import { useGetMyCarrierBidsQuery, useGetBrokerPublicInfoQuery } from '../store/services/hauliusApi';
+import type { CarrierBidWithLoadDto } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -19,89 +18,173 @@ import {
   AlertCircle,
   Loader2,
   TrendingUp,
+  Building2,
+  Phone,
 } from 'lucide-react';
 
-type BidWithLoad = BidDto & { load?: LoadDto };
+function BrokerContactInline({ brokerId }: { brokerId: string }) {
+  const { data, isLoading } = useGetBrokerPublicInfoQuery(brokerId);
+  if (isLoading) return <span className="text-xs italic text-muted-foreground">Loading broker info…</span>;
+  if (!data) return null;
+  const name = data.companyName || data.legalName;
+  return (
+    <div className="mt-2 p-3 bg-muted rounded-md text-xs space-y-1">
+      <p className="font-semibold text-sm text-foreground">Broker Contact</p>
+      {name && (
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <Building2 className="size-3" />
+          <span>{name}</span>
+        </div>
+      )}
+      {data.mcNumber && <div className="text-muted-foreground">MC: <span className="font-mono">{data.mcNumber}</span></div>}
+      {data.phoneNumber && (
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <Phone className="size-3" />
+          <a href={`tel:${data.phoneNumber}`} className="hover:text-amber-600">{data.phoneNumber}</a>
+        </div>
+      )}
+      {data.email && (
+        <div className="text-muted-foreground">
+          <a href={`mailto:${data.email}`} className="hover:text-amber-600">{data.email}</a>
+        </div>
+      )}
+    </div>
+  );
+}
 
-// Sub-component: loads bids for a single load and collects the carrier's bids
-function LoadBidsCollector({
-  load,
-  carrierId,
-  onBids,
-}: {
-  load: LoadDto;
-  carrierId: string;
-  onBids: (bids: BidWithLoad[]) => void;
-}) {
-  const { data: bids = [] } = useGetBidsForLoadQuery(load.id);
-  const myBids: BidWithLoad[] = bids
-    .filter((b) => b.carrierId === carrierId)
-    .map((b) => ({ ...b, load }));
-  // Call parent once via render; this is a pure render-prop pattern
-  onBids(myBids);
-  return null;
+function fmtDate(d?: string | null) {
+  if (!d) return null;
+  return new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'PENDING':
+      return (
+        <Badge variant="secondary" className="flex items-center gap-1">
+          <Clock className="w-3 h-3 text-yellow-600" />
+          Pending
+        </Badge>
+      );
+    case 'APPROVED':
+      return (
+        <Badge className="flex items-center gap-1 bg-green-600 text-white">
+          <CheckCircle className="w-3 h-3" />
+          Approved
+        </Badge>
+      );
+    case 'REJECTED':
+      return <Badge variant="destructive">Rejected</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+}
+
+function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
+  const vehicleTitle = [bid.vehicleYear, bid.vehicleMake, bid.vehicleModel].filter(Boolean).join(' ') || `Load #${bid.loadId.slice(0, 8)}`;
+  const isApproved = bid.bidStatus === 'APPROVED';
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1 min-w-0">
+            <CardTitle className="text-lg">{vehicleTitle}</CardTitle>
+            {(bid.pickupCity || bid.dropCity) && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="w-4 h-4 flex-shrink-0" />
+                <span>{bid.pickupCity}, {bid.pickupState} → {bid.dropCity}, {bid.dropState}</span>
+              </div>
+            )}
+          </div>
+          {getStatusBadge(bid.bidStatus)}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Your Bid</p>
+            <p className="font-semibold flex items-center gap-1">
+              <DollarSign className="size-3.5 text-green-600" />
+              ${Number(bid.amount).toLocaleString()}
+            </p>
+          </div>
+          {bid.price != null && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Listed Price</p>
+              <p className="font-semibold">${Number(bid.price).toLocaleString()}</p>
+            </div>
+          )}
+          {bid.loadCreatedAt && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Posted</p>
+              <p className="flex items-center gap-1">
+                <Calendar className="size-3.5 text-muted-foreground" />
+                {fmtDate(bid.loadCreatedAt)}
+              </p>
+            </div>
+          )}
+          {bid.pickupDate && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Pickup Date</p>
+              <p className="flex items-center gap-1">
+                <Calendar className="size-3.5 text-amber-500" />
+                {fmtDate(bid.pickupDate)}
+              </p>
+            </div>
+          )}
+          {bid.deliveryDate && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Delivery Date</p>
+              <p className="flex items-center gap-1">
+                <Calendar className="size-3.5 text-amber-500" />
+                {fmtDate(bid.deliveryDate)}
+              </p>
+            </div>
+          )}
+          {bid.bidCreatedAt && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Bid Placed</p>
+              <p>{fmtDate(bid.bidCreatedAt)}</p>
+            </div>
+          )}
+        </div>
+        {isApproved ? (
+          <>
+            <div className="flex items-center gap-2 text-sm mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-md">
+              <TrendingUp className="w-4 h-4 text-green-600" />
+              <span className="text-green-700 dark:text-green-400 font-medium">Load assigned to you</span>
+            </div>
+            {bid.brokerId && <BrokerContactInline brokerId={bid.brokerId} />}
+          </>
+        ) : bid.bidStatus === 'PENDING' ? (
+          <div className="flex items-center gap-2 text-sm p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
+            <Clock className="w-4 h-4 text-yellow-600" />
+            <span className="text-yellow-700 dark:text-yellow-400">Waiting for broker approval</span>
+          </div>
+        ) : null}
+        <div className="pt-1">
+          <Link to={`/load/${bid.loadId}`}>
+            <Button variant="outline" size="sm">View Load</Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 // Main component
 export function CarrierHistory() {
   const user = useAppSelector((s) => s.auth.user);
   const navigate = useNavigate();
-  const { data: allLoads = [], isLoading: loadingAll } = useGetLoadsQuery();
-  const { data: carrierLoads = [], isLoading: loadingCarrier } = useGetLoadsForCarrierQuery(
-    user?.id ?? '',
-    { skip: !user?.id }
-  );
 
-  const fetching = loadingAll || loadingCarrier;
+  const { data: bids = [], isLoading, isError, refetch } = useGetMyCarrierBidsQuery(undefined, {
+    skip: user?.role !== 'carrier',
+  });
 
-  // Combined unique loads for this carrier
-  const combinedLoads = useMemo(() => {
-    const seen = new Set<string>();
-    const result: LoadDto[] = [];
-    for (const l of [...carrierLoads, ...allLoads]) {
-      if (seen.has(l.id)) continue;
-      if (
-        carrierLoads.some((cl) => cl.id === l.id) ||
-        l.assignedCarrierId === user?.id ||
-        l.carrierId === user?.id
-      ) {
-        seen.add(l.id);
-        result.push(l);
-      }
-    }
-    return result;
-  }, [allLoads, carrierLoads, user?.id]);
+  const pendingBids = bids.filter(b => b.bidStatus === 'PENDING');
+  const approvedBids = bids.filter(b => b.bidStatus === 'APPROVED');
 
-  // Collect bids from all relevant loads using a stateful aggregator
-  // We track this via render; each LoadBidsCollector calls back
-  const collected: BidWithLoad[] = [];
-  const collectBids = (bids: BidWithLoad[]) => { collected.push(...bids); };
-
-  const pendingBids = collected.filter(b => b.status === 'PENDING');
-  const approvedBids = collected.filter(b => b.status === 'APPROVED');
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return (
-          <Badge variant="secondary" className="flex items-center gap-1">
-            <Clock className="w-3 h-3 text-yellow-600" />
-            Pending
-          </Badge>
-        );
-      case 'APPROVED':
-        return (
-          <Badge className="flex items-center gap-1 bg-green-600 text-white">
-            <CheckCircle className="w-3 h-3" />
-            Approved
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  if (fetching) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -112,19 +195,26 @@ export function CarrierHistory() {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-16 text-center">
+          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+          <p className="text-lg font-semibold text-red-600">Failed to load bid history</p>
+          <Button className="mt-4" onClick={refetch}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Hidden bid collectors — run before JSX render */}
-      {user?.id && combinedLoads.map((load) => (
-        <LoadBidsCollector key={load.id} load={load} carrierId={user.id} onBids={collectBids} />
-      ))}
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-2">My Load History</h1>
-        {user?.email && (
-          <p className="text-muted-foreground mb-8">{user.email}</p>
-        )}
+        {user?.email && <p className="text-muted-foreground mb-8">{user.email}</p>}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -133,13 +223,12 @@ export function CarrierHistory() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Bids</p>
-                  <p className="text-3xl font-bold">{collected.length}</p>
+                  <p className="text-3xl font-bold">{bids.length}</p>
                 </div>
                 <Package className="w-8 h-8 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -151,7 +240,6 @@ export function CarrierHistory() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -163,14 +251,13 @@ export function CarrierHistory() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Value</p>
                   <p className="text-3xl font-bold">
-                    ${approvedBids.reduce((s, b) => s + (b.amount || 0), 0).toLocaleString()}
+                    ${approvedBids.reduce((s, b) => s + (Number(b.amount) || 0), 0).toLocaleString()}
                   </p>
                 </div>
                 <DollarSign className="w-8 h-8 text-green-500" />
@@ -182,18 +269,11 @@ export function CarrierHistory() {
         {/* Tabs */}
         <Tabs defaultValue="pending" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="pending">
-              Pending ({pendingBids.length})
-            </TabsTrigger>
-            <TabsTrigger value="approved">
-              Approved ({approvedBids.length})
-            </TabsTrigger>
-            <TabsTrigger value="all">
-              All Bids ({collected.length})
-            </TabsTrigger>
+            <TabsTrigger value="pending">Pending ({pendingBids.length})</TabsTrigger>
+            <TabsTrigger value="approved">Approved ({approvedBids.length})</TabsTrigger>
+            <TabsTrigger value="all">All Bids ({bids.length})</TabsTrigger>
           </TabsList>
 
-          {/* Pending */}
           <TabsContent value="pending" className="space-y-4">
             {pendingBids.length === 0 ? (
               <Card>
@@ -201,58 +281,14 @@ export function CarrierHistory() {
                   <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No pending bids</p>
                   <p className="text-sm mt-2">Browse available loads and place bids</p>
-                  <Button className="mt-4" onClick={() => navigate('/loads')}>
-                    Browse Loads
-                  </Button>
+                  <Button className="mt-4" onClick={() => navigate('/loads')}>Browse Loads</Button>
                 </CardContent>
               </Card>
             ) : (
-              pendingBids.map(bid => (
-                <Card key={bid.id}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-lg">
-                          {bid.load
-                            ? `${bid.load.vehicleYear} ${bid.load.vehicleMake} ${bid.load.vehicleModel}`
-                            : `Load #${bid.loadId.slice(0, 8)}`}
-                        </CardTitle>
-                        {bid.createdAt && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Calendar className="w-4 h-4" />
-                            Placed: {new Date(bid.createdAt).toLocaleDateString()}
-                          </div>
-                        )}
-                      </div>
-                      {getStatusBadge(bid.status)}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {bid.load && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="w-4 h-4 text-muted-foreground" />
-                        <span>
-                          {bid.load.pickupCity}, {bid.load.pickupState} → {bid.load.dropCity}, {bid.load.dropState}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-sm">
-                      <DollarSign className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-semibold">Your bid: ${bid.amount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
-                      <Clock className="w-4 h-4 text-yellow-600" />
-                      <span className="text-yellow-700 dark:text-yellow-400">
-                        Waiting for broker approval
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+              pendingBids.map(bid => <BidCard key={bid.bidId} bid={bid} />)
             )}
           </TabsContent>
 
-          {/* Approved */}
           <TabsContent value="approved" className="space-y-4">
             {approvedBids.length === 0 ? (
               <Card>
@@ -263,102 +299,22 @@ export function CarrierHistory() {
                 </CardContent>
               </Card>
             ) : (
-              approvedBids.map(bid => (
-                <Card key={bid.id}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-lg">
-                          {bid.load
-                            ? `${bid.load.vehicleYear} ${bid.load.vehicleMake} ${bid.load.vehicleModel}`
-                            : `Load #${bid.loadId.slice(0, 8)}`}
-                        </CardTitle>
-                        {bid.updatedAt && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Calendar className="w-4 h-4" />
-                            Approved: {new Date(bid.updatedAt).toLocaleDateString()}
-                          </div>
-                        )}
-                      </div>
-                      {getStatusBadge(bid.status)}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {bid.load && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="w-4 h-4 text-muted-foreground" />
-                        <span>
-                          {bid.load.pickupCity}, {bid.load.pickupState} → {bid.load.dropCity}, {bid.load.dropState}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-sm">
-                      <DollarSign className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-semibold">${bid.amount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-md">
-                      <TrendingUp className="w-4 h-4 text-green-600" />
-                      <span className="text-green-700 dark:text-green-400 font-medium">
-                        Load assigned to you
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+              approvedBids.map(bid => <BidCard key={bid.bidId} bid={bid} />)
             )}
           </TabsContent>
 
-          {/* All */}
           <TabsContent value="all" className="space-y-4">
-            {collected.length === 0 ? (
+            {bids.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-muted-foreground">
                   <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No bid history yet</p>
                   <p className="text-sm mt-2">Start bidding on loads to build your history</p>
-                  <Button className="mt-4" onClick={() => navigate('/loads')}>
-                    Browse Available Loads
-                  </Button>
+                  <Button className="mt-4" onClick={() => navigate('/loads')}>Browse Available Loads</Button>
                 </CardContent>
               </Card>
             ) : (
-              collected.map(bid => (
-                <Card key={bid.id}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-lg">
-                          {bid.load
-                            ? `${bid.load.vehicleYear} ${bid.load.vehicleMake} ${bid.load.vehicleModel}`
-                            : `Load #${bid.loadId.slice(0, 8)}`}
-                        </CardTitle>
-                        {bid.load && (
-                          <div className="text-sm text-muted-foreground">
-                            {bid.load.pickupCity}, {bid.load.pickupState} → {bid.load.dropCity}, {bid.load.dropState}
-                          </div>
-                        )}
-                      </div>
-                      {getStatusBadge(bid.status)}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-1">
-                        {bid.createdAt && (
-                          <>
-                            <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <span>{new Date(bid.createdAt).toLocaleDateString()}</span>
-                          </>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold">${bid.amount.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+              bids.map(bid => <BidCard key={bid.bidId} bid={bid} />)
             )}
           </TabsContent>
         </Tabs>

@@ -150,10 +150,13 @@ export type CreateLoadPayload = {
   description?: string;
   weight?: number;
   price?: number;
+  pickupDate?: string;
+  deliveryDate?: string;
 };
 
 export type LoadDto = {
   id: string;
+  brokerId?: string;
   pickupCity: string;
   pickupState: string;
   pickupStreet?: string;
@@ -174,6 +177,8 @@ export type LoadDto = {
   description?: string;
   weight?: number;
   price?: number;
+  pickupDate?: string;
+  deliveryDate?: string;
   createdAt?: string;
   carrierId?: string;
   assignedCarrierId?: string;
@@ -197,6 +202,29 @@ export type BidDto = {
   updatedAt?: string;
 };
 
+export type CarrierBidWithLoadDto = {
+  bidId: string;
+  loadId: string;
+  amount: number;
+  bookNow: boolean;
+  bidStatus: string;
+  bidCreatedAt?: string;
+  bidUpdatedAt?: string;
+  vehicleMake?: string;
+  vehicleModel?: string;
+  vehicleYear?: number;
+  pickupCity?: string;
+  pickupState?: string;
+  dropCity?: string;
+  dropState?: string;
+  price?: number;
+  loadCreatedAt?: string;
+  pickupDate?: string;
+  deliveryDate?: string;
+  loadStatus?: string;
+  brokerId?: string;
+};
+
 export type BrokerProfile = {
   id: string;
   companyName?: string;
@@ -211,6 +239,32 @@ export type CarrierProfile = {
   companyName?: string;
   mcNumber?: string;
   dotNumber?: string;
+  phoneNumber?: string;
+  email?: string;
+};
+
+export type CarrierPublicInfo = {
+  dotNumber?: string;
+  mcNumber?: string;
+  legalName?: string;
+  dbaName?: string;
+  companyName?: string;
+  operatingStatus?: string;
+  safetyRating?: string;
+  phyCity?: string;
+  phyState?: string;
+  totalPowerUnits?: number;
+  phoneNumber?: string;
+};
+
+export type BrokerPublicInfo = {
+  mcNumber?: string;
+  dotNumber?: string;
+  legalName?: string;
+  companyName?: string;
+  operatingStatus?: string;
+  city?: string;
+  state?: string;
   phoneNumber?: string;
   email?: string;
 };
@@ -327,6 +381,10 @@ export const hauliusApi = createApi({
       query: (loadId) => `/api/loads/${loadId}/bids`,
       providesTags: (_result, _error, loadId) => [{ type: 'Bid', id: loadId }],
     }),
+    getMyCarrierBids: builder.query<CarrierBidWithLoadDto[], void>({
+      query: () => '/api/loads/carrier/my-bids',
+      providesTags: ['Bid', 'Load'],
+    }),
     placeBid: builder.mutation<BidDto, BidPayload>({
       query: (body) => ({ url: '/api/loads/bid', method: 'POST', body }),
       invalidatesTags: (_result, _error, { loadId }) => [{ type: 'Bid', id: loadId }, 'Load'],
@@ -339,7 +397,6 @@ export const hauliusApi = createApi({
       query: (loadId) => ({ url: `/api/loads/${loadId}/cancel`, method: 'POST' }),
       invalidatesTags: ['Load', 'Bid'],
     }),
-
     // ── Admin — user management ───────────────────────────────────────────
     getAdminUsers: builder.query<AdminUserDto[], void>({
       query: () => '/api/admin/users',
@@ -390,6 +447,12 @@ export const hauliusApi = createApi({
     getMyCarrierProfile: builder.query<CarrierProfile, void>({
       query: () => '/api/carriers/me',
       providesTags: ['Profile'],
+    }),
+    getCarrierPublicInfo: builder.query<CarrierPublicInfo, string>({
+      query: (carrierId) => `/api/carriers/${carrierId}/public`,
+    }),
+    getBrokerPublicInfo: builder.query<BrokerPublicInfo, string>({
+      query: (brokerId) => `/api/brokers/${brokerId}/public`,
     }),
     updateBrokerProfile: builder.mutation<{ message: string }, ProfileUpdatePayload>({
       query: (body) => ({ url: '/api/brokers/profile', method: 'PATCH', body }),
@@ -457,11 +520,14 @@ export const {
   useUpdateLoadMutation,
   useDeleteLoadMutation,
   useGetBidsForLoadQuery,
+  useGetMyCarrierBidsQuery,
   usePlaceBidMutation,
   useApproveBidMutation,
   useCancelBookingMutation,
   useGetMyBrokerProfileQuery,
   useGetMyCarrierProfileQuery,
+  useGetCarrierPublicInfoQuery,
+  useGetBrokerPublicInfoQuery,
   useUpdateBrokerProfileMutation,
   useUpdateCarrierProfileMutation,
   useUploadBrokerW9Mutation,

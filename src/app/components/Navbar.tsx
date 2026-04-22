@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout } from '../store/slices/authSlice';
+import { hauliusApi } from '../store/services/hauliusApi';
 import { Button } from './ui/button';
 import {
   Truck,
@@ -16,6 +17,7 @@ import {
 import { ThemeToggle } from './ThemeToggle';
 import { useState } from 'react';
 import { APP_NAME } from '../constants';
+import { useInactivityLogout } from '../hooks/useInactivityLogout';
 
 export function Navbar() {
   const dispatch = useAppDispatch();
@@ -24,8 +26,12 @@ export function Navbar() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Auto-logout after 30 minutes of inactivity
+  useInactivityLogout();
+
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(hauliusApi.util.resetApiState());
     navigate('/');
   };
 

@@ -359,7 +359,7 @@ export function Welcome() {
       {/* Footer */}
       <footer className="bg-muted text-foreground py-12 border-t border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="bg-amber-500 p-1.5 rounded-lg">
@@ -371,31 +371,22 @@ export function Welcome() {
                 Professional vehicle transport marketplace connecting carriers and brokers nationwide.
               </p>
             </div>
-            <div>
-              <h4 className="font-semibold mb-3 text-sm">Company</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-amber-500 transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Press</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3 text-sm">Resources</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Safety Guidelines</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Community</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3 text-sm">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Cookie Policy</a></li>
-              </ul>
+            <div className="flex gap-8 md:gap-12 md:col-span-2">
+              <div>
+                <h4 className="font-semibold mb-3 text-sm">Company</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li><Link to="/about" className="hover:text-amber-500 transition-colors">About Us</Link></li>
+                  <li><Link to="/contact" className="hover:text-amber-500 transition-colors">Contact</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-3 text-sm">Legal</h4>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li><Link to="/privacy" className="hover:text-amber-500 transition-colors">Privacy Policy</Link></li>
+                  <li><Link to="/terms" className="hover:text-amber-500 transition-colors">Terms of Service</Link></li>
+                  <li><Link to="/cookies" className="hover:text-amber-500 transition-colors">Cookie Policy</Link></li>
+                </ul>
+              </div>
             </div>
           </div>
           <div className="border-t border-border pt-6 text-center text-sm text-muted-foreground">

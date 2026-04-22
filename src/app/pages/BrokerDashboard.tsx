@@ -7,8 +7,9 @@ import {
   useApproveBidMutation,
   useCancelBookingMutation,
   useDeleteLoadMutation,
+  useGetCarrierPublicInfoQuery,
 } from '../store/services/hauliusApi';
-import type { LoadDto, BidDto } from '../store/services/hauliusApi';
+import type { LoadDto, BidDto, CarrierPublicInfo } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -26,6 +27,9 @@ import {
   X,
   Loader2,
   AlertCircle,
+  Building2,
+  Phone,
+  ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -35,6 +39,48 @@ type LoadWithBids = LoadDto & { bids: BidDto[] };
 function LoadWithBidsLoader({ load, children }: { load: LoadDto; children: (merged: LoadWithBids) => React.ReactNode }) {
   const { data: bids = [] } = useGetBidsForLoadQuery(load.id);
   return <>{children({ ...load, bids })}</>;
+}
+
+// Sub-component: fetches and displays public carrier info in a bid row
+function CarrierInfoInline({ carrierId }: { carrierId: string }) {
+  const { data, isLoading } = useGetCarrierPublicInfoQuery(carrierId);
+
+  if (isLoading) return <span className="text-xs text-muted-foreground italic">Loading carrier info…</span>;
+  if (!data) return <span className="text-xs text-muted-foreground">Carrier info unavailable</span>;
+
+  const name = data.companyName || data.legalName || data.dbaName;
+  return (
+    <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+      {name && (
+        <div className="flex items-center gap-1">
+          <Building2 className="w-3 h-3" />
+          <span className="font-medium text-foreground">{name}</span>
+        </div>
+      )}
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+        {data.dotNumber && <span>DOT: <span className="font-mono">{data.dotNumber}</span></span>}
+        {data.mcNumber && <span>MC: <span className="font-mono">{data.mcNumber}</span></span>}
+      </div>
+      {(data.phyCity || data.phyState) && (
+        <div className="flex items-center gap-1">
+          <MapPin className="w-3 h-3" />
+          <span>{[data.phyCity, data.phyState].filter(Boolean).join(', ')}</span>
+        </div>
+      )}
+      {data.phoneNumber && (
+        <div className="flex items-center gap-1">
+          <Phone className="w-3 h-3" />
+          <span>{data.phoneNumber}</span>
+        </div>
+      )}
+      {data.operatingStatus && (
+        <div className="flex items-center gap-1">
+          <ShieldCheck className="w-3 h-3" />
+          <span>{data.operatingStatus}{data.safetyRating ? ` · Safety: ${data.safetyRating}` : ''}</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function BrokerDashboard() {
@@ -219,18 +265,16 @@ export function BrokerDashboard() {
                         <CardContent className="space-y-3">
                           <h4 className="font-semibold text-sm">Incoming Bids</h4>
                           {pendingBids.map(bid => (
-                            <div key={bid.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                              <div className="space-y-1">
+                            <div key={bid.id} className="flex items-start justify-between p-3 bg-muted rounded-lg gap-3">
+                              <div className="space-y-1 min-w-0">
                                 <div className="flex items-center gap-2 text-sm">
-                                  <DollarSign className="w-4 h-4 text-green-600" />
+                                  <DollarSign className="w-4 h-4 text-green-600 flex-shrink-0" />
                                   <span className="font-semibold">${bid.amount.toLocaleString()}</span>
                                   {bid.bookNow && (
                                     <Badge variant="outline" className="text-xs">Book Now</Badge>
                                   )}
                                 </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Carrier ID: {bid.carrierId.slice(0, 8)}…
-                                </div>
+                                <CarrierInfoInline carrierId={bid.carrierId} />
                                 {bid.createdAt && (
                                   <div className="text-xs text-muted-foreground">
                                     Submitted: {new Date(bid.createdAt).toLocaleDateString()}
@@ -241,6 +285,7 @@ export function BrokerDashboard() {
                                 size="sm"
                                 onClick={() => handleApproveBid(load, bid)}
                                 disabled={actionLoading}
+                                className="flex-shrink-0"
                               >
                                 <Check className="w-4 h-4 mr-1" />
                                 Approve
@@ -275,7 +320,9 @@ export function BrokerDashboard() {
                           {load.vehicleYear} {load.vehicleMake} {load.vehicleModel}
                         </CardTitle>
                         <div className="text-sm text-muted-foreground mt-1">
-                          Carrier: {load.assignedCarrierId?.slice(0, 8)}…
+                          {load.assignedCarrierId
+                            ? <CarrierInfoInline carrierId={load.assignedCarrierId} />
+                            : 'No carrier assigned'}
                         </div>
                       </div>
                       {getStatusBadge(load)}
@@ -358,6 +405,9 @@ export function BrokerDashboard() {
                             <span className="text-sm text-muted-foreground">
                               {loadWithBids.bids.length} {loadWithBids.bids.length === 1 ? 'bid' : 'bids'}
                             </span>
+                            <Button variant="outline" size="sm" asChild>
+                              <Link to={`/broker/edit-load/${load.id}`}>Edit</Link>
+                            </Button>
                             <Button
                               variant="destructive"
                               size="sm"

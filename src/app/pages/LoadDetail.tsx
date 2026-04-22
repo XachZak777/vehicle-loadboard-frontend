@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { ArrowLeft, MapPin, DollarSign, Truck, FileText, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, MapPin, DollarSign, Truck, FileText, CheckCircle, Loader2, Phone, Building2, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppSelector } from '../store/hooks';
 import {
@@ -15,8 +15,37 @@ import {
   usePlaceBidMutation,
   useApproveBidMutation,
   useCancelBookingMutation,
+  useGetCarrierPublicInfoQuery,
+  useGetBrokerPublicInfoQuery,
+  useGetMyCarrierProfileQuery,
 } from '../store/services/hauliusApi';
 import type { BidDto } from '../store/services/hauliusApi';
+
+// Shows public carrier info inside a bid row (fetches lazily)
+function BidCarrierInfo({ carrierId }: { carrierId: string }) {
+  const { data, isLoading } = useGetCarrierPublicInfoQuery(carrierId);
+  if (isLoading) return <span className="text-xs italic text-muted-foreground">Loading…</span>;
+  if (!data) return <span className="text-xs text-muted-foreground">Carrier info unavailable</span>;
+  const name = data.companyName || data.legalName || data.dbaName;
+  return (
+    <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
+      {name && <div className="font-medium text-foreground flex items-center gap-1"><Building2 className="size-3" />{name}</div>}
+      <div className="flex flex-wrap gap-x-3">
+        {data.dotNumber && <span>DOT: <span className="font-mono">{data.dotNumber}</span></span>}
+        {data.mcNumber && <span>MC: <span className="font-mono">{data.mcNumber}</span></span>}
+      </div>
+      {(data.phyCity || data.phyState) && (
+        <div className="flex items-center gap-1"><MapPin className="size-3" />{[data.phyCity, data.phyState].filter(Boolean).join(', ')}</div>
+      )}
+      {data.phoneNumber && (
+        <div className="flex items-center gap-1"><Phone className="size-3" />{data.phoneNumber}</div>
+      )}
+      {data.operatingStatus && (
+        <div className="flex items-center gap-1"><ShieldCheck className="size-3" />{data.operatingStatus}{data.safetyRating ? ` · Safety: ${data.safetyRating}` : ''}</div>
+      )}
+    </div>
+  );
+}
 
 export function LoadDetail() {
   const { id } = useParams<{ id: string }>();
@@ -33,10 +62,20 @@ export function LoadDetail() {
   const [cancelBooking, { isLoading: isCancelling }] = useCancelBookingMutation();
 
   const load = id ? allLoads.find((l) => l.id === id) ?? null : null;
-  const myBid = user ? bids.find((b) => b.carrierId === user.id) : undefined;
   const isBooked = !!load?.status && load.status !== 'OPEN';
   const isBroker = user?.role === 'broker';
   const isCarrier = user?.role === 'carrier';
+
+  // Resolve carrier entity ID — needed to match bids and load assignment
+  const { data: myCarrierProfile } = useGetMyCarrierProfileQuery(undefined, { skip: !isCarrier });
+  const myCarrierId = myCarrierProfile?.id;
+
+  const myBid = myCarrierId ? bids.find((b) => b.carrierId === myCarrierId) : undefined;
+
+  // Broker public info — fetched by carrier to show contact details on this load
+  const { data: brokerInfo } = useGetBrokerPublicInfoQuery(load?.brokerId ?? '', {
+    skip: !isCarrier || !load?.brokerId,
+  });
 
   const handlePlaceBid = async () => {
     if (!id || !bidAmount) return;
@@ -209,6 +248,76 @@ export function LoadDetail() {
           </CardContent>
         </Card>
 
+        {/* Carrier: Broker contact info */}
+        {isCarrier && brokerInfo && (
+          <Card className="mb-6 border-amber-200 dark:border-amber-500/30">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Building2 className="size-4 text-amber-500" />
+                Posted by Broker
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                {(brokerInfo.companyName || brokerInfo.legalName) && (
+                  <div>
+                    <span className="text-muted-foreground text-xs uppercase tracking-wide">Company</span>
+                    <p className="font-semibold">{brokerInfo.companyName || brokerInfo.legalName}</p>
+                  </div>
+                )}
+                {brokerInfo.mcNumber && (
+                  <div>
+                    <span className="text-muted-foreground text-xs uppercase tracking-wide">MC Number</span>
+                    <p className="font-mono">{brokerInfo.mcNumber}</p>
+                  </div>
+                )}
+                {brokerInfo.dotNumber && (
+                  <div>
+                    <span className="text-muted-foreground text-xs uppercase tracking-wide">DOT Number</span>
+                    <p className="font-mono">{brokerInfo.dotNumber}</p>
+                  </div>
+                )}
+                {(brokerInfo.city || brokerInfo.state) && (
+                  <div>
+                    <span className="text-muted-foreground text-xs uppercase tracking-wide">Location</span>
+                    <p>{[brokerInfo.city, brokerInfo.state].filter(Boolean).join(', ')}</p>
+                  </div>
+                )}
+                {brokerInfo.phoneNumber && (
+                  <div>
+                    <span className="text-muted-foreground text-xs uppercase tracking-wide">Phone</span>
+                    <p className="flex items-center gap-1">
+                      <Phone className="size-3.5 text-amber-500" />
+                      <a href={`tel:${brokerInfo.phoneNumber}`} className="hover:text-amber-600 transition-colors">
+                        {brokerInfo.phoneNumber}
+                      </a>
+                    </p>
+                  </div>
+                )}
+                {brokerInfo.email && (
+                  <div>
+                    <span className="text-muted-foreground text-xs uppercase tracking-wide">Email</span>
+                    <p>
+                      <a href={`mailto:${brokerInfo.email}`} className="hover:text-amber-600 transition-colors">
+                        {brokerInfo.email}
+                      </a>
+                    </p>
+                  </div>
+                )}
+                {brokerInfo.operatingStatus && (
+                  <div className="sm:col-span-2">
+                    <span className="text-muted-foreground text-xs uppercase tracking-wide">Status</span>
+                    <p className="flex items-center gap-1">
+                      <ShieldCheck className="size-3.5 text-green-500" />
+                      {brokerInfo.operatingStatus}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Carrier: Place a bid */}
         {isCarrier && !isBooked && (
           <Card className="mb-6">
@@ -277,23 +386,22 @@ export function LoadDetail() {
                   {bids.map((bid) => (
                     <div
                       key={bid.id}
-                      className="flex items-center justify-between p-4 bg-muted rounded-lg border border-border"
+                      className="flex items-start justify-between p-4 bg-muted rounded-lg border border-border gap-3"
                     >
-                      <div>
+                      <div className="min-w-0">
                         <div className="font-semibold text-lg">
                           <DollarSign className="inline size-4 mr-1" />
                           {Number(bid.amount).toLocaleString()}
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          Carrier ID: {bid.carrierId} · Status: {bid.status}
-                        </div>
+                        <div className="text-sm text-muted-foreground">Status: {bid.status}</div>
+                        <BidCarrierInfo carrierId={bid.carrierId} />
                       </div>
                       {bid.status === 'PENDING' && !isBooked ? (
                         <Button
                           size="sm"
                           onClick={() => handleApproveBid(bid)}
                           disabled={isApprovingBid === bid.id}
-                          className="bg-green-600 hover:bg-green-700 text-white"
+                          className="bg-green-600 hover:bg-green-700 text-white flex-shrink-0"
                         >
                           {isApprovingBid === bid.id ? (
                             <Loader2 className="size-4 animate-spin" />
@@ -304,7 +412,7 @@ export function LoadDetail() {
                       ) : (
                         <Badge
                           variant={bid.status === 'APPROVED' ? 'default' : 'secondary'}
-                          className={bid.status === 'APPROVED' ? 'bg-green-600 text-white' : ''}
+                          className={bid.status === 'APPROVED' ? 'bg-green-600 text-white flex-shrink-0' : 'flex-shrink-0'}
                         >
                           {bid.status}
                         </Badge>

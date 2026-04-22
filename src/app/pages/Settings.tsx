@@ -15,6 +15,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { isStrongPassword, passwordRequirementsText } from '../utils/validation';
 
 export function Settings() {
   const dispatch = useAppDispatch();
@@ -34,16 +35,19 @@ export function Settings() {
     e.preventDefault();
 
     // Validate passwords
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('Passwords do not match', {
-        description: 'Please make sure your new passwords match.'
-      });
+    if (!passwordForm.currentPassword) {
+      toast.error('Current password is required.');
       return;
     }
 
-    if (passwordForm.newPassword.length < 6) {
-      toast.error('Password too short', {
-        description: 'Password must be at least 6 characters long.'
+    if (!isStrongPassword(passwordForm.newPassword)) {
+      toast.error('Password too weak', { description: passwordRequirementsText });
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('Passwords do not match', {
+        description: 'Please make sure your new passwords match.'
       });
       return;
     }
@@ -114,10 +118,12 @@ export function Settings() {
                   <Input
                     id="currentPassword"
                     type="password"
+                    autoComplete="current-password"
                     value={passwordForm.currentPassword}
                     onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
                     placeholder="Enter current password"
                     required
+                    maxLength={128}
                   />
                 </div>
                 <div>
@@ -125,23 +131,28 @@ export function Settings() {
                   <Input
                     id="newPassword"
                     type="password"
+                    autoComplete="new-password"
                     value={passwordForm.newPassword}
                     onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
-                    placeholder="Enter new password (min 6 characters)"
+                    placeholder="Min 8 chars, uppercase & number required"
                     required
-                    minLength={6}
+                    minLength={8}
+                    maxLength={128}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">{passwordRequirementsText}</p>
                 </div>
                 <div>
                   <Label htmlFor="confirmPassword">Confirm New Password</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
+                    autoComplete="new-password"
                     value={passwordForm.confirmPassword}
                     onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
                     placeholder="Confirm new password"
                     required
-                    minLength={6}
+                    minLength={8}
+                    maxLength={128}
                   />
                 </div>
                 <Button type="submit" disabled={isUpdating}>
