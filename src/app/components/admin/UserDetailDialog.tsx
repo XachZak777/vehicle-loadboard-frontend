@@ -17,10 +17,12 @@ function toAbsoluteUrl(url: string): string {
   return `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
 }
 
-function ApprovalBadge({ approved }: { approved: boolean }) {
-  return approved
-    ? <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Approved</Badge>
-    : <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</Badge>;
+function ApprovalBadge({ approved, declined }: { approved: boolean; declined: boolean }) {
+  if (approved)
+    return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Approved</Badge>;
+  if (declined)
+    return <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Rejected</Badge>;
+  return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</Badge>;
 }
 
 interface Props {
@@ -28,11 +30,12 @@ interface Props {
   onClose: () => void;
   onApprove: (u: AdminUserDto) => void;
   onDecline: (u: AdminUserDto) => void;
+  onRevoke: (u: AdminUserDto) => void;
   onDelete: (u: AdminUserDto) => void;
   isActing: boolean;
 }
 
-export function UserDetailDialog({ user, onClose, onApprove, onDecline, onDelete, isActing }: Props) {
+export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke, onDelete, isActing }: Props) {
   const infoRow = (label: string, value?: string | null) =>
     value ? (
       <div key={label} className="flex justify-between py-1 border-b border-border last:border-0 text-sm">
@@ -59,7 +62,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onDelete
 
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-2">
-            <ApprovalBadge approved={user.adminApproved} />
+            <ApprovalBadge approved={user.adminApproved} declined={user.declined} />
             {user.emailVerified
               ? <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1"><Mail className="size-3" />Email Verified</Badge>
               : <Badge variant="outline" className="text-muted-foreground flex items-center gap-1"><Mail className="size-3" />Email Unverified</Badge>
@@ -69,9 +72,14 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onDelete
                 <ShieldCheck className="size-3" />FMCSA Verified
               </Badge>
             )}
-            {user.adminApprovedAt && (
+            {user.adminApprovedAt && user.adminApproved && (
               <span className="text-xs text-muted-foreground ml-auto">
-                {user.adminApproved ? 'Approved' : 'Updated'} {new Date(user.adminApprovedAt).toLocaleDateString()}
+                Approved {new Date(user.adminApprovedAt).toLocaleDateString()}
+              </span>
+            )}
+            {user.declinedAt && user.declined && (
+              <span className="text-xs text-red-500 ml-auto">
+                Rejected {new Date(user.declinedAt).toLocaleDateString()}
               </span>
             )}
           </div>
@@ -185,26 +193,40 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onDelete
             <Trash2 className="size-4 mr-1" /> Delete Registration
           </Button>
           <div className="flex gap-2">
-            {!user.adminApproved && (
+            {user.adminApproved ? null : !user.declined ? (
+              /* Pending — show Decline button */
               <Button
                 variant="outline"
                 size="sm"
                 disabled={isActing}
                 onClick={() => onDecline(user)}
-                className="border-red-300 text-red-600 hover:bg-red-50"
+                className="border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
               >
                 <XCircle className="size-4 mr-1" /> Decline
               </Button>
+            ) : null}
+            {!user.adminApproved && (
+              <Button
+                size="sm"
+                disabled={isActing}
+                onClick={() => onApprove(user)}
+                className="bg-amber-500 hover:bg-amber-600 text-white"
+              >
+                {isActing ? <Loader2 className="size-4 mr-1 animate-spin" /> : <CheckCircle className="size-4 mr-1" />}
+                {user.declined ? 'Re-Approve' : 'Approve'}
+              </Button>
             )}
-            <Button
-              size="sm"
-              disabled={isActing || user.adminApproved}
-              onClick={() => onApprove(user)}
-              className="bg-amber-500 hover:bg-amber-600 text-white"
-            >
-              {isActing ? <Loader2 className="size-4 mr-1 animate-spin" /> : <CheckCircle className="size-4 mr-1" />}
-              {user.adminApproved ? 'Approved' : 'Approve'}
-            </Button>
+            {user.adminApproved && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isActing}
+                onClick={() => onRevoke(user)}
+                className="border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+              >
+                <XCircle className="size-4 mr-1" /> Revoke Approval
+              </Button>
+            )}
           </div>
         </DialogFooter>
       </DialogContent>

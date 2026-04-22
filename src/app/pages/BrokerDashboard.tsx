@@ -1,6 +1,6 @@
 import { useAppSelector } from '../store/hooks';
 import {
-  useGetLoadsQuery,
+  useGetMyBrokerLoadsQuery,
   useApproveBidMutation,
   useCancelBookingMutation,
   useDeleteLoadMutation,
@@ -19,7 +19,7 @@ import { AllLoadsTab } from '../components/broker/AllLoadsTab';
 
 export function BrokerDashboard() {
   const user = useAppSelector((s) => s.auth.user);
-  const { data: loads = [], isLoading: fetching, isError, error, refetch } = useGetLoadsQuery();
+  const { data: loads = [], isLoading: fetching, isError, error, refetch } = useGetMyBrokerLoadsQuery();
   const [approveBid, { isLoading: approving }] = useApproveBidMutation();
   const [cancelBooking, { isLoading: cancelling }] = useCancelBookingMutation();
   const [deleteLoad, { isLoading: deleting }] = useDeleteLoadMutation();

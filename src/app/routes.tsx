@@ -16,7 +16,6 @@ const Validation      = lazy(() => import('./pages/Validation').then(m => ({ def
 const BrokerDashboard = lazy(() => import('./pages/BrokerDashboard').then(m => ({ default: m.BrokerDashboard })));
 const CarrierHistory  = lazy(() => import('./pages/CarrierHistory').then(m => ({ default: m.CarrierHistory })));
 const CompanyProfile  = lazy(() => import('./pages/CompanyProfile').then(m => ({ default: m.CompanyProfile })));
-const Settings        = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 const PendingApproval = lazy(() => import('./pages/PendingApproval').then(m => ({ default: m.PendingApproval })));
 const AdminDashboard  = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const CheckEmail      = lazy(() => import('./pages/CheckEmail').then(m => ({ default: m.CheckEmail })));
@@ -107,14 +106,6 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['carrier']}>
             <CompanyProfile />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: '/settings',
-        element: (
-          <ProtectedRoute>
-            <Settings />
           </ProtectedRoute>
         ),
       },

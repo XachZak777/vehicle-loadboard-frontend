@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
-import type { FieldErrors } from '../../utils/validation';
+import { sanitizeDecimal, type FieldErrors } from '../../utils/validation';
 
 interface Props {
   formData: {
@@ -26,13 +26,10 @@ export function PricingNotesSection({ formData, fieldErrors, onChange }: Props) 
           <Label htmlFor="price">Price (USD) *</Label>
           <Input
             id="price"
-            type="number"
+            inputMode="decimal"
             placeholder="e.g., 1500"
-            min="1"
-            max="999999"
-            step="1"
             value={formData.price}
-            onChange={(e) => onChange('price', e.target.value)}
+            onChange={(e) => onChange('price', sanitizeDecimal(e.target.value))}
             aria-invalid={!!fieldErrors.price}
           />
           {fieldErrors.price && <p className="text-xs text-destructive mt-1">{fieldErrors.price}</p>}

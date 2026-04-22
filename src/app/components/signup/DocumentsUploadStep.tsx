@@ -5,7 +5,7 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { HintText } from '../../styles/signup.styles';
 import { DocumentUploadField } from './DocumentUploadField';
-import type { FieldErrors } from '../../utils/validation';
+import { sanitizeTaxId, type FieldErrors } from '../../utils/validation';
 
 interface Props {
   formData: { taxIdType: 'EIN' | 'SSN'; taxId: string };
@@ -60,7 +60,7 @@ export function DocumentsUploadStep({
             type="password"
             autoComplete="off"
             value={formData.taxId}
-            onChange={(e) => onChange('taxId', e.target.value)}
+            onChange={(e) => onChange('taxId', sanitizeTaxId(e.target.value))}
             placeholder={formData.taxIdType === 'EIN' ? '12-3456789' : '123-45-6789'}
             maxLength={11}
             aria-invalid={!!fieldErrors.taxId}

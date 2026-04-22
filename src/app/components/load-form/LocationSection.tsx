@@ -3,7 +3,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { US_STATES } from '../../constants';
-import type { FieldErrors } from '../../utils/validation';
+import { sanitizeDigits, type FieldErrors } from '../../utils/validation';
 
 const LOCATION_TYPES = ['BUSINESS', 'RESIDENCE', 'AUCTION', 'PORT', 'OTHER'] as const;
 
@@ -41,7 +41,7 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
               id={field('street')}
               placeholder="e.g., 100 Main St"
               value={formData.street}
-              onChange={(e) => onChange(field('street'), e.target.value)}
+              onChange={(e) => onChange(field('street'), e.target.value.trimStart())}
               maxLength={200}
               aria-invalid={!!fieldErrors[field('street')]}
             />
@@ -73,7 +73,7 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
               id={field('city')}
               placeholder="e.g., Chicago"
               value={formData.city}
-              onChange={(e) => onChange(field('city'), e.target.value)}
+              onChange={(e) => onChange(field('city'), e.target.value.trimStart().replace(/[^a-zA-Z\s'\-.]/g, ''))}
               maxLength={100}
               aria-invalid={!!fieldErrors[field('city')]}
             />
@@ -103,8 +103,8 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
               id={field('zip')}
               placeholder="e.g., 60601"
               value={formData.zip}
-              onChange={(e) => onChange(field('zip'), e.target.value)}
-              maxLength={10}
+              onChange={(e) => onChange(field('zip'), sanitizeDigits(e.target.value))}
+              maxLength={5}
               inputMode="numeric"
               aria-invalid={!!fieldErrors[field('zip')]}
             />

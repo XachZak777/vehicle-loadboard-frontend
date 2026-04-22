@@ -1,5 +1,20 @@
 // ─── Shared validation helpers ────────────────────────────────────────────────
 
+// ─── Input sanitizers (call before storing in state) ─────────────────────────
+
+/** Strips everything except digits — for MC, DOT, ZIP, year, etc. */
+export const sanitizeDigits = (v: string) => v.replace(/\D/g, '');
+
+/** Strips everything except digits and a single decimal point — for price, weight, insurance amounts */
+export const sanitizeDecimal = (v: string) => {
+  const stripped = v.replace(/[^\d.]/g, '');
+  const parts = stripped.split('.');
+  return parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : stripped;
+};
+
+/** Strips everything except digits and a single hyphen (for EIN: XX-XXXXXXX / SSN: XXX-XX-XXXX) */
+export const sanitizeTaxId = (v: string) => v.replace(/[^\d-]/g, '');
+
 /** Standard email check */
 export const isValidEmail = (v: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());

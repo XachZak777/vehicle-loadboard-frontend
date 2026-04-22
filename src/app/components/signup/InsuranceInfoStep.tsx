@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { FormGrid, HintText } from '../../styles/signup.styles';
-import type { FieldErrors } from '../../utils/validation';
+import { sanitizeDecimal, type FieldErrors } from '../../utils/validation';
 
 interface Props {
   formData: {
@@ -30,7 +30,7 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
           <Input
             id="insuranceCompany"
             value={formData.insuranceCompany}
-            onChange={(e) => onChange('insuranceCompany', e.target.value)}
+            onChange={(e) => onChange('insuranceCompany', e.target.value.trimStart())}
             placeholder="ABC Insurance Co."
             maxLength={100}
             aria-invalid={!!fieldErrors.insuranceCompany}
@@ -45,13 +45,10 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
             <Label htmlFor="cargoInsurance">Cargo Insurance Coverage *</Label>
             <Input
               id="cargoInsurance"
-              type="number"
+              inputMode="decimal"
               value={formData.cargoInsurance}
-              onChange={(e) => onChange('cargoInsurance', e.target.value)}
+              onChange={(e) => onChange('cargoInsurance', sanitizeDecimal(e.target.value))}
               placeholder="100000"
-              min="1"
-              max="999999999"
-              step="1"
               aria-invalid={!!fieldErrors.cargoInsurance}
             />
             {fieldErrors.cargoInsurance
@@ -63,13 +60,10 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
             <Label htmlFor="liabilityInsurance">Liability Insurance Coverage *</Label>
             <Input
               id="liabilityInsurance"
-              type="number"
+              inputMode="decimal"
               value={formData.liabilityInsurance}
-              onChange={(e) => onChange('liabilityInsurance', e.target.value)}
+              onChange={(e) => onChange('liabilityInsurance', sanitizeDecimal(e.target.value))}
               placeholder="1000000"
-              min="1"
-              max="999999999"
-              step="1"
               aria-invalid={!!fieldErrors.liabilityInsurance}
             />
             {fieldErrors.liabilityInsurance
@@ -83,7 +77,7 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
           onClick={onSubmit}
           className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
         >
-          Continue to W9 Upload
+          Continue to Documents Upload
         </Button>
         <Button type="button" variant="ghost" className="w-full text-sm" onClick={onBack}>
           ← Back

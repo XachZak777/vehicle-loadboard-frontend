@@ -3,17 +3,23 @@ import { Navbar } from '../components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
-import { 
-  Building2, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  FileText, 
-  Shield, 
+import {
+  Building2,
+  Mail,
+  Phone,
+  MapPin,
+  FileText,
+  Shield,
   CheckCircle,
   Calendar,
+  Truck,
+  AlertCircle,
   type LucideIcon,
 } from 'lucide-react';
+import {
+  useGetMyBrokerProfileQuery,
+  useGetMyCarrierProfileQuery,
+} from '../store/services/hauliusApi';
 
 // ── Reusable field row ──────────────────────────────────────────────────────
 function InfoRow({
@@ -50,13 +56,14 @@ function SectionCard({
   title: string;
   description: string;
   children: React.ReactNode;
-  accentColor?: 'amber' | 'green' | 'blue' | 'violet';
+  accentColor?: 'amber' | 'green' | 'blue' | 'violet' | 'slate';
 }) {
   const accent: Record<string, string> = {
     amber: 'bg-amber-500',
     green: 'bg-emerald-500',
     blue: 'bg-blue-500',
     violet: 'bg-violet-500',
+    slate: 'bg-slate-500',
   };
 
   return (
@@ -75,8 +82,45 @@ function SectionCard({
 // ── Page ────────────────────────────────────────────────────────────────────
 export function CompanyProfile() {
   const user = useAppSelector((s) => s.auth.user);
+  const isBroker = user?.role === 'broker';
+  const isCarrier = user?.role === 'carrier';
+
+  const { data: brokerProfile } = useGetMyBrokerProfileQuery(undefined, { skip: !isBroker });
+  const { data: carrierProfile } = useGetMyCarrierProfileQuery(undefined, { skip: !isCarrier });
 
   if (!user) return null;
+
+  // Merge: auth-store values as base, API values as supplements (API may have FMCSA fields not in store)
+  const profile = isBroker ? brokerProfile : carrierProfile;
+
+  const companyName    = user.companyName   || profile?.companyName   || profile?.legalName;
+  const mcNumber       = user.mcNumber      || profile?.mcNumber;
+  const dotNumber      = user.dotNumber     || profile?.dotNumber;
+  const phoneNumber    = user.phoneNumber   || profile?.phoneNumber;
+  const mailingAddress = user.mailingAddress|| profile?.mailingAddress;
+  const city           = user.city          || profile?.city;
+  const state          = user.state         || profile?.state;
+  const zipCode        = user.zipCode       || profile?.zipCode;
+  const insuranceCo    = user.insuranceCompany || profile?.insuranceCompany;
+  const cargoIns       = user.cargoInsurance   ?? profile?.cargoInsurance;
+  const liabilityIns   = user.liabilityInsurance ?? profile?.liabilityInsurance;
+  const taxIdType      = user.taxIdType     || profile?.taxIdType;
+  const taxId          = user.taxId         || profile?.taxId;
+  const w9Document     = user.w9Document;
+
+  // FMCSA-sourced fields (only available from API response, not in auth store)
+  const legalName          = profile?.legalName;
+  const dbaName            = (profile as typeof carrierProfile)?.dbaName;
+  const operatingStatus    = profile?.operatingStatus;
+  const safetyRating       = (profile as typeof carrierProfile)?.safetyRating;
+  const phyCity            = (profile as typeof carrierProfile)?.phyCity;
+  const phyState           = (profile as typeof carrierProfile)?.phyState;
+  const totalDrivers       = (profile as typeof carrierProfile)?.totalDrivers;
+  const totalPowerUnits    = (profile as typeof carrierProfile)?.totalPowerUnits;
+  const brokerAuthority    = (profile as typeof brokerProfile)?.brokerAuthorityActive;
+
+  const hasAddress = mailingAddress || city || state || zipCode;
+  const hasPhyAddress = phyCity || phyState;
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,12 +135,17 @@ export function CompanyProfile() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
-                {user.companyName || 'Company Profile'}
+                {companyName || legalName || 'Company Profile'}
               </h1>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <Badge className="bg-white/20 text-white border-white/30 capitalize hover:bg-white/30">
                   {user.role}
                 </Badge>
+                {operatingStatus && (
+                  <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                    {operatingStatus}
+                  </Badge>
+                )}
                 <span className="text-white/80 text-sm">
                   Member since{' '}
                   {new Date(user.createdAt).toLocaleDateString('en-US', {
@@ -114,7 +163,7 @@ export function CompanyProfile() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-5">
 
-          {/* Verification Status */}
+          {/* Verification Status badges */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-center gap-4 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/20 px-5 py-4">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
@@ -122,7 +171,7 @@ export function CompanyProfile() {
               </span>
               <div>
                 <p className="font-semibold text-emerald-900 dark:text-emerald-100 text-sm">
-                  Carrier Verified
+                  {isCarrier ? 'Carrier' : 'Broker'} Verified
                 </p>
                 <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
                   {user.verificationDate
@@ -131,42 +180,108 @@ export function CompanyProfile() {
                         month: 'short',
                         day: 'numeric',
                       })
-                    : 'Verified'}
+                    : 'FMCSA verified'}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/20 px-5 py-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
-                <CheckCircle className="h-5 w-5 text-emerald-600" />
-              </span>
-              <div>
-                <p className="font-semibold text-emerald-900 dark:text-emerald-100 text-sm">
-                  Phone Verified
-                </p>
-                <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
-                  {user.phoneNumber}
-                </p>
+            {isBroker && brokerAuthority !== undefined && (
+              <div className={`flex items-center gap-4 rounded-xl border px-5 py-4 ${
+                brokerAuthority
+                  ? 'border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/20'
+                  : 'border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20'
+              }`}>
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                  brokerAuthority ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-amber-100 dark:bg-amber-900/40'
+                }`}>
+                  {brokerAuthority
+                    ? <CheckCircle className="h-5 w-5 text-emerald-600" />
+                    : <AlertCircle className="h-5 w-5 text-amber-600" />}
+                </span>
+                <div>
+                  <p className={`font-semibold text-sm ${
+                    brokerAuthority
+                      ? 'text-emerald-900 dark:text-emerald-100'
+                      : 'text-amber-900 dark:text-amber-100'
+                  }`}>
+                    Broker Authority
+                  </p>
+                  <p className={`text-xs mt-0.5 ${
+                    brokerAuthority
+                      ? 'text-emerald-700 dark:text-emerald-300'
+                      : 'text-amber-700 dark:text-amber-300'
+                  }`}>
+                    {brokerAuthority ? 'Active' : 'Inactive'}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
+
+            {isCarrier && phoneNumber && (
+              <div className="flex items-center gap-4 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/20 px-5 py-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                </span>
+                <div>
+                  <p className="font-semibold text-emerald-900 dark:text-emerald-100 text-sm">
+                    Phone Verified
+                  </p>
+                  <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                    {phoneNumber}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Company Information */}
+          {/* Company / Identity Information */}
           <SectionCard
             title="Company Information"
-            description="Basic details about your company"
+            description="Identity details from FMCSA and registration"
             accentColor="amber"
           >
             <div className="divide-y divide-border">
-              <InfoRow icon={Building2} label="Company Name">
-                {user.companyName}
-              </InfoRow>
-              <InfoRow icon={Shield} label="MC Number">
-                {user.mcNumber}
-              </InfoRow>
-              <InfoRow icon={Shield} label="DOT Number">
-                {user.dotNumber}
-              </InfoRow>
+              {companyName && (
+                <InfoRow icon={Building2} label="Company Name">
+                  {companyName}
+                </InfoRow>
+              )}
+              {legalName && legalName !== companyName && (
+                <InfoRow icon={Building2} label="Legal Name (FMCSA)">
+                  {legalName}
+                </InfoRow>
+              )}
+              {dbaName && (
+                <InfoRow icon={Building2} label="DBA Name">
+                  {dbaName}
+                </InfoRow>
+              )}
+              {mcNumber && (
+                <InfoRow icon={Shield} label="MC Number">
+                  {mcNumber}
+                </InfoRow>
+              )}
+              {dotNumber && (
+                <InfoRow icon={Shield} label="DOT Number">
+                  {dotNumber}
+                </InfoRow>
+              )}
+              {operatingStatus && (
+                <InfoRow icon={Shield} label="Operating Status">
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    operatingStatus.toUpperCase() === 'ACTIVE'
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+                      : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
+                  }`}>
+                    {operatingStatus}
+                  </span>
+                </InfoRow>
+              )}
+              {safetyRating && (
+                <InfoRow icon={Shield} label="Safety Rating">
+                  {safetyRating}
+                </InfoRow>
+              )}
             </div>
           </SectionCard>
 
@@ -180,80 +295,143 @@ export function CompanyProfile() {
               <InfoRow icon={Mail} label="Email Address">
                 {user.email}
               </InfoRow>
-              <InfoRow icon={Phone} label="Phone Number">
-                {user.phoneNumber}
-              </InfoRow>
-              <InfoRow icon={MapPin} label="Mailing Address">
-                <span>{user.mailingAddress}</span>
-                <span className="block text-sm text-muted-foreground font-normal mt-0.5">
-                  {user.city}, {user.state} {user.zipCode}
-                </span>
-              </InfoRow>
+              {phoneNumber && (
+                <InfoRow icon={Phone} label="Phone Number">
+                  {phoneNumber}
+                </InfoRow>
+              )}
+              {hasAddress && (
+                <InfoRow icon={MapPin} label="Mailing Address">
+                  {mailingAddress && <span>{mailingAddress}</span>}
+                  {(city || state || zipCode) && (
+                    <span className="block text-sm text-muted-foreground font-normal mt-0.5">
+                      {[city, state, zipCode].filter(Boolean).join(', ')}
+                    </span>
+                  )}
+                </InfoRow>
+              )}
+              {hasPhyAddress && (
+                <InfoRow icon={MapPin} label="Physical Address (FMCSA)">
+                  <span className="text-sm text-muted-foreground font-normal">
+                    {[phyCity, phyState].filter(Boolean).join(', ')}
+                  </span>
+                </InfoRow>
+              )}
             </div>
           </SectionCard>
+
+          {/* Fleet Info — carriers only */}
+          {isCarrier && (totalDrivers != null || totalPowerUnits != null) && (
+            <SectionCard
+              title="Fleet Information"
+              description="Fleet size from FMCSA records"
+              accentColor="slate"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
+                {totalPowerUnits != null && (
+                  <div className="rounded-lg border bg-muted/40 px-5 py-4 flex items-center gap-3">
+                    <Truck className="h-6 w-6 text-muted-foreground shrink-0" />
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
+                        Power Units
+                      </p>
+                      <p className="text-2xl font-bold">{totalPowerUnits.toLocaleString()}</p>
+                    </div>
+                  </div>
+                )}
+                {totalDrivers != null && (
+                  <div className="rounded-lg border bg-muted/40 px-5 py-4 flex items-center gap-3">
+                    <Truck className="h-6 w-6 text-muted-foreground shrink-0" />
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
+                        Total Drivers
+                      </p>
+                      <p className="text-2xl font-bold">{totalDrivers.toLocaleString()}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </SectionCard>
+          )}
 
           {/* Insurance Information */}
-          <SectionCard
-            title="Insurance Information"
-            description="Your coverage details"
-            accentColor="green"
-          >
-            <div className="divide-y divide-border">
-              <InfoRow icon={Shield} label="Insurance Company">
-                {user.insuranceCompany}
-              </InfoRow>
-            </div>
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-lg border bg-muted/40 px-5 py-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
-                  Cargo Insurance
-                </p>
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                  ${user.cargoInsurance.toLocaleString()}
-                </p>
+          {(insuranceCo || cargoIns != null || liabilityIns != null) && (
+            <SectionCard
+              title="Insurance Information"
+              description="Your coverage details"
+              accentColor="green"
+            >
+              <div className="divide-y divide-border">
+                {insuranceCo && (
+                  <InfoRow icon={Shield} label="Insurance Company">
+                    {insuranceCo}
+                  </InfoRow>
+                )}
               </div>
-              <div className="rounded-lg border bg-muted/40 px-5 py-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
-                  Liability Insurance
-                </p>
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                  ${user.liabilityInsurance.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </SectionCard>
+              {(cargoIns != null || liabilityIns != null) && (
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {cargoIns != null && (
+                    <div className="rounded-lg border bg-muted/40 px-5 py-4">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
+                        Cargo Insurance
+                      </p>
+                      <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                        ${Number(cargoIns).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                  {liabilityIns != null && (
+                    <div className="rounded-lg border bg-muted/40 px-5 py-4">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
+                        Liability Insurance
+                      </p>
+                      <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                        ${Number(liabilityIns).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </SectionCard>
+          )}
 
           {/* Tax Information */}
-          <SectionCard
-            title="Tax Information"
-            description="W9 and tax identification details"
-            accentColor="violet"
-          >
-            <div className="divide-y divide-border">
-              <InfoRow icon={FileText} label="Tax ID Type">
-                {user.taxIdType}
-              </InfoRow>
-              <InfoRow icon={FileText} label="Tax ID">
-                {user.taxId.replace(/./g, (char: string, index: number) =>
-                  index < user.taxId.length - 4 ? '•' : char
+          {(taxIdType || taxId) && (
+            <SectionCard
+              title="Tax Information"
+              description="W9 and tax identification details"
+              accentColor="violet"
+            >
+              <div className="divide-y divide-border">
+                {taxIdType && (
+                  <InfoRow icon={FileText} label="Tax ID Type">
+                    {taxIdType}
+                  </InfoRow>
                 )}
-              </InfoRow>
-            </div>
-
-            {user.w9Document && (
-              <div className="mt-4 flex items-center gap-3 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/20 px-4 py-3">
-                <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" />
-                <div>
-                  <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100">
-                    W9 Document on File
-                  </p>
-                  <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                    Document uploaded successfully
-                  </p>
-                </div>
+                {taxId && (
+                  <InfoRow icon={FileText} label="Tax ID">
+                    {taxId.replace(/./g, (char: string, index: number) =>
+                      index < taxId.length - 4 ? '•' : char
+                    )}
+                  </InfoRow>
+                )}
               </div>
-            )}
-          </SectionCard>
+
+              {w9Document && (
+                <div className="mt-4 flex items-center gap-3 rounded-lg border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/20 px-4 py-3">
+                  <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" />
+                  <div>
+                    <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100">
+                      W9 Document on File
+                    </p>
+                    <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                      Document uploaded successfully
+                    </p>
+                  </div>
+                </div>
+              )}
+            </SectionCard>
+          )}
 
           {/* Footer timestamp */}
           <div className="flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground">
@@ -273,3 +451,4 @@ export function CompanyProfile() {
     </div>
   );
 }
+

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { FormGrid, HintText } from '../../styles/signup.styles';
-import type { FieldErrors } from '../../utils/validation';
+import { sanitizeDigits, type FieldErrors } from '../../utils/validation';
 
 interface Props {
   formData: { mcNumber: string; dotNumber: string };
@@ -30,9 +30,10 @@ export function CompanyInfoStep({ formData, fieldErrors, onChange, onSubmit, ent
             <Input
               id="mcNumber"
               value={formData.mcNumber}
-              onChange={(e) => onChange('mcNumber', e.target.value)}
+              onChange={(e) => onChange('mcNumber', sanitizeDigits(e.target.value))}
               placeholder="123456"
               maxLength={10}
+              inputMode="numeric"
               aria-invalid={!!fieldErrors.mcNumber}
             />
             {fieldErrors.mcNumber
@@ -45,7 +46,7 @@ export function CompanyInfoStep({ formData, fieldErrors, onChange, onSubmit, ent
             <Input
               id="dotNumber"
               value={formData.dotNumber}
-              onChange={(e) => onChange('dotNumber', e.target.value)}
+              onChange={(e) => onChange('dotNumber', sanitizeDigits(e.target.value))}
               placeholder="123456"
               maxLength={8}
               inputMode="numeric"

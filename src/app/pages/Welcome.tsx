@@ -204,11 +204,6 @@ export function Welcome() {
                     <ArrowRight className="size-4" />
                   </Button>
                 </Link>
-                <Link to={postTo} className="w-full sm:w-auto">
-                  <Button size="lg" variant="outline" className="text-base px-8 h-12 border-2 border-amber-500 text-foreground hover:bg-amber-500/10 w-full shadow-lg">
-                    Post a Load
-                  </Button>
-                </Link>
               </div>
             </div>
 

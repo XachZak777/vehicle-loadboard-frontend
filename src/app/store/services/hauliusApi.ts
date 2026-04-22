@@ -226,21 +226,55 @@ export type CarrierBidWithLoadDto = {
 };
 
 export type BrokerProfile = {
-  id: string;
+  id?: string;
+  // FMCSA / registration identity
   companyName?: string;
   mcNumber?: string;
   dotNumber?: string;
+  legalName?: string;
+  operatingStatus?: string;
+  brokerAuthorityActive?: boolean;
+  // Profile-completion fields
   phoneNumber?: string;
   email?: string;
+  mailingAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  insuranceCompany?: string;
+  cargoInsurance?: number;
+  liabilityInsurance?: number;
+  taxIdType?: string;
+  taxId?: string;
 };
 
 export type CarrierProfile = {
-  id: string;
+  id?: string;
+  // FMCSA / registration identity
   companyName?: string;
   mcNumber?: string;
   dotNumber?: string;
+  legalName?: string;
+  dbaName?: string;
+  operatingStatus?: string;
+  safetyRating?: string;
+  verified?: boolean;
+  phyCity?: string;
+  phyState?: string;
+  totalDrivers?: number;
+  totalPowerUnits?: number;
+  // Profile-completion fields
   phoneNumber?: string;
   email?: string;
+  mailingAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  insuranceCompany?: string;
+  cargoInsurance?: number;
+  liabilityInsurance?: number;
+  taxIdType?: string;
+  taxId?: string;
 };
 
 export type CarrierPublicInfo = {
@@ -284,6 +318,9 @@ export type AdminUserDto = {
   adminApproved: boolean;
   adminApprovedAt?: string;
   emailVerified: boolean;
+  /** True when admin actively declined this registration (distinct from "never reviewed"). */
+  declined: boolean;
+  declinedAt?: string;
   fmcsaVerified?: boolean;
   verificationDate?: string;
   createdAt?: string;
@@ -359,6 +396,10 @@ export const hauliusApi = createApi({
       query: () => '/api/loads',
       providesTags: ['Load'],
     }),
+    getMyBrokerLoads: builder.query<LoadDto[], void>({
+      query: () => '/api/loads/broker/my-loads',
+      providesTags: ['Load'],
+    }),
     getLoadsForCarrier: builder.query<LoadDto[], string>({
       query: (carrierId) => `/api/loads/carrier/${carrierId}`,
       providesTags: ['Load'],
@@ -402,6 +443,18 @@ export const hauliusApi = createApi({
       query: () => '/api/admin/users',
       providesTags: ['Profile'],
     }),
+    getAdminUsersApproved: builder.query<AdminUserDto[], void>({
+      query: () => '/api/admin/users/approved',
+      providesTags: ['Profile'],
+    }),
+    getAdminUsersPending: builder.query<AdminUserDto[], void>({
+      query: () => '/api/admin/users/pending',
+      providesTags: ['Profile'],
+    }),
+    getAdminUsersRejected: builder.query<AdminUserDto[], void>({
+      query: () => '/api/admin/users/rejected',
+      providesTags: ['Profile'],
+    }),
     getAdminUser: builder.query<AdminUserDto, string>({
       query: (id) => `/api/admin/users/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Profile', id }],
@@ -418,6 +471,10 @@ export const hauliusApi = createApi({
       query: (id) => ({ url: `/api/admin/carriers/${id}/decline`, method: 'POST' }),
       invalidatesTags: ['Profile'],
     }),
+    revokeCarrier: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/admin/carriers/${id}/revoke`, method: 'POST' }),
+      invalidatesTags: ['Profile'],
+    }),
     deleteAdminCarrier: builder.mutation<void, string>({
       query: (id) => ({ url: `/api/admin/carriers/${id}`, method: 'DELETE' }),
       invalidatesTags: ['Profile'],
@@ -428,6 +485,10 @@ export const hauliusApi = createApi({
     }),
     declineBroker: builder.mutation<{ message: string }, string>({
       query: (id) => ({ url: `/api/admin/brokers/${id}/decline`, method: 'POST' }),
+      invalidatesTags: ['Profile'],
+    }),
+    revokeBroker: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/admin/brokers/${id}/revoke`, method: 'POST' }),
       invalidatesTags: ['Profile'],
     }),
     deleteAdminBroker: builder.mutation<void, string>({
@@ -533,6 +594,7 @@ export const {
   useResetPasswordMutation,
   useGetMeQuery,
   useGetLoadsQuery,
+  useGetMyBrokerLoadsQuery,
   useGetLoadsForCarrierQuery,
   useCreateLoadMutation,
   useUpdateLoadMutation,
@@ -556,12 +618,17 @@ export const {
   useUploadCarrierMcAuthorityMutation,
   // Admin — user management
   useGetAdminUsersQuery,
+  useGetAdminUsersApprovedQuery,
+  useGetAdminUsersPendingQuery,
+  useGetAdminUsersRejectedQuery,
   useGetAdminUserQuery,
   useDeleteAdminUserMutation,
   useApproveCarrierMutation,
   useDeclineCarrierMutation,
+  useRevokeCarrierMutation,
   useDeleteAdminCarrierMutation,
   useApproveBrokerMutation,
   useDeclineBrokerMutation,
+  useRevokeBrokerMutation,
   useDeleteAdminBrokerMutation,
 } = hauliusApi;

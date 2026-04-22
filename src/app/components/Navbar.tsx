@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   History,
   Building2,
-  Settings,
   LogOut,
   Plus,
   Menu,
@@ -43,14 +42,12 @@ export function Navbar() {
     { path: '/loads', label: 'Load Board', icon: Truck },
     { path: '/carrier/history', label: 'My Loads', icon: History },
     { path: '/carrier/company', label: 'My Company', icon: Building2 },
-    { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
   const brokerNavItems = [
     { path: '/loads', label: 'Load Board', icon: Truck },
     { path: '/broker/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/broker/company', label: 'My Company', icon: Building2 },
-    { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
   const adminNavItems = [

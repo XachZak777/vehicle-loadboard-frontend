@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import type { FieldErrors } from '../../utils/validation';
+import { sanitizeDigits, sanitizeDecimal, type FieldErrors } from '../../utils/validation';
 
 interface Props {
   formData: {
@@ -33,7 +33,7 @@ export function VehicleInfoSection({ formData, fieldErrors, onChange, hideCondit
               id="make"
               placeholder="e.g., Toyota"
               value={formData.make}
-              onChange={(e) => onChange('make', e.target.value)}
+              onChange={(e) => onChange('make', e.target.value.trimStart().replace(/[^a-zA-Z0-9\s\-]/g, ''))}
               maxLength={50}
               aria-invalid={!!fieldErrors.make}
             />
@@ -45,7 +45,7 @@ export function VehicleInfoSection({ formData, fieldErrors, onChange, hideCondit
               id="model"
               placeholder="e.g., Camry"
               value={formData.model}
-              onChange={(e) => onChange('model', e.target.value)}
+              onChange={(e) => onChange('model', e.target.value.trimStart().replace(/[^a-zA-Z0-9\s\-]/g, ''))}
               maxLength={50}
               aria-invalid={!!fieldErrors.model}
             />
@@ -55,12 +55,11 @@ export function VehicleInfoSection({ formData, fieldErrors, onChange, hideCondit
             <Label htmlFor="year">Year *</Label>
             <Input
               id="year"
-              type="number"
+              inputMode="numeric"
               placeholder="e.g., 2022"
-              min="1900"
-              max={new Date().getFullYear() + 2}
               value={formData.year}
-              onChange={(e) => onChange('year', e.target.value)}
+              onChange={(e) => onChange('year', sanitizeDigits(e.target.value))}
+              maxLength={4}
               aria-invalid={!!fieldErrors.year}
             />
             {fieldErrors.year && <p className="text-xs text-destructive mt-1">{fieldErrors.year}</p>}
@@ -86,13 +85,10 @@ export function VehicleInfoSection({ formData, fieldErrors, onChange, hideCondit
             <Label htmlFor="weight">Weight (lbs)</Label>
             <Input
               id="weight"
-              type="number"
+              inputMode="decimal"
               placeholder="e.g., 3500"
-              min="1"
-              max="100000"
-              step="1"
               value={formData.weight}
-              onChange={(e) => onChange('weight', e.target.value)}
+              onChange={(e) => onChange('weight', sanitizeDecimal(e.target.value))}
               aria-invalid={!!fieldErrors.weight}
             />
             {fieldErrors.weight && <p className="text-xs text-destructive mt-1">{fieldErrors.weight}</p>}
