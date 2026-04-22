@@ -3,20 +3,15 @@ import { useNavigate, useParams, Link } from 'react-router';
 import { useGetLoadsQuery, useUpdateLoadMutation } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Textarea } from '../components/ui/textarea';
 import { ArrowLeft, Truck, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { US_STATES } from '../constants';
 import {
   isValidVehicleYear, isValidPrice, isValidWeight, isValidZip, isValidCity,
   buildErrors, type FieldErrors,
 } from '../utils/validation';
-
-const LOCATION_TYPES = ['BUSINESS', 'RESIDENCE', 'AUCTION', 'PORT', 'OTHER'] as const;
+import { VehicleInfoSection } from '../components/load-form/VehicleInfoSection';
+import { LocationSection } from '../components/load-form/LocationSection';
+import { PricingNotesSection } from '../components/load-form/PricingNotesSection';
 
 export function EditLoad() {
   const { id } = useParams<{ id: string }>();
@@ -184,175 +179,33 @@ export function EditLoad() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Vehicle Information */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Vehicle Information</CardTitle>
-                <CardDescription>Details about the vehicle to be transported</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="make">Make *</Label>
-                    <Input id="make" placeholder="e.g., Toyota" value={formData.make}
-                      onChange={(e) => handleInputChange('make', e.target.value)} maxLength={50} aria-invalid={!!fieldErrors.make} />
-                    {fieldErrors.make && <p className="text-xs text-destructive mt-1">{fieldErrors.make}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="model">Model *</Label>
-                    <Input id="model" placeholder="e.g., Camry" value={formData.model}
-                      onChange={(e) => handleInputChange('model', e.target.value)} maxLength={50} aria-invalid={!!fieldErrors.model} />
-                    {fieldErrors.model && <p className="text-xs text-destructive mt-1">{fieldErrors.model}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="year">Year *</Label>
-                    <Input id="year" type="number" placeholder="e.g., 2022" min="1900" max={new Date().getFullYear() + 2}
-                      value={formData.year} onChange={(e) => handleInputChange('year', e.target.value)} aria-invalid={!!fieldErrors.year} />
-                    {fieldErrors.year && <p className="text-xs text-destructive mt-1">{fieldErrors.year}</p>}
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="weight">Weight (lbs)</Label>
-                  <Input id="weight" type="number" placeholder="e.g., 3500" min="1" max="100000" step="1"
-                    value={formData.weight} onChange={(e) => handleInputChange('weight', e.target.value)} aria-invalid={!!fieldErrors.weight} />
-                  {fieldErrors.weight && <p className="text-xs text-destructive mt-1">{fieldErrors.weight}</p>}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Pickup */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Pickup Location</CardTitle>
-                <CardDescription>Where will the vehicle be picked up?</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="pickupStreet">Street Address</Label>
-                    <Input id="pickupStreet" placeholder="e.g., 100 Main St" value={formData.pickupStreet}
-                      onChange={(e) => handleInputChange('pickupStreet', e.target.value)} maxLength={200} aria-invalid={!!fieldErrors.pickupStreet} />
-                    {fieldErrors.pickupStreet && <p className="text-xs text-destructive mt-1">{fieldErrors.pickupStreet}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="pickupType">Location Type</Label>
-                    <Select value={formData.pickupType} onValueChange={(v) => handleInputChange('pickupType', v)}>
-                      <SelectTrigger id="pickupType"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {LOCATION_TYPES.map(t => <SelectItem key={t} value={t}>{t.charAt(0) + t.slice(1).toLowerCase()}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="pickupCity">City *</Label>
-                    <Input id="pickupCity" placeholder="e.g., Chicago" value={formData.pickupCity}
-                      onChange={(e) => handleInputChange('pickupCity', e.target.value)} maxLength={100} aria-invalid={!!fieldErrors.pickupCity} />
-                    {fieldErrors.pickupCity && <p className="text-xs text-destructive mt-1">{fieldErrors.pickupCity}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="pickupState">State *</Label>
-                    <Select value={formData.pickupState} onValueChange={(v) => handleInputChange('pickupState', v)}>
-                      <SelectTrigger id="pickupState" aria-invalid={!!fieldErrors.pickupState}><SelectValue placeholder="Select state" /></SelectTrigger>
-                      <SelectContent>{US_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                    </Select>
-                    {fieldErrors.pickupState && <p className="text-xs text-destructive mt-1">{fieldErrors.pickupState}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="pickupZip">ZIP Code</Label>
-                    <Input id="pickupZip" placeholder="e.g., 60601" value={formData.pickupZip}
-                      onChange={(e) => handleInputChange('pickupZip', e.target.value)} maxLength={10} inputMode="numeric" aria-invalid={!!fieldErrors.pickupZip} />
-                    {fieldErrors.pickupZip && <p className="text-xs text-destructive mt-1">{fieldErrors.pickupZip}</p>}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Delivery */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Delivery Location</CardTitle>
-                <CardDescription>Where should the vehicle be delivered?</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="dropStreet">Street Address</Label>
-                    <Input id="dropStreet" placeholder="e.g., 200 Freight Ave" value={formData.dropStreet}
-                      onChange={(e) => handleInputChange('dropStreet', e.target.value)} maxLength={200} aria-invalid={!!fieldErrors.dropStreet} />
-                    {fieldErrors.dropStreet && <p className="text-xs text-destructive mt-1">{fieldErrors.dropStreet}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="dropType">Location Type</Label>
-                    <Select value={formData.dropType} onValueChange={(v) => handleInputChange('dropType', v)}>
-                      <SelectTrigger id="dropType"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {LOCATION_TYPES.map(t => <SelectItem key={t} value={t}>{t.charAt(0) + t.slice(1).toLowerCase()}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="dropCity">City *</Label>
-                    <Input id="dropCity" placeholder="e.g., Los Angeles" value={formData.dropCity}
-                      onChange={(e) => handleInputChange('dropCity', e.target.value)} maxLength={100} aria-invalid={!!fieldErrors.dropCity} />
-                    {fieldErrors.dropCity && <p className="text-xs text-destructive mt-1">{fieldErrors.dropCity}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="dropState">State *</Label>
-                    <Select value={formData.dropState} onValueChange={(v) => handleInputChange('dropState', v)}>
-                      <SelectTrigger id="dropState" aria-invalid={!!fieldErrors.dropState}><SelectValue placeholder="Select state" /></SelectTrigger>
-                      <SelectContent>{US_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                    </Select>
-                    {fieldErrors.dropState && <p className="text-xs text-destructive mt-1">{fieldErrors.dropState}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="dropZip">ZIP Code</Label>
-                    <Input id="dropZip" placeholder="e.g., 90001" value={formData.dropZip}
-                      onChange={(e) => handleInputChange('dropZip', e.target.value)} maxLength={10} inputMode="numeric" aria-invalid={!!fieldErrors.dropZip} />
-                    {fieldErrors.dropZip && <p className="text-xs text-destructive mt-1">{fieldErrors.dropZip}</p>}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Pricing & Notes */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Pricing & Notes</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="price">Price (USD) *</Label>
-                  <Input id="price" type="number" placeholder="e.g., 1500" min="1" max="999999" step="1"
-                    value={formData.price} onChange={(e) => handleInputChange('price', e.target.value)} aria-invalid={!!fieldErrors.price} />
-                  {fieldErrors.price && <p className="text-xs text-destructive mt-1">{fieldErrors.price}</p>}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="pickupDate">Pickup Date</Label>
-                    <Input id="pickupDate" type="date" value={formData.pickupDate}
-                      onChange={(e) => handleInputChange('pickupDate', e.target.value)} />
-                  </div>
-                  <div>
-                    <Label htmlFor="deliveryDate">Delivery Date</Label>
-                    <Input id="deliveryDate" type="date" value={formData.deliveryDate}
-                      onChange={(e) => handleInputChange('deliveryDate', e.target.value)} />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="description">Additional Notes</Label>
-                  <Textarea id="description" placeholder="Special instructions, trailer type preference, etc."
-                    rows={3} maxLength={1000} value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)} aria-invalid={!!fieldErrors.description} />
-                  <p className="text-xs text-muted-foreground mt-1 text-right">{formData.description.length}/1000</p>
-                  {fieldErrors.description && <p className="text-xs text-destructive mt-1">{fieldErrors.description}</p>}
-                </div>
-              </CardContent>
-            </Card>
-
+            <VehicleInfoSection
+              formData={{ make: formData.make, model: formData.model, year: formData.year, condition: formData.condition, weight: formData.weight }}
+              fieldErrors={fieldErrors}
+              onChange={handleInputChange}
+              hideCondition
+            />
+            <LocationSection
+              prefix="pickup"
+              title="Pickup Location"
+              description="Where will the vehicle be picked up?"
+              formData={{ street: formData.pickupStreet, city: formData.pickupCity, state: formData.pickupState, zip: formData.pickupZip, type: formData.pickupType }}
+              fieldErrors={fieldErrors}
+              onChange={handleInputChange}
+            />
+            <LocationSection
+              prefix="drop"
+              title="Delivery Location"
+              description="Where should the vehicle be delivered?"
+              formData={{ street: formData.dropStreet, city: formData.dropCity, state: formData.dropState, zip: formData.dropZip, type: formData.dropType }}
+              fieldErrors={fieldErrors}
+              onChange={handleInputChange}
+            />
+            <PricingNotesSection
+              formData={{ price: formData.price, pickupDate: formData.pickupDate, deliveryDate: formData.deliveryDate, description: formData.description }}
+              fieldErrors={fieldErrors}
+              onChange={handleInputChange}
+            />
             <div className="flex flex-col sm:flex-row gap-3">
               <Button type="submit" size="lg" className="flex-1 bg-amber-500 hover:bg-amber-600 text-white" disabled={isSubmitting}>
                 {isSubmitting ? 'Saving…' : 'Save Changes'}

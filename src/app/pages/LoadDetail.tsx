@@ -15,37 +15,11 @@ import {
   usePlaceBidMutation,
   useApproveBidMutation,
   useCancelBookingMutation,
-  useGetCarrierPublicInfoQuery,
   useGetBrokerPublicInfoQuery,
   useGetMyCarrierProfileQuery,
 } from '../store/services/hauliusApi';
 import type { BidDto } from '../store/services/hauliusApi';
-
-// Shows public carrier info inside a bid row (fetches lazily)
-function BidCarrierInfo({ carrierId }: { carrierId: string }) {
-  const { data, isLoading } = useGetCarrierPublicInfoQuery(carrierId);
-  if (isLoading) return <span className="text-xs italic text-muted-foreground">Loading…</span>;
-  if (!data) return <span className="text-xs text-muted-foreground">Carrier info unavailable</span>;
-  const name = data.companyName || data.legalName || data.dbaName;
-  return (
-    <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
-      {name && <div className="font-medium text-foreground flex items-center gap-1"><Building2 className="size-3" />{name}</div>}
-      <div className="flex flex-wrap gap-x-3">
-        {data.dotNumber && <span>DOT: <span className="font-mono">{data.dotNumber}</span></span>}
-        {data.mcNumber && <span>MC: <span className="font-mono">{data.mcNumber}</span></span>}
-      </div>
-      {(data.phyCity || data.phyState) && (
-        <div className="flex items-center gap-1"><MapPin className="size-3" />{[data.phyCity, data.phyState].filter(Boolean).join(', ')}</div>
-      )}
-      {data.phoneNumber && (
-        <div className="flex items-center gap-1"><Phone className="size-3" />{data.phoneNumber}</div>
-      )}
-      {data.operatingStatus && (
-        <div className="flex items-center gap-1"><ShieldCheck className="size-3" />{data.operatingStatus}{data.safetyRating ? ` · Safety: ${data.safetyRating}` : ''}</div>
-      )}
-    </div>
-  );
-}
+import { CarrierInfoInline } from '../components/broker/CarrierInfoInline';
 
 export function LoadDetail() {
   const { id } = useParams<{ id: string }>();
@@ -394,7 +368,7 @@ export function LoadDetail() {
                           {Number(bid.amount).toLocaleString()}
                         </div>
                         <div className="text-sm text-muted-foreground">Status: {bid.status}</div>
-                        <BidCarrierInfo carrierId={bid.carrierId} />
+                        <CarrierInfoInline carrierId={bid.carrierId} />
                       </div>
                       {bid.status === 'PENDING' && !isBooked ? (
                         <Button

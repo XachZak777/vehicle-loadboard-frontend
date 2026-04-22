@@ -1,34 +1,41 @@
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Outlet } from 'react-router';
-import { Welcome } from './pages/Welcome';
-import { LoadBoard } from './pages/LoadBoard';
-import { LoadDetail } from './pages/LoadDetail';
-import { PostLoad } from './pages/PostLoad';
-import { EditLoad } from './pages/EditLoad';
-import { Login } from './pages/Login';
-import { Signup } from './pages/Signup';
-import { CarrierSignup } from './pages/CarrierSignup';
-import { BrokerSignup } from './pages/BrokerSignup';
-import { Validation } from './pages/Validation';
-import { BrokerDashboard } from './pages/BrokerDashboard';
-import { CarrierHistory } from './pages/CarrierHistory';
-import { CompanyProfile } from './pages/CompanyProfile';
-import { Settings } from './pages/Settings';
-import { PendingApproval } from './pages/PendingApproval';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { CheckEmail } from './pages/CheckEmail';
-import { VerifyEmail } from './pages/VerifyEmail';
-import { ForgotPassword } from './pages/ForgotPassword';
-import { ResetPassword } from './pages/ResetPassword';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { PrivacyPolicy } from './pages/PrivacyPolicy';
-import { TermsOfService } from './pages/TermsOfService';
-import { CookiePolicy } from './pages/CookiePolicy';
-import { AboutUs } from './pages/AboutUs';
-import { Contact } from './pages/Contact';
+
+// Lazy-loaded pages — Vite splits each into its own chunk
+const Welcome         = lazy(() => import('./pages/Welcome').then(m => ({ default: m.Welcome })));
+const LoadBoard       = lazy(() => import('./pages/LoadBoard').then(m => ({ default: m.LoadBoard })));
+const LoadDetail      = lazy(() => import('./pages/LoadDetail').then(m => ({ default: m.LoadDetail })));
+const PostLoad        = lazy(() => import('./pages/PostLoad').then(m => ({ default: m.PostLoad })));
+const EditLoad        = lazy(() => import('./pages/EditLoad').then(m => ({ default: m.EditLoad })));
+const Login           = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
+const Signup          = lazy(() => import('./pages/Signup').then(m => ({ default: m.Signup })));
+const CarrierSignup   = lazy(() => import('./pages/CarrierSignup').then(m => ({ default: m.CarrierSignup })));
+const BrokerSignup    = lazy(() => import('./pages/BrokerSignup').then(m => ({ default: m.BrokerSignup })));
+const Validation      = lazy(() => import('./pages/Validation').then(m => ({ default: m.Validation })));
+const BrokerDashboard = lazy(() => import('./pages/BrokerDashboard').then(m => ({ default: m.BrokerDashboard })));
+const CarrierHistory  = lazy(() => import('./pages/CarrierHistory').then(m => ({ default: m.CarrierHistory })));
+const CompanyProfile  = lazy(() => import('./pages/CompanyProfile').then(m => ({ default: m.CompanyProfile })));
+const Settings        = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const PendingApproval = lazy(() => import('./pages/PendingApproval').then(m => ({ default: m.PendingApproval })));
+const AdminDashboard  = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const CheckEmail      = lazy(() => import('./pages/CheckEmail').then(m => ({ default: m.CheckEmail })));
+const VerifyEmail     = lazy(() => import('./pages/VerifyEmail').then(m => ({ default: m.VerifyEmail })));
+const ForgotPassword  = lazy(() => import('./pages/ForgotPassword').then(m => ({ default: m.ForgotPassword })));
+const ResetPassword   = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
+const PrivacyPolicy   = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
+const TermsOfService  = lazy(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
+const CookiePolicy    = lazy(() => import('./pages/CookiePolicy').then(m => ({ default: m.CookiePolicy })));
+const AboutUs         = lazy(() => import('./pages/AboutUs').then(m => ({ default: m.AboutUs })));
+const Contact         = lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
 
 // Thin root layout – Redux Provider lives in App.tsx
 function RootLayout() {
-  return <Outlet />;
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" /></div>}>
+      <Outlet />
+    </Suspense>
+  );
 }
 
 export const router = createBrowserRouter([
@@ -37,7 +44,7 @@ export const router = createBrowserRouter([
     children: [
       {
         path: '/',
-        Component: Welcome,
+        element: <Welcome />,
       },
       {
         path: '/loads',
@@ -129,59 +136,59 @@ export const router = createBrowserRouter([
       },
       {
         path: '/login',
-        Component: Login,
+        element: <Login />,
       },
       {
         path: '/signup',
-        Component: Signup,
+        element: <Signup />,
       },
       {
         path: '/validation',
-        Component: Validation,
+        element: <Validation />,
       },
       {
         path: '/signup/carrier',
-        Component: CarrierSignup,
+        element: <CarrierSignup />,
       },
       {
         path: '/signup/broker',
-        Component: BrokerSignup,
+        element: <BrokerSignup />,
       },
       {
         path: '/check-email',
-        Component: CheckEmail,
+        element: <CheckEmail />,
       },
       {
         path: '/verify-email',
-        Component: VerifyEmail,
+        element: <VerifyEmail />,
       },
       {
         path: '/forgot-password',
-        Component: ForgotPassword,
+        element: <ForgotPassword />,
       },
       {
         path: '/reset-password',
-        Component: ResetPassword,
+        element: <ResetPassword />,
       },
       {
         path: '/privacy',
-        Component: PrivacyPolicy,
+        element: <PrivacyPolicy />,
       },
       {
         path: '/terms',
-        Component: TermsOfService,
+        element: <TermsOfService />,
       },
       {
         path: '/cookies',
-        Component: CookiePolicy,
+        element: <CookiePolicy />,
       },
       {
         path: '/about',
-        Component: AboutUs,
+        element: <AboutUs />,
       },
       {
         path: '/contact',
-        Component: Contact,
+        element: <Contact />,
       },
     ],
   },

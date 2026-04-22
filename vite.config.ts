@@ -17,6 +17,31 @@ export default defineConfig({
     },
   },
 
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React runtime — cached long-term, changes rarely
+          'vendor-react': ['react', 'react-dom', 'react-router'],
+          // Redux stack
+          'vendor-redux': ['@reduxjs/toolkit', 'react-redux'],
+          // Radix / shadcn UI primitives
+          'vendor-ui': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-tooltip',
+            '@radix-ui/react-label',
+            '@radix-ui/react-slot',
+          ],
+          // Lucide icons tree-shaken bundle
+          'vendor-icons': ['lucide-react'],
+        },
+      },
+    },
+  },
+
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })

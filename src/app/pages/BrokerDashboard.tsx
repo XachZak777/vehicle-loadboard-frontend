@@ -1,87 +1,21 @@
-import { useMemo } from 'react';
-import { Link } from 'react-router';
 import { useAppSelector } from '../store/hooks';
 import {
   useGetLoadsQuery,
-  useGetBidsForLoadQuery,
   useApproveBidMutation,
   useCancelBookingMutation,
   useDeleteLoadMutation,
-  useGetCarrierPublicInfoQuery,
 } from '../store/services/hauliusApi';
-import type { LoadDto, BidDto, CarrierPublicInfo } from '../store/services/hauliusApi';
+import type { LoadDto, BidDto } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import {
-  Truck,
-  Package,
-  CheckCircle,
-  Clock,
-  DollarSign,
-  MapPin,
-  Calendar,
-  Check,
-  X,
-  Loader2,
-  AlertCircle,
-  Building2,
-  Phone,
-  ShieldCheck,
-} from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-
-type LoadWithBids = LoadDto & { bids: BidDto[] };
-
-// Sub-component: loads a single load's bids and merges them
-function LoadWithBidsLoader({ load, children }: { load: LoadDto; children: (merged: LoadWithBids) => React.ReactNode }) {
-  const { data: bids = [] } = useGetBidsForLoadQuery(load.id);
-  return <>{children({ ...load, bids })}</>;
-}
-
-// Sub-component: fetches and displays public carrier info in a bid row
-function CarrierInfoInline({ carrierId }: { carrierId: string }) {
-  const { data, isLoading } = useGetCarrierPublicInfoQuery(carrierId);
-
-  if (isLoading) return <span className="text-xs text-muted-foreground italic">Loading carrier info…</span>;
-  if (!data) return <span className="text-xs text-muted-foreground">Carrier info unavailable</span>;
-
-  const name = data.companyName || data.legalName || data.dbaName;
-  return (
-    <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-      {name && (
-        <div className="flex items-center gap-1">
-          <Building2 className="w-3 h-3" />
-          <span className="font-medium text-foreground">{name}</span>
-        </div>
-      )}
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-        {data.dotNumber && <span>DOT: <span className="font-mono">{data.dotNumber}</span></span>}
-        {data.mcNumber && <span>MC: <span className="font-mono">{data.mcNumber}</span></span>}
-      </div>
-      {(data.phyCity || data.phyState) && (
-        <div className="flex items-center gap-1">
-          <MapPin className="w-3 h-3" />
-          <span>{[data.phyCity, data.phyState].filter(Boolean).join(', ')}</span>
-        </div>
-      )}
-      {data.phoneNumber && (
-        <div className="flex items-center gap-1">
-          <Phone className="w-3 h-3" />
-          <span>{data.phoneNumber}</span>
-        </div>
-      )}
-      {data.operatingStatus && (
-        <div className="flex items-center gap-1">
-          <ShieldCheck className="w-3 h-3" />
-          <span>{data.operatingStatus}{data.safetyRating ? ` · Safety: ${data.safetyRating}` : ''}</span>
-        </div>
-      )}
-    </div>
-  );
-}
+import { DashboardStats } from '../components/broker/DashboardStats';
+import { PendingBidsTab } from '../components/broker/PendingBidsTab';
+import { AssignedLoadsTab } from '../components/broker/AssignedLoadsTab';
+import { AllLoadsTab } from '../components/broker/AllLoadsTab';
 
 export function BrokerDashboard() {
   const user = useAppSelector((s) => s.auth.user);
@@ -162,268 +96,42 @@ export function BrokerDashboard() {
 
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-2">Broker Dashboard</h1>
-        {user?.email && (
-          <p className="text-muted-foreground mb-8">{user.email}</p>
-        )}
+        {user?.email && <p className="text-muted-foreground mb-8">{user.email}</p>}
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Loads</p>
-                  <p className="text-3xl font-bold">{loads.length}</p>
-                </div>
-                <Package className="w-8 h-8 text-muted-foreground" />
-              </div>
-            </CardContent>
-          </Card>
+        <DashboardStats loads={loads} openLoads={openLoads} assignedLoads={assignedLoads} />
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Open Loads</p>
-                  <p className="text-3xl font-bold">{openLoads.length}</p>
-                </div>
-                <Clock className="w-8 h-8 text-amber-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Assigned</p>
-                  <p className="text-3xl font-bold">{assignedLoads.length}</p>
-                </div>
-                <Truck className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Open Bids</p>
-                  <p className="text-3xl font-bold">{openLoads.length}</p>
-                </div>
-                <DollarSign className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tabs */}
         <Tabs defaultValue="pending" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="pending">
-              Pending Bids
-            </TabsTrigger>
-            <TabsTrigger value="assigned">
-              Assigned ({assignedLoads.length})
-            </TabsTrigger>
-            <TabsTrigger value="myloads">
-              All Loads ({loads.length})
-            </TabsTrigger>
+            <TabsTrigger value="pending">Pending Bids</TabsTrigger>
+            <TabsTrigger value="assigned">Assigned ({assignedLoads.length})</TabsTrigger>
+            <TabsTrigger value="myloads">All Loads ({loads.length})</TabsTrigger>
           </TabsList>
 
-          {/* Pending Bids */}
           <TabsContent value="pending" className="space-y-4">
-            {openLoads.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center text-muted-foreground">
-                  <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No pending bids right now</p>
-                </CardContent>
-              </Card>
-            ) : (
-              openLoads.map(load => (
-                <LoadWithBidsLoader key={load.id} load={load}>
-                  {(loadWithBids) => {
-                    const pendingBids = loadWithBids.bids.filter(b => b.status === 'PENDING');
-                    if (pendingBids.length === 0) return null;
-                    return (
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <CardTitle className="text-lg">
-                                {load.vehicleYear} {load.vehicleMake} {load.vehicleModel}
-                              </CardTitle>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                                <MapPin className="w-4 h-4" />
-                                {load.pickupCity}, {load.pickupState} → {load.dropCity}, {load.dropState}
-                              </div>
-                            </div>
-                            {getStatusBadge(load)}
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <h4 className="font-semibold text-sm">Incoming Bids</h4>
-                          {pendingBids.map(bid => (
-                            <div key={bid.id} className="flex items-start justify-between p-3 bg-muted rounded-lg gap-3">
-                              <div className="space-y-1 min-w-0">
-                                <div className="flex items-center gap-2 text-sm">
-                                  <DollarSign className="w-4 h-4 text-green-600 flex-shrink-0" />
-                                  <span className="font-semibold">${bid.amount.toLocaleString()}</span>
-                                  {bid.bookNow && (
-                                    <Badge variant="outline" className="text-xs">Book Now</Badge>
-                                  )}
-                                </div>
-                                <CarrierInfoInline carrierId={bid.carrierId} />
-                                {bid.createdAt && (
-                                  <div className="text-xs text-muted-foreground">
-                                    Submitted: {new Date(bid.createdAt).toLocaleDateString()}
-                                  </div>
-                                )}
-                              </div>
-                              <Button
-                                size="sm"
-                                onClick={() => handleApproveBid(load, bid)}
-                                disabled={actionLoading}
-                                className="flex-shrink-0"
-                              >
-                                <Check className="w-4 h-4 mr-1" />
-                                Approve
-                              </Button>
-                            </div>
-                          ))}
-                        </CardContent>
-                      </Card>
-                    );
-                  }}
-                </LoadWithBidsLoader>
-              ))
-            )}
+            <PendingBidsTab
+              openLoads={openLoads}
+              getStatusBadge={getStatusBadge}
+              onApproveBid={handleApproveBid}
+              actionLoading={actionLoading}
+            />
           </TabsContent>
 
-          {/* Assigned Loads */}
           <TabsContent value="assigned" className="space-y-4">
-            {assignedLoads.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center text-muted-foreground">
-                  <Truck className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No assigned loads yet</p>
-                </CardContent>
-              </Card>
-            ) : (
-              assignedLoads.map(load => (
-                <Card key={load.id}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">
-                          {load.vehicleYear} {load.vehicleMake} {load.vehicleModel}
-                        </CardTitle>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {load.assignedCarrierId
-                            ? <CarrierInfoInline carrierId={load.assignedCarrierId} />
-                            : 'No carrier assigned'}
-                        </div>
-                      </div>
-                      {getStatusBadge(load)}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span>{load.pickupCity}, {load.pickupState} → {load.dropCity}, {load.dropState}</span>
-                    </div>
-                    {load.price != null && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <DollarSign className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold">${load.price.toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div className="pt-2">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleCancelBooking(load)}
-                        disabled={actionLoading}
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Cancel Booking
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+            <AssignedLoadsTab
+              assignedLoads={assignedLoads}
+              getStatusBadge={getStatusBadge}
+              onCancelBooking={handleCancelBooking}
+              actionLoading={actionLoading}
+            />
           </TabsContent>
 
-          {/* All Loads */}
           <TabsContent value="myloads" className="space-y-4">
-            {loads.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center">
-                  <p className="text-muted-foreground mb-4">You haven't posted any loads yet</p>
-                  <Button asChild>
-                    <Link to="/post-load">Post Your First Load</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              loads.map(load => (
-                <LoadWithBidsLoader key={load.id} load={load}>
-                  {(loadWithBids) => (
-                    <Card>
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <CardTitle className="text-lg">
-                              {load.vehicleYear} {load.vehicleMake} {load.vehicleModel}
-                            </CardTitle>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {load.pickupCity}, {load.pickupState} → {load.dropCity}, {load.dropState}
-                            </p>
-                          </div>
-                          {getStatusBadge(load)}
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 text-sm">
-                            {load.createdAt && (
-                              <div className="flex items-center gap-1">
-                                <Calendar className="w-4 h-4 text-muted-foreground" />
-                                <span>{new Date(load.createdAt).toLocaleDateString()}</span>
-                              </div>
-                            )}
-                            {load.price != null && (
-                              <div className="flex items-center gap-1">
-                                <DollarSign className="w-4 h-4 text-muted-foreground" />
-                                <span className="font-semibold">${load.price.toLocaleString()}</span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm text-muted-foreground">
-                              {loadWithBids.bids.length} {loadWithBids.bids.length === 1 ? 'bid' : 'bids'}
-                            </span>
-                            <Button variant="outline" size="sm" asChild>
-                              <Link to={`/broker/edit-load/${load.id}`}>Edit</Link>
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDeleteLoad(load)}
-                              disabled={actionLoading}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </LoadWithBidsLoader>
-              ))
-            )}
+            <AllLoadsTab
+              loads={loads}
+              getStatusBadge={getStatusBadge}
+              onDeleteLoad={handleDeleteLoad}
+              actionLoading={actionLoading}
+            />
           </TabsContent>
         </Tabs>
       </div>
