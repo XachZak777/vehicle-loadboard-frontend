@@ -1,7 +1,11 @@
+/**
+ * Legacy mock type used only by the Welcome page demo carousel.
+ * Do NOT use for real API data — use LoadPostingDto from hauliusApi instead.
+ */
 export interface Load {
   id: string;
-  brokerId?: string; // ID of the broker who posted the load
-  brokerEmail?: string; // Email of the broker for notifications
+  brokerId?: string;
+  brokerEmail?: string;
   vehicleType: string;
   make: string;
   model: string;

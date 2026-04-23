@@ -1,27 +1,50 @@
-import type { AuthResponse } from '../store/services/hauliusApi';
+// Stores only non-sensitive user metadata. The JWT lives in an httpOnly
+// cookie set by the backend — it is never accessible from JavaScript.
+const CURRENT_USER_KEY = 'currentUser';
 
-const AUTH_STORAGE_KEY = 'auth';
+export type StoredUser = {
+  userId: string;
+  email: string;
+  role: string;
+};
 
-export type StoredAuth = Pick<AuthResponse, 'token' | 'userId' | 'email' | 'role'>;
-
-export function getAuth(): StoredAuth | null {
-  const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+export function getStoredUser(): StoredUser | null {
+  const raw = localStorage.getItem(CURRENT_USER_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as StoredAuth;
+    return JSON.parse(raw) as StoredUser;
   } catch {
     return null;
   }
 }
 
-export function getToken(): string | null {
-  return getAuth()?.token || null;
+export function setStoredUser(user: StoredUser) {
+  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
 }
 
-export function setAuth(auth: StoredAuth) {
-  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
+export function clearStoredUser() {
+  localStorage.removeItem(CURRENT_USER_KEY);
+  // Clean up any token that may have been stored by an older version
+  localStorage.removeItem('auth');
 }
 
+// Legacy shims so existing callers don't break during migration
+/** @deprecated Use getStoredUser() */
+export function getAuth(): StoredUser | null {
+  return getStoredUser();
+}
+
+/** @deprecated Use setStoredUser() */
+export function setAuth(user: StoredUser) {
+  setStoredUser(user);
+}
+
+/** @deprecated Use clearStoredUser() */
 export function clearAuth() {
-  localStorage.removeItem(AUTH_STORAGE_KEY);
+  clearStoredUser();
+}
+
+export function getToken(): null {
+  // Token is no longer stored in JS — it lives in the httpOnly cookie.
+  return null;
 }

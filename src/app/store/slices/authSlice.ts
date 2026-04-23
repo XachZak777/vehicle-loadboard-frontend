@@ -1,53 +1,39 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { UserProfile } from '../../types/user';
-import { clearAuth, getAuth, setAuth } from '../../utils/authStorage';
+import { clearStoredUser, setStoredUser } from '../../utils/authStorage';
 
 export interface AuthState {
   user: UserProfile | null;
-  token: string | null;
+  token: string | null; // In-memory only — NOT persisted to localStorage
   isAuthenticated: boolean;
   adminApproved: boolean;
 }
 
 function buildInitialState(): AuthState {
-  const stored = getAuth();
-  if (!stored) return { user: null, token: null, isAuthenticated: false, adminApproved: false };
-
+  // Restore non-sensitive user profile from localStorage.
+  // Actual authentication is handled by the httpOnly JWT cookie sent automatically by the browser.
   const savedUser = localStorage.getItem('currentUser');
-  let user: UserProfile | null = savedUser ? JSON.parse(savedUser) : null;
+  let user: UserProfile | null = null;
 
-  if (!user && stored) {
-    const rawRole = stored.role?.toLowerCase() ?? '';
-    const role: UserProfile['role'] =
-      rawRole === 'broker' ? 'broker' : rawRole === 'admin' ? 'admin' : 'carrier';
-    user = {
-      id: stored.userId,
-      role,
-      email: stored.email,
-      phoneNumber: '',
-      phoneVerified: true,
-      companyName: role === 'broker' ? 'Broker' : role === 'admin' ? 'Admin' : 'Carrier',
-      mcNumber: '',
-      dotNumber: '',
-      insuranceCompany: '',
-      cargoInsurance: 0,
-      liabilityInsurance: 0,
-      taxId: '',
-      taxIdType: 'EIN',
-      fmcsaVerified: true,
-      mailingAddress: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      createdAt: new Date().toISOString(),
-    };
+  if (savedUser) {
+    try {
+      user = JSON.parse(savedUser) as UserProfile;
+    } catch {
+      localStorage.removeItem('currentUser');
+    }
+  }
+
+  if (!user) {
+    // Clean up legacy auth storage
+    localStorage.removeItem('auth');
+    return { user: null, token: null, isAuthenticated: false, adminApproved: false };
   }
 
   return {
     user,
-    token: stored.token,
-    isAuthenticated: !!stored.token,
-    adminApproved: user?.adminApproved ?? false,
+    token: null, // Never restored from storage — cookie handles API auth
+    isAuthenticated: true,
+    adminApproved: user.adminApproved ?? false,
   };
 }
 
@@ -55,14 +41,30 @@ const authSlice = createSlice({
   name: 'auth',
   initialState: buildInitialState(),
   reducers: {
-    setCredentials(state, action: PayloadAction<{ user: UserProfile; token: string; userId: string; email: string; role: string; adminApproved?: boolean }>) {
+    setCredentials(
+      state,
+      action: PayloadAction<{
+        user: UserProfile;
+        token: string;
+        userId: string;
+        email: string;
+        role: string;
+        adminApproved?: boolean;
+      }>
+    ) {
       const { user, token, userId, email, role, adminApproved } = action.payload;
-      state.user = { ...user, adminApproved: adminApproved ?? false };
-      state.token = token;
+      const enriched = { ...user, adminApproved: adminApproved ?? false };
+      state.user = enriched;
+      state.token = token; // Held in memory for Authorization header fallback (dev/non-cookie flows)
       state.adminApproved = adminApproved ?? false;
       state.isAuthenticated = true;
-      setAuth({ token, userId, email, role });
-      localStorage.setItem('currentUser', JSON.stringify({ ...user, adminApproved: adminApproved ?? false }));
+
+      // Persist only non-sensitive profile data, never the raw token
+      setStoredUser({ userId, email, role });
+      localStorage.setItem('currentUser', JSON.stringify(enriched));
+
+      // Remove any legacy token entry
+      localStorage.removeItem('auth');
     },
     updateUserProfile(state, action: PayloadAction<UserProfile>) {
       state.user = action.payload;
@@ -74,7 +76,7 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.adminApproved = false;
-      clearAuth();
+      clearStoredUser();
       localStorage.removeItem('currentUser');
     },
   },

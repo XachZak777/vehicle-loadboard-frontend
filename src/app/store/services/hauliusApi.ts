@@ -335,8 +335,8 @@ export type AdminUserDto = {
   state?: string;
   zipCode?: string;
   insuranceCompany?: string;
-  cargoInsurance?: string;
-  liabilityInsurance?: string;
+  cargoInsurance?: number;
+  liabilityInsurance?: number;
   taxIdType?: string;
   taxId?: string;
   carrierOperation?: string;
@@ -347,7 +347,10 @@ export const hauliusApi = createApi({
   reducerPath: 'hauliusApi',
   baseQuery: fetchBaseQuery({
     baseUrl: (import.meta as any).env?.VITE_API_BASE_URL ?? '',
+    credentials: 'include',
     prepareHeaders: (headers, { getState }) => {
+      // Token is in-memory only (not localStorage). The httpOnly cookie is the
+      // primary auth mechanism; the Authorization header is a fallback for dev.
       const token = (getState() as RootState).auth.token;
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);

@@ -15,16 +15,8 @@ function getBaseUrl() {
   return (base || '').replace(/\/$/, '');
 }
 
-function getToken(): string | null {
-  try {
-    const raw = localStorage.getItem('auth');
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed?.token ?? null;
-  } catch {
-    return null;
-  }
-}
+// Token is no longer stored in localStorage — authentication is handled by
+// the httpOnly JWT cookie, which is sent automatically via credentials: 'include'.
 
 async function requestJson<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const baseUrl = getBaseUrl();
@@ -42,16 +34,12 @@ async function requestJson<T>(path: string, options: RequestOptions = {}): Promi
     ...(options.headers || {}),
   };
 
-  // Attach JWT if auth=true (default) and a token is stored.
-  const shouldAuth = options.auth !== false;
-  if (shouldAuth) {
-    const token = getToken();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-  }
+  // Auth is handled by httpOnly cookie (credentials: 'include' above).
 
   try {
     const res = await fetch(url, {
       ...options,
+      credentials: 'include',
       headers,
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
     });
