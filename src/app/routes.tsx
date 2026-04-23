@@ -12,7 +12,6 @@ const Login           = lazy(() => import('./pages/Login').then(m => ({ default:
 const Signup          = lazy(() => import('./pages/Signup').then(m => ({ default: m.Signup })));
 const CarrierSignup   = lazy(() => import('./pages/CarrierSignup').then(m => ({ default: m.CarrierSignup })));
 const BrokerSignup    = lazy(() => import('./pages/BrokerSignup').then(m => ({ default: m.BrokerSignup })));
-const Validation      = lazy(() => import('./pages/Validation').then(m => ({ default: m.Validation })));
 const BrokerDashboard = lazy(() => import('./pages/BrokerDashboard').then(m => ({ default: m.BrokerDashboard })));
 const CarrierHistory  = lazy(() => import('./pages/CarrierHistory').then(m => ({ default: m.CarrierHistory })));
 const CompanyProfile  = lazy(() => import('./pages/CompanyProfile').then(m => ({ default: m.CompanyProfile })));
@@ -132,10 +131,6 @@ export const router = createBrowserRouter([
       {
         path: '/signup',
         element: <Signup />,
-      },
-      {
-        path: '/validation',
-        element: <Validation />,
       },
       {
         path: '/signup/carrier',
