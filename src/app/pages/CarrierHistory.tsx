@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAppSelector } from '../store/hooks';
 import { useGetMyCarrierBidsQuery, useGetBrokerPublicInfoQuery } from '../store/services/hauliusApi';
@@ -7,6 +8,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { RateModal } from '../components/RateModal';
 import {
   Truck,
   Package,
@@ -20,7 +22,10 @@ import {
   TrendingUp,
   Building2,
   Phone,
+  Star,
 } from 'lucide-react';
+
+const COMPLETED_STATUSES = ['DELIVERED', 'PAID', 'COMPLETED'];
 
 function BrokerContactInline({ brokerId }: { brokerId: string }) {
   const { data, isLoading } = useGetBrokerPublicInfoQuery(brokerId);
@@ -81,7 +86,12 @@ function getStatusBadge(status: string) {
 }
 
 function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
+  const [ratingOpen, setRatingOpen] = useState(false);
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const { data: brokerInfo } = useGetBrokerPublicInfoQuery(bid.brokerId ?? '', { skip: !bid.brokerId });
+  const brokerName = brokerInfo?.companyName || brokerInfo?.legalName || 'the broker';
   const vehicleTitle = [bid.vehicleYear, bid.vehicleMake, bid.vehicleModel].filter(Boolean).join(' ') || `Load #${bid.loadId.slice(0, 8)}`;
+  const isCompleted = COMPLETED_STATUSES.includes(bid.loadStatus ?? '');
   const isApproved = bid.bidStatus === 'APPROVED';
   return (
     <Card>
@@ -162,12 +172,42 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
             <span className="text-yellow-700 dark:text-yellow-400">Waiting for broker approval</span>
           </div>
         ) : null}
-        <div className="pt-1">
+        <div className="pt-1 flex items-center gap-2 flex-wrap">
           <Link to={`/load/${bid.loadId}`}>
             <Button variant="outline" size="sm">View Load</Button>
           </Link>
+          {isCompleted && bid.brokerId && (
+            ratingSubmitted ? (
+              <span className="flex items-center gap-1.5 text-sm font-medium text-green-600">
+                <CheckCircle className="size-4" />
+                Rating Submitted
+              </span>
+            ) : (
+              <Button
+                size="sm"
+                className="bg-amber-500 hover:bg-amber-600 text-white"
+                onClick={() => setRatingOpen(true)}
+              >
+                <Star className="size-3.5 mr-1.5" />
+                Rate Broker
+              </Button>
+            )
+          )}
         </div>
       </CardContent>
+
+      {bid.brokerId && (
+        <RateModal
+          open={ratingOpen}
+          onClose={() => setRatingOpen(false)}
+          onSubmitted={() => setRatingSubmitted(true)}
+          targetId={bid.brokerId}
+          targetType="broker"
+          targetName={brokerName}
+          loadId={bid.loadId}
+          vehicleTitle={vehicleTitle}
+        />
+      )}
     </Card>
   );
 }
