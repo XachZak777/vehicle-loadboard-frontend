@@ -6,7 +6,6 @@ import { setCredentials } from '../store/slices/authSlice';
 import {
   useUpdateBrokerProfileMutation,
   useUploadBrokerW9Mutation,
-  useUploadBrokerInsuranceMutation,
   useUploadBrokerMcAuthorityMutation,
   useValidateBrokerMutation,
   useSaveBrokerFromValidationMutation,
@@ -16,8 +15,8 @@ import { UserProfile } from '../types/user';
 import { AuthNavbar } from '../components/AuthNavbar';
 import { PageWrapper, ContentWrapper } from '../styles/signup.styles';
 import {
-  isValidMcNumber, isValidDotNumber, isValidEmail, isValidCompanyName,
-  isValidInsuranceAmount, isValidEIN, isValidSSN,
+  isValidMcNumber, isValidDotNumber, isBusinessEmail, businessEmailError,
+  isValidEIN, isValidSSN,
   isStrongPassword, passwordRequirementsText, buildErrors, type FieldErrors,
 } from '../utils/validation';
 import { SignupStepIndicator } from '../components/signup/SignupStepIndicator';
@@ -32,7 +31,7 @@ type SignupStep = 'company-info' | 'fmcsa-verification' | 'insurance-info' | 'w9
 const STEPS = [
   { id: 'company-info',       label: 'MC / DOT'       },
   { id: 'fmcsa-verification', label: 'Verify'         },
-  { id: 'insurance-info',     label: 'Insurance'      },
+  { id: 'insurance-info',     label: 'Bond'           },
   { id: 'w9-upload',          label: 'Documents'      },
   { id: 'create-account',     label: 'Create Account' },
 ] as const;
@@ -44,7 +43,6 @@ export function BrokerSignup() {
   const [saveBroker] = useSaveBrokerFromValidationMutation();
   const [updateProfile] = useUpdateBrokerProfileMutation();
   const [uploadW9] = useUploadBrokerW9Mutation();
-  const [uploadInsurance] = useUploadBrokerInsuranceMutation();
   const [uploadMcAuthority] = useUploadBrokerMcAuthorityMutation();
 
   const [currentStep, setCurrentStep] = useState<SignupStep>('company-info');
@@ -53,16 +51,16 @@ export function BrokerSignup() {
   const [fmcsaVerified, setFmcsaVerified] = useState(false);
   const [fmcsaData, setFmcsaData] = useState<LookupResponse | null>(null);
   const [w9File, setW9File] = useState<File | null>(null);
-  const [insuranceFile, setInsuranceFile] = useState<File | null>(null);
   const [mcAuthorityFile, setMcAuthorityFile] = useState<File | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const [formData, setFormData] = useState({
     email: '', password: '', confirmPassword: '',
     companyName: '', dotNumber: '', mcNumber: '', phoneNumber: '',
-    insuranceCompany: '', cargoInsurance: '', liabilityInsurance: '',
-    taxIdType: 'EIN' as 'SSN' | 'EIN',
-    taxId: '', mailingAddress: '', city: '', state: '', zipCode: '',
+    bondCompany: '', bondPolicyNumber: '', bondCoverage: '', bondEffectiveDate: '',
+    bondAgentFirstName: '', bondAgentLastName: '', bondAgentEmail: '', bondAgentPhone: '',
+    taxIdType: 'EIN' as 'SSN' | 'EIN', taxId: '',
+    mailingAddress: '', city: '', state: '', zipCode: '',
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -112,12 +110,14 @@ export function BrokerSignup() {
 
   const handleInsuranceSubmit = () => {
     const errs = buildErrors([
-      [!formData.insuranceCompany.trim(), 'insuranceCompany', 'Insurance company name is required.'],
-      [!!formData.insuranceCompany.trim() && !isValidCompanyName(formData.insuranceCompany), 'insuranceCompany', 'Insurance company name must be 2–100 characters.'],
-      [!formData.cargoInsurance.trim(), 'cargoInsurance', 'Cargo insurance amount is required.'],
-      [!!formData.cargoInsurance.trim() && !isValidInsuranceAmount(formData.cargoInsurance), 'cargoInsurance', 'Enter a valid amount between $1 and $999,999,999.'],
-      [!formData.liabilityInsurance.trim(), 'liabilityInsurance', 'Liability insurance amount is required.'],
-      [!!formData.liabilityInsurance.trim() && !isValidInsuranceAmount(formData.liabilityInsurance), 'liabilityInsurance', 'Enter a valid amount between $1 and $999,999,999.'],
+      [!formData.bondCompany.trim(), 'bondCompany', 'Bond company is required.'],
+      [!formData.bondPolicyNumber.trim(), 'bondPolicyNumber', 'Bond policy number is required.'],
+      [!formData.bondCoverage.trim(), 'bondCoverage', 'Bond coverage amount is required.'],
+      [!formData.bondEffectiveDate, 'bondEffectiveDate', 'Bond effective date is required.'],
+      [!formData.bondAgentFirstName.trim(), 'bondAgentFirstName', 'Bond agent first name is required.'],
+      [!formData.bondAgentLastName.trim(), 'bondAgentLastName', 'Bond agent last name is required.'],
+      [!formData.bondAgentEmail.trim(), 'bondAgentEmail', 'Bond agent email is required.'],
+      [!formData.bondAgentPhone.trim(), 'bondAgentPhone', 'Bond agent phone is required.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
@@ -142,7 +142,6 @@ export function BrokerSignup() {
       [!!taxId && formData.taxIdType === 'EIN' && !isValidEIN(taxId), 'taxId', 'EIN must be in the format XX-XXXXXXX (9 digits).'],
       [!!taxId && formData.taxIdType === 'SSN' && !isValidSSN(taxId), 'taxId', 'SSN must be in the format XXX-XX-XXXX (9 digits).'],
       [!w9File, 'w9File', 'W9 document is required.'],
-      [!insuranceFile, 'insuranceFile', 'Insurance certificate is required.'],
       [!mcAuthorityFile, 'mcAuthorityFile', 'MC Authority document is required.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
@@ -153,7 +152,7 @@ export function BrokerSignup() {
   const handleCreateAccount = async () => {
     const errs = buildErrors([
       [!formData.email.trim(), 'email', 'Email address is required.'],
-      [!!formData.email.trim() && !isValidEmail(formData.email), 'email', 'Please enter a valid email address.'],
+      [!!formData.email.trim() && !isBusinessEmail(formData.email), 'email', businessEmailError],
       [!formData.password, 'password', 'Password is required.'],
       [!!formData.password && !isStrongPassword(formData.password), 'password', passwordRequirementsText],
       [!formData.confirmPassword, 'confirmPassword', 'Please confirm your password.'],
@@ -169,9 +168,6 @@ export function BrokerSignup() {
         id: res.userId, role: 'broker', email: res.email,
         phoneNumber: formData.phoneNumber, phoneVerified: false,
         companyName: formData.companyName, mcNumber: formData.mcNumber, dotNumber: formData.dotNumber,
-        insuranceCompany: formData.insuranceCompany,
-        cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : 0,
-        liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : 0,
         w9Document: w9File?.name, taxId: formData.taxId, taxIdType: formData.taxIdType,
         fmcsaVerified: true, verificationDate: new Date().toISOString(),
         mailingAddress: formData.mailingAddress, city: formData.city,
@@ -179,11 +175,10 @@ export function BrokerSignup() {
       };
       dispatch(setCredentials({ user: userProfile, token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved }));
 
-      try { await updateProfile({ companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber, phoneNumber: formData.phoneNumber, insuranceCompany: formData.insuranceCompany, cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : undefined, liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : undefined, taxIdType: formData.taxIdType, taxId: formData.taxId, mailingAddress: formData.mailingAddress, city: formData.city, state: formData.state, zipCode: formData.zipCode }).unwrap(); } catch { toast.warning('Profile data will be saved once your email is verified.'); }
+      try { await updateProfile({ companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber, phoneNumber: formData.phoneNumber, taxIdType: formData.taxIdType, taxId: formData.taxId, mailingAddress: formData.mailingAddress, city: formData.city, state: formData.state, zipCode: formData.zipCode, bondCompany: formData.bondCompany || undefined, bondPolicyNumber: formData.bondPolicyNumber || undefined, bondCoverage: formData.bondCoverage || undefined, bondEffectiveDate: formData.bondEffectiveDate || undefined, bondAgentFirstName: formData.bondAgentFirstName || undefined, bondAgentLastName: formData.bondAgentLastName || undefined, bondAgentEmail: formData.bondAgentEmail || undefined, bondAgentPhone: formData.bondAgentPhone || undefined }).unwrap(); } catch { toast.warning('Profile data will be saved once your email is verified.'); }
 
       for (const [file, upload, msg] of [
         [w9File, uploadW9, 'W9 upload will be available once your email is verified.'],
-        [insuranceFile, uploadInsurance, 'Insurance certificate upload will be available once your email is verified.'],
         [mcAuthorityFile, uploadMcAuthority, 'MC Authority upload will be available once your email is verified.'],
       ] as [File | null, (fd: FormData) => any, string][]) {
         if (file) {
@@ -234,7 +229,16 @@ export function BrokerSignup() {
 
         {currentStep === 'insurance-info' && (
           <InsuranceInfoStep
-            formData={{ insuranceCompany: formData.insuranceCompany, cargoInsurance: formData.cargoInsurance, liabilityInsurance: formData.liabilityInsurance }}
+            formData={{
+              bondCompany: formData.bondCompany,
+              bondPolicyNumber: formData.bondPolicyNumber,
+              bondCoverage: formData.bondCoverage,
+              bondEffectiveDate: formData.bondEffectiveDate,
+              bondAgentFirstName: formData.bondAgentFirstName,
+              bondAgentLastName: formData.bondAgentLastName,
+              bondAgentEmail: formData.bondAgentEmail,
+              bondAgentPhone: formData.bondAgentPhone,
+            }}
             fieldErrors={fieldErrors}
             onChange={handleInputChange}
             onSubmit={handleInsuranceSubmit}
@@ -248,10 +252,8 @@ export function BrokerSignup() {
             fieldErrors={fieldErrors}
             onChange={handleInputChange}
             w9File={w9File}
-            insuranceFile={insuranceFile}
             mcAuthorityFile={mcAuthorityFile}
             onW9Upload={makeUploadHandler(setW9File, 'W9 document uploaded successfully')}
-            onInsuranceUpload={makeUploadHandler(setInsuranceFile, 'Insurance certificate uploaded successfully')}
             onMcAuthorityUpload={makeUploadHandler(setMcAuthorityFile, 'MC Authority document uploaded successfully')}
             onSubmit={handleDocumentsSubmit}
             onBack={() => setCurrentStep('insurance-info')}

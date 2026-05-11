@@ -11,29 +11,32 @@ import {
   useUploadCarrierInsuranceMutation,
   useUploadCarrierMcAuthorityMutation,
   LookupResponse,
+  PreferredLine,
 } from '../store/services/hauliusApi';
 import { UserProfile } from '../types/user';
 import { AuthNavbar } from '../components/AuthNavbar';
 import { PageWrapper, ContentWrapper } from '../styles/signup.styles';
 import {
   isValidDotNumber, isValidMcNumber, isValidCompanyName, isValidInsuranceAmount,
-  isValidEIN, isValidSSN, isValidEmail, isStrongPassword,
-  passwordRequirementsText, buildErrors, type FieldErrors,
+  isValidEIN, isValidSSN, isBusinessEmail, businessEmailError,
+  isStrongPassword, passwordRequirementsText, buildErrors, type FieldErrors,
 } from '../utils/validation';
 import { SignupStepIndicator } from '../components/signup/SignupStepIndicator';
 import { CompanyInfoStep } from '../components/signup/CompanyInfoStep';
 import { FmcsaVerificationStep } from '../components/signup/FmcsaVerificationStep';
-import { InsuranceInfoStep } from '../components/signup/InsuranceInfoStep';
+import { CarrierInsuranceStep } from '../components/signup/CarrierInsuranceStep';
+import { PreferredLinesStep } from '../components/signup/PreferredLinesStep';
 import { DocumentsUploadStep } from '../components/signup/DocumentsUploadStep';
 import { CreateAccountStep } from '../components/signup/CreateAccountStep';
 
-type SignupStep = 'company-info' | 'fmcsa-verification' | 'insurance-info' | 'w9-upload' | 'create-account';
+type SignupStep = 'company-info' | 'fmcsa-verification' | 'insurance-info' | 'w9-upload' | 'preferred-lines' | 'create-account';
 
 const STEPS = [
   { id: 'company-info',       label: 'MC / DOT'       },
   { id: 'fmcsa-verification', label: 'Verify'         },
   { id: 'insurance-info',     label: 'Insurance'      },
   { id: 'w9-upload',          label: 'Documents'      },
+  { id: 'preferred-lines',    label: 'Lanes'          },
   { id: 'create-account',     label: 'Create Account' },
 ] as const;
 
@@ -55,6 +58,7 @@ export function CarrierSignup() {
   const [w9File, setW9File] = useState<File | null>(null);
   const [insuranceFile, setInsuranceFile] = useState<File | null>(null);
   const [mcAuthorityFile, setMcAuthorityFile] = useState<File | null>(null);
+  const [preferredLines, setPreferredLines] = useState<PreferredLine[]>([]);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const [formData, setFormData] = useState({
@@ -128,16 +132,14 @@ export function CarrierSignup() {
     setCurrentStep('w9-upload');
   };
 
-  const makeUploadHandler = (
-    setFile: (f: File) => void,
-    successMsg: string,
-  ) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error('File size must be less than 5MB'); return; }
-    setFile(file);
-    toast.success(successMsg);
-  };
+  const makeUploadHandler = (setFile: (f: File) => void, successMsg: string) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { toast.error('File size must be less than 5MB'); return; }
+      setFile(file);
+      toast.success(successMsg);
+    };
 
   const handleDocumentsSubmit = () => {
     const taxId = formData.taxId.trim();
@@ -151,13 +153,17 @@ export function CarrierSignup() {
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
+    setCurrentStep('preferred-lines');
+  };
+
+  const handlePreferredLinesSubmit = () => {
     setCurrentStep('create-account');
   };
 
   const handleCreateAccount = async () => {
     const errs = buildErrors([
       [!formData.email.trim(), 'email', 'Email address is required.'],
-      [!!formData.email.trim() && !isValidEmail(formData.email), 'email', 'Please enter a valid email address.'],
+      [!!formData.email.trim() && !isBusinessEmail(formData.email), 'email', businessEmailError],
       [!formData.password, 'password', 'Password is required.'],
       [!!formData.password && !isStrongPassword(formData.password), 'password', passwordRequirementsText],
       [!formData.confirmPassword, 'confirmPassword', 'Please confirm your password.'],
@@ -183,7 +189,18 @@ export function CarrierSignup() {
       };
       dispatch(setCredentials({ user: userProfile, token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved }));
 
-      try { await updateProfile({ companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber, phoneNumber: formData.phoneNumber, insuranceCompany: formData.insuranceCompany, cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : undefined, liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : undefined, taxIdType: formData.taxIdType, taxId: formData.taxId, mailingAddress: formData.mailingAddress, city: formData.city, state: formData.state, zipCode: formData.zipCode }).unwrap(); } catch { toast.warning('Profile data will be saved once your email is verified.'); }
+      const linesJson = preferredLines.length > 0 ? JSON.stringify(preferredLines) : undefined;
+      try {
+        await updateProfile({
+          companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
+          phoneNumber: formData.phoneNumber, insuranceCompany: formData.insuranceCompany,
+          cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : undefined,
+          liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : undefined,
+          taxIdType: formData.taxIdType, taxId: formData.taxId, mailingAddress: formData.mailingAddress,
+          city: formData.city, state: formData.state, zipCode: formData.zipCode,
+          preferredLines: linesJson,
+        }).unwrap();
+      } catch { toast.warning('Profile data will be saved once your email is verified.'); }
 
       for (const [file, upload, msg] of [
         [w9File, uploadW9, 'W9 upload will be available once your email is verified.'],
@@ -236,7 +253,7 @@ export function CarrierSignup() {
         )}
 
         {currentStep === 'insurance-info' && (
-          <InsuranceInfoStep
+          <CarrierInsuranceStep
             formData={{ insuranceCompany: formData.insuranceCompany, cargoInsurance: formData.cargoInsurance, liabilityInsurance: formData.liabilityInsurance }}
             fieldErrors={fieldErrors}
             onChange={handleInputChange}
@@ -261,6 +278,15 @@ export function CarrierSignup() {
           />
         )}
 
+        {currentStep === 'preferred-lines' && (
+          <PreferredLinesStep
+            lines={preferredLines}
+            onChange={setPreferredLines}
+            onSubmit={handlePreferredLinesSubmit}
+            onBack={() => setCurrentStep('w9-upload')}
+          />
+        )}
+
         {currentStep === 'create-account' && (
           <CreateAccountStep
             role="carrier"
@@ -269,11 +295,10 @@ export function CarrierSignup() {
             onChange={handleInputChange}
             isLoading={isLoading}
             onSubmit={handleCreateAccount}
-            onBack={() => setCurrentStep('w9-upload')}
+            onBack={() => setCurrentStep('preferred-lines')}
           />
         )}
       </ContentWrapper>
     </PageWrapper>
   );
 }
-

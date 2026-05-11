@@ -7,17 +7,16 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { AuthNavbar } from '../components/AuthNavbar';
 import { useForgotPasswordMutation } from '../store/services/hauliusApi';
+import { isBusinessEmail } from '../utils/validation';
 
 export function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
-  const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValidEmail(email.trim())) return;
+    if (!isBusinessEmail(email.trim())) return;
     try {
       await forgotPassword({ email: email.trim() }).unwrap();
     } catch {
@@ -68,7 +67,7 @@ export function ForgotPassword() {
                 <Button
                   type="submit"
                   className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
-                  disabled={isLoading || !isValidEmail(email.trim())}
+                  disabled={isLoading || !isBusinessEmail(email.trim())}
                 >
                   {isLoading ? 'Sending…' : 'Send reset link'}
                 </Button>

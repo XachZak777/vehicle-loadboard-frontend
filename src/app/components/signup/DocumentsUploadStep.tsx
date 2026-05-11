@@ -12,10 +12,8 @@ interface Props {
   fieldErrors: FieldErrors;
   onChange: (field: string, value: string) => void;
   w9File: File | null;
-  insuranceFile: File | null;
   mcAuthorityFile: File | null;
   onW9Upload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onInsuranceUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onMcAuthorityUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: () => void;
   onBack: () => void;
@@ -23,15 +21,15 @@ interface Props {
 
 export function DocumentsUploadStep({
   formData, fieldErrors, onChange,
-  w9File, insuranceFile, mcAuthorityFile,
-  onW9Upload, onInsuranceUpload, onMcAuthorityUpload,
+  w9File, mcAuthorityFile,
+  onW9Upload, onMcAuthorityUpload,
   onSubmit, onBack,
 }: Props) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Required Documents</CardTitle>
-        <CardDescription>Upload your W9, Insurance Certificate, and MC Authority documents</CardDescription>
+        <CardDescription>Upload your W9 and MC Authority documents</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
@@ -77,13 +75,6 @@ export function DocumentsUploadStep({
           file={w9File}
           onChange={onW9Upload}
           error={fieldErrors.w9File}
-        />
-        <DocumentUploadField
-          label="Insurance Certificate *"
-          fieldId="insuranceFile"
-          file={insuranceFile}
-          onChange={onInsuranceUpload}
-          error={fieldErrors.insuranceFile}
         />
         <DocumentUploadField
           label="MC Authority *"

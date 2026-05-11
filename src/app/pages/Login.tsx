@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setCredentials, logout } from '../store/slices/authSlice';
-import { useLoginUserMutation } from '../store/services/hauliusApi';
-import { hauliusApi } from '../store/services/hauliusApi';
-import { UserProfile } from '../types/user';
+import { logout } from '../store/slices/authSlice';
+import { hauliusApi, useLoginUserMutation, useLogoutUserMutation } from '../store/services/hauliusApi';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { AuthNavbar } from '../components/AuthNavbar';
 import { APP_NAME } from '../constants';
+import { isBusinessEmail, businessEmailError } from '../utils/validation';
 
 export function Login() {
   const navigate = useNavigate();
@@ -20,22 +19,25 @@ export function Login() {
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const [loginUser] = useLoginUserMutation();
+  const [logoutUser] = useLogoutUserMutation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showResend, setShowResend] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // If an authenticated user navigates back to the login page, clear their session
   // and replace the history entry so the forward button no longer leads to the dashboard.
   useEffect(() => {
     if (isAuthenticated) {
-      dispatch(logout());
-      dispatch(hauliusApi.util.resetApiState());
-      // Replace the current history entry to cut off forward navigation to protected pages
-      navigate('/login', { replace: true });
-      toast.info('Session cleared', {
-        description: 'You were signed out. Please log in again to continue.',
+      logoutUser().finally(() => {
+        dispatch(logout());
+        dispatch(hauliusApi.util.resetApiState());
+        navigate('/login', { replace: true });
+        toast.info('Session cleared', {
+          description: 'You were signed out. Please log in again to continue.',
+        });
       });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -43,83 +45,33 @@ export function Login() {
   const justVerified = (location.state as any)?.verified === true;
   const justResetPassword = (location.state as any)?.passwordReset === true;
 
-  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
     setShowResend(false);
 
-    if (!email.trim() || !password) {
+    if (!email.trim()) {
       setIsLoading(false);
-      setError('Email and password are required.');
+      setError('Email address is required.');
       return;
     }
 
-    if (!isValidEmail(email.trim())) {
+    if (!isBusinessEmail(email.trim())) {
       setIsLoading(false);
-      setError('Please enter a valid email address.');
+      setError(businessEmailError);
       return;
     }
 
-    if (password.length < 6) {
+    if (!password) {
       setIsLoading(false);
-      setError('Password must be at least 6 characters.');
+      setError('Password is required.');
       return;
     }
 
     try {
       const res = await loginUser({ email: email.trim(), password }).unwrap();
-
-      const rawRole = res.role?.toLowerCase() ?? '';
-      const role: import('../types/user').UserRole =
-        rawRole === 'broker' ? 'broker' : rawRole === 'admin' ? 'admin' : 'carrier';
-
-      const minimalUser: UserProfile = {
-        id: res.userId,
-        role,
-        email: res.email,
-        phoneNumber: '',
-        phoneVerified: true,
-        companyName: role === 'broker' ? 'Broker' : role === 'admin' ? 'Admin' : 'Carrier',
-        mcNumber: '',
-        dotNumber: '',
-        insuranceCompany: '',
-        cargoInsurance: 0,
-        liabilityInsurance: 0,
-        taxId: '',
-        taxIdType: 'EIN',
-        fmcsaVerified: true,
-        mailingAddress: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        createdAt: new Date().toISOString(),
-      };
-
-      dispatch(setCredentials({
-        user: minimalUser,
-        token: res.token,
-        userId: res.userId,
-        email: res.email,
-        role: res.role,
-        adminApproved: res.adminApproved,
-      }));
-
-      toast.success('Welcome back!', {
-        description: `Logged in as ${res.email}`,
-      });
-
-      if (!res.adminApproved && role !== 'admin') {
-        navigate('/pending-approval');
-      } else if (role === 'broker') {
-        navigate('/broker/dashboard');
-      } else if (role === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/loads');
-      }
+      navigate('/verify-login', { state: { email: res.email } });
     } catch (e: any) {
       const status = e?.status ?? e?.originalStatus;
       const message =
@@ -178,14 +130,25 @@ export function Login() {
               </div>
               <div>
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center justify-between text-sm">

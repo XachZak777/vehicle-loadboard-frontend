@@ -1,7 +1,10 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery, type BaseQueryFn, type FetchArgs, type FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../store';
+import { sessionExpire } from '../slices/authSlice';
 
-export type AuthRole = 'BROKER' | 'CARRIER';
+export type PreferredLine = { fromState: string; toState: string };
+
+export type AuthRole = 'BROKER' | 'CARRIER' | 'DEALER';
 
 export type AuthResponse = {
   token: string;
@@ -10,6 +13,8 @@ export type AuthResponse = {
   role: string;
   adminApproved: boolean;
 };
+
+export type LoginPendingResponse = { email: string };
 
 export type MeResponse = {
   userId: string;
@@ -34,6 +39,17 @@ export type ProfileUpdatePayload = {
   city?: string;
   state?: string;
   zipCode?: string;
+  // Broker-only bond fields
+  bondCompany?: string;
+  bondPolicyNumber?: string;
+  bondCoverage?: string;
+  bondEffectiveDate?: string;
+  bondAgentFirstName?: string;
+  bondAgentLastName?: string;
+  bondAgentEmail?: string;
+  bondAgentPhone?: string;
+  // Carrier-only preferred lines (JSON-encoded)
+  preferredLines?: string;
 };
 
 export type DocumentUploadResponse = {
@@ -129,6 +145,23 @@ export type SaveFromValidationRequest = {
   password: string;
 };
 
+export type RegisterDealerPayload = {
+  email: string;
+  password: string;
+  companyName: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  businessPhone: string;
+  companyAddress: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  yearEstablished?: string;
+  dealerLicenseNumber?: string;
+  auctionAccessNumber?: string;
+  howDidYouHear?: string;
+};
+
 export type CreateLoadPayload = {
   pickupCity: string;
   pickupState: string;
@@ -136,22 +169,37 @@ export type CreateLoadPayload = {
   pickupZip?: string;
   pickupCountry?: string;
   pickupLotNumber?: string;
+  pickupContactName?: string;
+  pickupContactPhone?: string;
   dropCity: string;
   dropState: string;
   dropStreet?: string;
   dropZip?: string;
   dropCountry?: string;
   dropLotNumber?: string;
+  dropContactName?: string;
+  dropContactPhone?: string;
   pickupType?: string;
   dropType?: string;
   vehicleMake: string;
   vehicleModel: string;
   vehicleYear: number;
+  vehicleType?: string;
+  vehicleCondition?: string;
+  vin?: string;
+  trailerType?: string;
+  vehicleAdditionalInfo?: string;
   description?: string;
   weight?: number;
   price?: number;
   pickupDate?: string;
   deliveryDate?: string;
+  contactName?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  orderId?: string;
+  paymentMethod?: string;
+  paymentTiming?: string;
 };
 
 export type LoadDto = {
@@ -163,26 +211,58 @@ export type LoadDto = {
   pickupZip?: string;
   pickupCountry?: string;
   pickupLotNumber?: string;
+  pickupContactName?: string;
+  pickupContactPhone?: string;
   dropCity: string;
   dropState: string;
   dropStreet?: string;
   dropZip?: string;
   dropCountry?: string;
   dropLotNumber?: string;
+  dropContactName?: string;
+  dropContactPhone?: string;
   pickupType?: string;
   dropType?: string;
   vehicleMake: string;
   vehicleModel: string;
   vehicleYear: number;
+  vehicleType?: string;
+  vehicleCondition?: string;
+  vin?: string;
+  trailerType?: string;
   description?: string;
   weight?: number;
   price?: number;
+  distance?: number;
   pickupDate?: string;
   deliveryDate?: string;
   createdAt?: string;
   carrierId?: string;
   assignedCarrierId?: string;
   status?: string;
+  contactName?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  orderId?: string;
+  paymentMethod?: string;
+  paymentTiming?: string;
+};
+
+export type VinDecodeResult = {
+  vin: string;
+  make?: string;
+  model?: string;
+  year?: number;
+  vehicleType?: string;
+  bodyClass?: string;
+  trim?: string;
+  driveType?: string;
+  fuelType?: string;
+  engineHp?: string;
+  cylinders?: string;
+  displacementL?: string;
+  success: boolean;
+  errorText?: string;
 };
 
 export type BidPayload = {
@@ -241,11 +321,17 @@ export type BrokerProfile = {
   city?: string;
   state?: string;
   zipCode?: string;
-  insuranceCompany?: string;
-  cargoInsurance?: number;
-  liabilityInsurance?: number;
   taxIdType?: string;
   taxId?: string;
+  // Bond fields
+  bondCompany?: string;
+  bondPolicyNumber?: string;
+  bondCoverage?: string;
+  bondEffectiveDate?: string;
+  bondAgentFirstName?: string;
+  bondAgentLastName?: string;
+  bondAgentEmail?: string;
+  bondAgentPhone?: string;
 };
 
 export type CarrierProfile = {
@@ -275,6 +361,7 @@ export type CarrierProfile = {
   liabilityInsurance?: number;
   taxIdType?: string;
   taxId?: string;
+  preferredLines?: string;
 };
 
 export type CarrierPublicInfo = {
@@ -343,29 +430,54 @@ export type AdminUserDto = {
   documents: AdminDocumentDto[];
 };
 
+const rawBaseQuery = fetchBaseQuery({
+  baseUrl: (import.meta as any).env?.VITE_API_BASE_URL ?? '',
+  credentials: 'include',
+  prepareHeaders: (headers, { getState }) => {
+    const token = (getState() as RootState).auth.token;
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+    return headers;
+  },
+});
+
+const baseQueryWith401Intercept: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+  args,
+  api,
+  extraOptions
+) => {
+  const result = await rawBaseQuery(args, api, extraOptions);
+  if (result.error?.status === 401 && (api.getState() as RootState).auth.isAuthenticated) {
+    api.dispatch(sessionExpire());
+  }
+  return result;
+};
+
 export const hauliusApi = createApi({
   reducerPath: 'hauliusApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: (import.meta as any).env?.VITE_API_BASE_URL ?? '',
-    credentials: 'include',
-    prepareHeaders: (headers, { getState }) => {
-      // Token is in-memory only (not localStorage). The httpOnly cookie is the
-      // primary auth mechanism; the Authorization header is a fallback for dev.
-      const token = (getState() as RootState).auth.token;
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWith401Intercept,
   tagTypes: ['Load', 'Bid', 'Profile'],
   endpoints: (builder) => ({
     // ── Auth ──────────────────────────────────────────────────────────────
     register: builder.mutation<AuthResponse, { email: string; password: string; role: AuthRole }>({
       query: (body) => ({ url: '/api/auth/register', method: 'POST', body }),
     }),
-    loginUser: builder.mutation<AuthResponse, { email: string; password: string }>({
+    registerDealer: builder.mutation<AuthResponse, RegisterDealerPayload>({
+      query: (body) => ({ url: '/api/dealers/register', method: 'POST', body }),
+    }),
+    uploadDealerW9: builder.mutation<DocumentUploadResponse, FormData>({
+      query: (body) => ({
+        url: '/api/dealers/documents/w9',
+        method: 'POST',
+        body,
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
+    loginUser: builder.mutation<LoginPendingResponse, { email: string; password: string }>({
       query: (body) => ({ url: '/api/auth/login', method: 'POST', body }),
+    }),
+    logoutUser: builder.mutation<void, void>({
+      query: () => ({ url: '/api/auth/logout', method: 'POST' }),
     }),
 
     // ── FMCSA Validation ──────────────────────────────────────────────────
@@ -392,6 +504,17 @@ export const hauliusApi = createApi({
     }),
     resetPassword: builder.mutation<void, { token: string; newPassword: string }>({
       query: (body) => ({ url: '/api/auth/reset-password', method: 'POST', body }),
+    }),
+    requestLoginCode: builder.mutation<{ message: string }, { email: string }>({
+      query: (body) => ({ url: '/api/auth/request-login-code', method: 'POST', body }),
+    }),
+    verifyLoginCode: builder.mutation<AuthResponse, { email: string; code: string }>({
+      query: (body) => ({ url: '/api/auth/verify-login-code', method: 'POST', body }),
+    }),
+
+    // ── VIN Lookup ────────────────────────────────────────────────────────
+    vinLookup: builder.query<VinDecodeResult, string>({
+      query: (vin) => `/api/vin/${encodeURIComponent(vin)}`,
     }),
 
     // ── Loads ─────────────────────────────────────────────────────────────
@@ -536,9 +659,18 @@ export const hauliusApi = createApi({
       }),
       invalidatesTags: ['Profile'],
     }),
-    uploadBrokerInsurance: builder.mutation<DocumentUploadResponse, FormData>({
+    uploadDealerLicense: builder.mutation<DocumentUploadResponse, FormData>({
       query: (body) => ({
-        url: '/api/brokers/documents/insurance',
+        url: '/api/dealers/documents/dealer-license',
+        method: 'POST',
+        body,
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
+    uploadDealerCorporatePaperwork: builder.mutation<DocumentUploadResponse, FormData>({
+      query: (body) => ({
+        url: '/api/dealers/documents/corporate-paperwork',
         method: 'POST',
         body,
         formData: true,
@@ -586,7 +718,10 @@ export const hauliusApi = createApi({
 
 export const {
   useRegisterMutation,
+  useRegisterDealerMutation,
+  useUploadDealerW9Mutation,
   useLoginUserMutation,
+  useLogoutUserMutation,
   useValidateCarrierMutation,
   useValidateBrokerMutation,
   useSaveCarrierFromValidationMutation,
@@ -595,7 +730,10 @@ export const {
   useResendVerificationMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
+  useRequestLoginCodeMutation,
+  useVerifyLoginCodeMutation,
   useGetMeQuery,
+  useLazyVinLookupQuery,
   useGetLoadsQuery,
   useGetMyBrokerLoadsQuery,
   useGetLoadsForCarrierQuery,
@@ -614,8 +752,9 @@ export const {
   useUpdateBrokerProfileMutation,
   useUpdateCarrierProfileMutation,
   useUploadBrokerW9Mutation,
-  useUploadBrokerInsuranceMutation,
   useUploadBrokerMcAuthorityMutation,
+  useUploadDealerLicenseMutation,
+  useUploadDealerCorporatePaperworkMutation,
   useUploadCarrierW9Mutation,
   useUploadCarrierInsuranceMutation,
   useUploadCarrierMcAuthorityMutation,

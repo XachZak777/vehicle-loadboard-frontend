@@ -12,8 +12,10 @@ const Login           = lazy(() => import('./pages/Login').then(m => ({ default:
 const Signup          = lazy(() => import('./pages/Signup').then(m => ({ default: m.Signup })));
 const CarrierSignup   = lazy(() => import('./pages/CarrierSignup').then(m => ({ default: m.CarrierSignup })));
 const BrokerSignup    = lazy(() => import('./pages/BrokerSignup').then(m => ({ default: m.BrokerSignup })));
+const DealerSignup    = lazy(() => import('./pages/DealerSignup').then(m => ({ default: m.DealerSignup })));
 const BrokerDashboard = lazy(() => import('./pages/BrokerDashboard').then(m => ({ default: m.BrokerDashboard })));
 const CarrierHistory  = lazy(() => import('./pages/CarrierHistory').then(m => ({ default: m.CarrierHistory })));
+const CarrierLoadsPage = lazy(() => import('./pages/CarrierLoadsPage').then(m => ({ default: m.CarrierLoadsPage })));
 const CompanyProfile  = lazy(() => import('./pages/CompanyProfile').then(m => ({ default: m.CompanyProfile })));
 const PendingApproval = lazy(() => import('./pages/PendingApproval').then(m => ({ default: m.PendingApproval })));
 const AdminDashboard  = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
@@ -21,6 +23,8 @@ const CheckEmail      = lazy(() => import('./pages/CheckEmail').then(m => ({ def
 const VerifyEmail     = lazy(() => import('./pages/VerifyEmail').then(m => ({ default: m.VerifyEmail })));
 const ForgotPassword  = lazy(() => import('./pages/ForgotPassword').then(m => ({ default: m.ForgotPassword })));
 const ResetPassword   = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
+const SessionExpired  = lazy(() => import('./pages/SessionExpired').then(m => ({ default: m.SessionExpired })));
+const VerifyLogin     = lazy(() => import('./pages/VerifyLogin').then(m => ({ default: m.VerifyLogin })));
 const PrivacyPolicy   = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
 const TermsOfService  = lazy(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
 const CookiePolicy    = lazy(() => import('./pages/CookiePolicy').then(m => ({ default: m.CookiePolicy })));
@@ -63,7 +67,7 @@ export const router = createBrowserRouter([
       {
         path: '/post-load',
         element: (
-          <ProtectedRoute allowedRoles={['broker']}>
+          <ProtectedRoute allowedRoles={['broker', 'dealer']}>
             <PostLoad />
           </ProtectedRoute>
         ),
@@ -71,7 +75,7 @@ export const router = createBrowserRouter([
       {
         path: '/broker/edit-load/:id',
         element: (
-          <ProtectedRoute allowedRoles={['broker']}>
+          <ProtectedRoute allowedRoles={['broker', 'dealer']}>
             <EditLoad />
           </ProtectedRoute>
         ),
@@ -79,7 +83,7 @@ export const router = createBrowserRouter([
       {
         path: '/broker/dashboard',
         element: (
-          <ProtectedRoute allowedRoles={['broker']}>
+          <ProtectedRoute allowedRoles={['broker', 'dealer']}>
             <BrokerDashboard />
           </ProtectedRoute>
         ),
@@ -87,7 +91,7 @@ export const router = createBrowserRouter([
       {
         path: '/broker/company',
         element: (
-          <ProtectedRoute allowedRoles={['broker']}>
+          <ProtectedRoute allowedRoles={['broker', 'dealer']}>
             <CompanyProfile />
           </ProtectedRoute>
         ),
@@ -97,6 +101,30 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={['carrier']}>
             <CarrierHistory />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/carrier/assigned',
+        element: (
+          <ProtectedRoute allowedRoles={['carrier']}>
+            <CarrierLoadsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/carrier/requested',
+        element: (
+          <ProtectedRoute allowedRoles={['carrier']}>
+            <CarrierLoadsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/carrier/offers',
+        element: (
+          <ProtectedRoute allowedRoles={['carrier']}>
+            <CarrierLoadsPage />
           </ProtectedRoute>
         ),
       },
@@ -141,6 +169,10 @@ export const router = createBrowserRouter([
         element: <BrokerSignup />,
       },
       {
+        path: '/signup/dealer',
+        element: <DealerSignup />,
+      },
+      {
         path: '/check-email',
         element: <CheckEmail />,
       },
@@ -155,6 +187,14 @@ export const router = createBrowserRouter([
       {
         path: '/reset-password',
         element: <ResetPassword />,
+      },
+      {
+        path: '/session-expired',
+        element: <SessionExpired />,
+      },
+      {
+        path: '/verify-login',
+        element: <VerifyLogin />,
       },
       {
         path: '/privacy',

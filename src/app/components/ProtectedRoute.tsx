@@ -11,7 +11,11 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, allowedRoles, requireAuth = true, skipApprovalCheck = false }: ProtectedRouteProps) {
-  const { user, isAuthenticated, adminApproved } = useAppSelector((s) => s.auth);
+  const { user, isAuthenticated, adminApproved, sessionExpired } = useAppSelector((s) => s.auth);
+
+  if (sessionExpired) {
+    return <Navigate to="/session-expired" replace />;
+  }
 
   if (requireAuth && !isAuthenticated) {
     return <Navigate to="/" replace />;

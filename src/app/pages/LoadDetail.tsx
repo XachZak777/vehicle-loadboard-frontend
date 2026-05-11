@@ -136,7 +136,6 @@ export function LoadDetail() {
             </div>
             <div>
               <h1 className="text-3xl font-bold">Load Details</h1>
-              <p className="text-sm text-muted-foreground">Load ID: {load.id}</p>
             </div>
           </div>
         </div>
@@ -155,6 +154,11 @@ export function LoadDetail() {
                 {load.price != null && (
                   <div className="text-3xl font-bold text-amber-500">
                     ${load.price.toLocaleString()}
+                  </div>
+                )}
+                {load.price != null && load.distance != null && load.distance > 0 && (
+                  <div className="text-sm text-muted-foreground mt-0.5">
+                    ${(load.price / load.distance).toFixed(2)}/mile · {load.distance.toLocaleString()} miles
                   </div>
                 )}
                 {load.status && (
@@ -207,6 +211,18 @@ export function LoadDetail() {
                 </div>
               </div>
             </div>
+
+            {load.orderId && (
+              <div className="mt-6">
+                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                  <FileText className="size-5" />
+                  Order ID
+                </h3>
+                <div className="bg-muted border border-border px-4 py-2.5 rounded-lg">
+                  <p className="font-mono text-sm">{load.orderId}</p>
+                </div>
+              </div>
+            )}
 
             {load.description && (
               <div className="mt-6">

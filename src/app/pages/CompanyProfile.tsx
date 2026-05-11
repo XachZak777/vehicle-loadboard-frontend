@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { Navbar } from '../components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Separator } from '../components/ui/separator';
+import { Button } from '../components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import {
   Building2,
   Mail,
@@ -14,12 +17,22 @@ import {
   Calendar,
   Truck,
   AlertCircle,
+  ArrowRight,
+  Plus,
+  Trash2,
+  Pencil,
+  Save,
+  X,
   type LucideIcon,
 } from 'lucide-react';
 import {
   useGetMyBrokerProfileQuery,
   useGetMyCarrierProfileQuery,
+  useUpdateCarrierProfileMutation,
+  type PreferredLine,
 } from '../store/services/hauliusApi';
+import { US_STATES } from '../constants';
+import { toast } from 'sonner';
 
 // ── Reusable field row ──────────────────────────────────────────────────────
 function InfoRow({
@@ -79,6 +92,108 @@ function SectionCard({
   );
 }
 
+// ── Preferred Lines Editor ──────────────────────────────────────────────────
+function PreferredLinesEditor({ initialLines, onSave }: { initialLines: PreferredLine[]; onSave: (lines: PreferredLine[]) => Promise<void> }) {
+  const [editing, setEditing] = useState(false);
+  const [lines, setLines] = useState<PreferredLine[]>(initialLines);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const addLine = () => setLines(prev => [...prev, { fromState: '', toState: '' }]);
+  const removeLine = (i: number) => setLines(prev => prev.filter((_, idx) => idx !== i));
+  const updateLine = (i: number, field: 'fromState' | 'toState', value: string) =>
+    setLines(prev => prev.map((l, idx) => idx === i ? { ...l, [field]: value } : l));
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onSave(lines);
+      setEditing(false);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setLines(initialLines);
+    setEditing(false);
+  };
+
+  return (
+    <SectionCard title="Preferred Lanes" description="Origin-to-destination state pairs for loads you prefer" accentColor="amber">
+      <div className="space-y-3">
+        {!editing && (
+          <>
+            {lines.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-2">No preferred lanes configured.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {lines.map((l, i) => (
+                  <span key={i} className="inline-flex items-center gap-1.5 rounded-full border bg-muted/50 px-3 py-1 text-sm font-medium">
+                    {l.fromState}
+                    <ArrowRight className="size-3 text-muted-foreground" />
+                    {l.toState}
+                  </span>
+                ))}
+              </div>
+            )}
+            <Button variant="outline" size="sm" className="gap-1.5 mt-1" onClick={() => setEditing(true)}>
+              <Pencil className="size-3.5" />
+              Edit Lanes
+            </Button>
+          </>
+        )}
+
+        {editing && (
+          <>
+            {lines.map((line, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Select value={line.fromState} onValueChange={v => updateLine(i, 'fromState', v)}>
+                  <SelectTrigger className="flex-1 h-8 text-sm">
+                    <SelectValue placeholder="From" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {US_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <ArrowRight className="size-4 text-muted-foreground shrink-0" />
+                <Select value={line.toState} onValueChange={v => updateLine(i, 'toState', v)}>
+                  <SelectTrigger className="flex-1 h-8 text-sm">
+                    <SelectValue placeholder="To" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {US_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button type="button" variant="ghost" size="icon" className="size-8 text-destructive hover:text-destructive shrink-0" onClick={() => removeLine(i)}>
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            ))}
+
+            {lines.length < 10 && (
+              <Button type="button" variant="outline" size="sm" className="gap-1.5 w-full" onClick={addLine}>
+                <Plus className="size-3.5" />
+                Add Lane
+              </Button>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <Button size="sm" className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white" onClick={handleSave} disabled={isSaving}>
+                <Save className="size-3.5" />
+                {isSaving ? 'Saving…' : 'Save'}
+              </Button>
+              <Button size="sm" variant="ghost" className="gap-1.5" onClick={handleCancel}>
+                <X className="size-3.5" />
+                Cancel
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    </SectionCard>
+  );
+}
+
 // ── Page ────────────────────────────────────────────────────────────────────
 export function CompanyProfile() {
   const user = useAppSelector((s) => s.auth.user);
@@ -86,14 +201,15 @@ export function CompanyProfile() {
   const isCarrier = user?.role === 'carrier';
 
   const { data: brokerProfile } = useGetMyBrokerProfileQuery(undefined, { skip: !isBroker });
-  const { data: carrierProfile } = useGetMyCarrierProfileQuery(undefined, { skip: !isCarrier });
+  const { data: carrierProfile, refetch: refetchCarrier } = useGetMyCarrierProfileQuery(undefined, { skip: !isCarrier });
+  const [updateCarrierProfile] = useUpdateCarrierProfileMutation();
 
   if (!user) return null;
 
   // Merge: auth-store values as base, API values as supplements (API may have FMCSA fields not in store)
   const profile = isBroker ? brokerProfile : carrierProfile;
 
-  const companyName    = user.companyName   || profile?.companyName   || profile?.legalName;
+  const companyName    = profile?.legalName  || profile?.companyName   || user.companyName;
   const mcNumber       = user.mcNumber      || profile?.mcNumber;
   const dotNumber      = user.dotNumber     || profile?.dotNumber;
   const phoneNumber    = user.phoneNumber   || profile?.phoneNumber;
@@ -108,8 +224,24 @@ export function CompanyProfile() {
   const taxId          = user.taxId         || profile?.taxId;
   const w9Document     = user.w9Document;
 
+  // Carrier preferred lines
+  const preferredLinesJson = isCarrier ? (carrierProfile as typeof carrierProfile)?.preferredLines : undefined;
+  const preferredLines: PreferredLine[] = (() => {
+    try { return preferredLinesJson ? JSON.parse(preferredLinesJson) : []; } catch { return []; }
+  })();
+
+  const handleSavePreferredLines = async (lines: PreferredLine[]) => {
+    try {
+      await updateCarrierProfile({ preferredLines: lines.length > 0 ? JSON.stringify(lines) : '' }).unwrap();
+      refetchCarrier();
+      toast.success('Preferred lanes saved.');
+    } catch {
+      toast.error('Failed to save preferred lanes. Please try again.');
+      throw new Error('save failed');
+    }
+  };
+
   // FMCSA-sourced fields (only available from API response, not in auth store)
-  const legalName          = profile?.legalName;
   const dbaName            = (profile as typeof carrierProfile)?.dbaName;
   const operatingStatus    = profile?.operatingStatus;
   const safetyRating       = (profile as typeof carrierProfile)?.safetyRating;
@@ -135,7 +267,7 @@ export function CompanyProfile() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
-                {companyName || legalName || 'Company Profile'}
+                {companyName || 'Company Profile'}
               </h1>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <Badge className="bg-white/20 text-white border-white/30 capitalize hover:bg-white/30">
@@ -242,13 +374,8 @@ export function CompanyProfile() {
           >
             <div className="divide-y divide-border">
               {companyName && (
-                <InfoRow icon={Building2} label="Company Name">
+                <InfoRow icon={Building2} label="Legal Name">
                   {companyName}
-                </InfoRow>
-              )}
-              {legalName && legalName !== companyName && (
-                <InfoRow icon={Building2} label="Legal Name (FMCSA)">
-                  {legalName}
                 </InfoRow>
               )}
               {dbaName && (
@@ -352,6 +479,14 @@ export function CompanyProfile() {
                 )}
               </div>
             </SectionCard>
+          )}
+
+          {/* Preferred Lanes — carriers only */}
+          {isCarrier && (
+            <PreferredLinesEditor
+              initialLines={preferredLines}
+              onSave={handleSavePreferredLines}
+            />
           )}
 
           {/* Insurance Information */}

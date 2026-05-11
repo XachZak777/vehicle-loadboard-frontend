@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router';
-import { useGetLoadsQuery, useUpdateLoadMutation } from '../store/services/hauliusApi';
+import { useGetLoadsQuery, useUpdateLoadMutation, useLazyVinLookupQuery, type VinDecodeResult } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { ArrowLeft, Truck, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   isValidVehicleYear, isValidPrice, isValidWeight, isValidZip, isValidCity,
-  buildErrors, type FieldErrors,
+  isValidVin, buildErrors, type FieldErrors,
 } from '../utils/validation';
 import { VehicleInfoSection } from '../components/load-form/VehicleInfoSection';
 import { LocationSection } from '../components/load-form/LocationSection';
@@ -18,15 +18,20 @@ export function EditLoad() {
   const navigate = useNavigate();
   const [updateLoad] = useUpdateLoadMutation();
   const { data: allLoads = [], isLoading: loadingLoads } = useGetLoadsQuery();
+  const [triggerVinLookup, { isFetching: vinLookupLoading }] = useLazyVinLookupQuery();
+  const [vinDetails, setVinDetails] = useState<VinDecodeResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [initialized, setInitialized] = useState(false);
 
   const [formData, setFormData] = useState({
-    make: '', model: '', year: '', condition: '',
+    vin: '', vehicleType: '', condition: '', make: '', model: '', year: '',
+    trailerType: '', additionalInfo: '', weight: '',
     pickupStreet: '', pickupCity: '', pickupState: '', pickupZip: '', pickupType: 'BUSINESS',
+    pickupDate: '', pickupFacilityName: '', pickupLocationContactName: '', pickupLocationContactPhone: '',
     dropStreet: '', dropCity: '', dropState: '', dropZip: '', dropType: 'RESIDENCE',
-    weight: '', price: '', description: '', pickupDate: '', deliveryDate: '',
+    deliveryDate: '', dropFacilityName: '', dropLocationContactName: '', dropLocationContactPhone: '',
+    price: '', paymentMethod: '', paymentTiming: '', description: '',
   });
 
   const load = allLoads.find(l => l.id === id);
@@ -34,25 +39,37 @@ export function EditLoad() {
   useEffect(() => {
     if (load && !initialized) {
       setFormData({
+        vin: load.vin ?? '',
+        vehicleType: load.vehicleType ?? '',
+        condition: load.vehicleCondition ?? '',
         make: load.vehicleMake ?? '',
         model: load.vehicleModel ?? '',
         year: load.vehicleYear?.toString() ?? '',
-        condition: '',
+        trailerType: load.trailerType ?? '',
+        additionalInfo: '',
+        weight: load.weight?.toString() ?? '',
         pickupStreet: load.pickupStreet ?? '',
         pickupCity: load.pickupCity ?? '',
         pickupState: load.pickupState ?? '',
         pickupZip: load.pickupZip ?? '',
         pickupType: (load.pickupType as string) ?? 'BUSINESS',
+        pickupDate: load.pickupDate ?? '',
+        pickupFacilityName: load.pickupLotNumber ?? '',
+        pickupLocationContactName: load.pickupContactName ?? '',
+        pickupLocationContactPhone: load.pickupContactPhone ?? '',
         dropStreet: load.dropStreet ?? '',
         dropCity: load.dropCity ?? '',
         dropState: load.dropState ?? '',
         dropZip: load.dropZip ?? '',
         dropType: (load.dropType as string) ?? 'RESIDENCE',
-        weight: load.weight?.toString() ?? '',
-        price: load.price?.toString() ?? '',
-        description: load.description ?? '',
-        pickupDate: load.pickupDate ?? '',
         deliveryDate: load.deliveryDate ?? '',
+        dropFacilityName: load.dropLotNumber ?? '',
+        dropLocationContactName: load.dropContactName ?? '',
+        dropLocationContactPhone: load.dropContactPhone ?? '',
+        price: load.price?.toString() ?? '',
+        paymentMethod: load.paymentMethod ?? '',
+        paymentTiming: load.paymentTiming ?? '',
+        description: load.description ?? '',
       });
       setInitialized(true);
     }
@@ -63,10 +80,34 @@ export function EditLoad() {
     if (fieldErrors[field]) setFieldErrors(prev => { const e = { ...prev }; delete e[field]; return e; });
   };
 
+  const handleVinLookup = async () => {
+    const vin = formData.vin.trim();
+    if (!vin) { toast.error('Enter a VIN first.'); return; }
+    try {
+      const result = await triggerVinLookup(vin).unwrap();
+      if (!result.success) {
+        toast.error('VIN not found', { description: result.errorText || 'Invalid or unrecognized VIN.' });
+        setVinDetails(null);
+        return;
+      }
+      if (result.make)        handleInputChange('make', result.make);
+      if (result.model)       handleInputChange('model', result.model);
+      if (result.year)        handleInputChange('year', String(result.year));
+      if (result.vehicleType) handleInputChange('vehicleType', result.vehicleType);
+      setVinDetails(result);
+      toast.success('Vehicle info loaded', {
+        description: [result.year, result.make, result.model].filter(Boolean).join(' '),
+      });
+    } catch {
+      toast.error('VIN lookup failed', { description: 'Could not reach the vehicle database.' });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const currentYear = new Date().getFullYear();
     const errs = buildErrors([
+      [!!formData.vin.trim() && !isValidVin(formData.vin), 'vin', 'VIN must be exactly 17 alphanumeric characters (no I, O, or Q).'],
       [!formData.make.trim(), 'make', 'Vehicle make is required.'],
       [!!formData.make.trim() && formData.make.trim().length > 50, 'make', 'Make must be 50 characters or fewer.'],
       [!formData.model.trim(), 'model', 'Vehicle model is required.'],
@@ -102,19 +143,32 @@ export function EditLoad() {
           vehicleMake: formData.make,
           vehicleModel: formData.model,
           vehicleYear: parseInt(formData.year, 10),
+          vehicleType: formData.vehicleType || undefined,
+          vehicleCondition: formData.condition || undefined,
+          vin: formData.vin || undefined,
+          trailerType: formData.trailerType || undefined,
+          vehicleAdditionalInfo: formData.additionalInfo || undefined,
           pickupStreet: formData.pickupStreet || undefined,
           pickupCity: formData.pickupCity,
           pickupState: formData.pickupState,
           pickupZip: formData.pickupZip || undefined,
           pickupCountry: 'US',
           pickupType: formData.pickupType,
+          pickupLotNumber: formData.pickupFacilityName || undefined,
+          pickupContactName: formData.pickupLocationContactName || undefined,
+          pickupContactPhone: formData.pickupLocationContactPhone || undefined,
           dropStreet: formData.dropStreet || undefined,
           dropCity: formData.dropCity,
           dropState: formData.dropState,
           dropZip: formData.dropZip || undefined,
           dropCountry: 'US',
           dropType: formData.dropType,
+          dropLotNumber: formData.dropFacilityName || undefined,
+          dropContactName: formData.dropLocationContactName || undefined,
+          dropContactPhone: formData.dropLocationContactPhone || undefined,
           price: parseFloat(formData.price),
+          paymentMethod: formData.paymentMethod || undefined,
+          paymentTiming: formData.paymentTiming || undefined,
           weight: formData.weight ? parseFloat(formData.weight) : undefined,
           description: formData.description || undefined,
           pickupDate: formData.pickupDate || undefined,
@@ -180,16 +234,18 @@ export function EditLoad() {
 
           <form onSubmit={handleSubmit}>
             <VehicleInfoSection
-              formData={{ make: formData.make, model: formData.model, year: formData.year, condition: formData.condition, weight: formData.weight }}
+              formData={{ vin: formData.vin, vehicleType: formData.vehicleType, condition: formData.condition, make: formData.make, model: formData.model, year: formData.year, trailerType: formData.trailerType, additionalInfo: formData.additionalInfo, weight: formData.weight }}
               fieldErrors={fieldErrors}
               onChange={handleInputChange}
-              hideCondition
+              onVinLookup={handleVinLookup}
+              vinLookupLoading={vinLookupLoading}
+              vinDetails={vinDetails}
             />
             <LocationSection
               prefix="pickup"
               title="Pickup Location"
               description="Where will the vehicle be picked up?"
-              formData={{ street: formData.pickupStreet, city: formData.pickupCity, state: formData.pickupState, zip: formData.pickupZip, type: formData.pickupType }}
+              formData={{ street: formData.pickupStreet, city: formData.pickupCity, state: formData.pickupState, zip: formData.pickupZip, type: formData.pickupType, date: formData.pickupDate, facilityName: formData.pickupFacilityName, locationContactName: formData.pickupLocationContactName, locationContactPhone: formData.pickupLocationContactPhone }}
               fieldErrors={fieldErrors}
               onChange={handleInputChange}
             />
@@ -197,12 +253,12 @@ export function EditLoad() {
               prefix="drop"
               title="Delivery Location"
               description="Where should the vehicle be delivered?"
-              formData={{ street: formData.dropStreet, city: formData.dropCity, state: formData.dropState, zip: formData.dropZip, type: formData.dropType }}
+              formData={{ street: formData.dropStreet, city: formData.dropCity, state: formData.dropState, zip: formData.dropZip, type: formData.dropType, date: formData.deliveryDate, facilityName: formData.dropFacilityName, locationContactName: formData.dropLocationContactName, locationContactPhone: formData.dropLocationContactPhone }}
               fieldErrors={fieldErrors}
               onChange={handleInputChange}
             />
             <PricingNotesSection
-              formData={{ price: formData.price, pickupDate: formData.pickupDate, deliveryDate: formData.deliveryDate, description: formData.description }}
+              formData={{ price: formData.price, paymentMethod: formData.paymentMethod, paymentTiming: formData.paymentTiming, description: formData.description }}
               fieldErrors={fieldErrors}
               onChange={handleInputChange}
             />

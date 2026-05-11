@@ -7,6 +7,7 @@ export interface AuthState {
   token: string | null; // In-memory only — NOT persisted to localStorage
   isAuthenticated: boolean;
   adminApproved: boolean;
+  sessionExpired: boolean;
 }
 
 function buildInitialState(): AuthState {
@@ -24,16 +25,16 @@ function buildInitialState(): AuthState {
   }
 
   if (!user) {
-    // Clean up legacy auth storage
     localStorage.removeItem('auth');
-    return { user: null, token: null, isAuthenticated: false, adminApproved: false };
+    return { user: null, token: null, isAuthenticated: false, adminApproved: false, sessionExpired: false };
   }
 
   return {
     user,
-    token: null, // Never restored from storage — cookie handles API auth
+    token: null,
     isAuthenticated: true,
     adminApproved: user.adminApproved ?? false,
+    sessionExpired: false,
   };
 }
 
@@ -58,6 +59,7 @@ const authSlice = createSlice({
       state.token = token; // Held in memory for Authorization header fallback (dev/non-cookie flows)
       state.adminApproved = adminApproved ?? false;
       state.isAuthenticated = true;
+      state.sessionExpired = false;
 
       // Persist only non-sensitive profile data, never the raw token
       setStoredUser({ userId, email, role });
@@ -76,11 +78,17 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.adminApproved = false;
+      state.sessionExpired = false;
       clearStoredUser();
       localStorage.removeItem('currentUser');
+    },
+    sessionExpire(state) {
+      state.isAuthenticated = false;
+      state.token = null;
+      state.sessionExpired = true;
     },
   },
 });
 
-export const { setCredentials, updateUserProfile, logout } = authSlice.actions;
+export const { setCredentials, updateUserProfile, logout, sessionExpire } = authSlice.actions;
 export default authSlice.reducer;

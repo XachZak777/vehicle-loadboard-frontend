@@ -15,9 +15,58 @@ export const sanitizeDecimal = (v: string) => {
 /** Strips everything except digits and a single hyphen (for EIN: XX-XXXXXXX / SSN: XXX-XX-XXXX) */
 export const sanitizeTaxId = (v: string) => v.replace(/[^\d-]/g, '');
 
-/** Standard email check */
+/** Basic email format check (internal use only — prefer isBusinessEmail for user-facing validation) */
 export const isValidEmail = (v: string) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
+
+const BLOCKED_DOMAINS = new Set([
+  // Test / placeholder domains
+  'test.com', 'test.net', 'test.org', 'test.io', 'test.co',
+  'example.com', 'example.net', 'example.org', 'example.io',
+  'sample.com', 'fake.com', 'fakeemail.com', 'invalid.com',
+  'nomail.com', 'noemail.com', 'notreal.com', 'nope.com',
+  'domain.com', 'email.com', 'mail.test', 'user.com',
+  // Disposable / throwaway services
+  'mailinator.com', 'guerrillamail.com', 'guerrillamail.info',
+  'guerrillamail.biz', 'guerrillamail.de', 'guerrillamail.net',
+  'guerrillamail.org', 'guerrillamailblock.com',
+  '10minutemail.com', '10minutemail.net', '10minutemail.org',
+  'tempmail.com', 'tempmail.net', 'temp-mail.org', 'temp-mail.io',
+  'temporarymail.com', 'throwam.com', 'throwaway.email',
+  'yopmail.com', 'sharklasers.com', 'grr.la',
+  'spam4.me', 'trashmail.com', 'trashmail.net', 'trashmail.io',
+  'trash-mail.com', 'mailnull.com', 'dispostable.com',
+  'spamgourmet.com', 'spamgourmet.net', 'spamgourmet.org',
+  'fakeinbox.com', 'fakebox.net', 'mailnesia.com', 'mailtothis.com',
+  'dodgit.com', 'spamfree24.org', 'jetable.org', 'spambox.us',
+  'anonymbox.com', 'filzmail.com', 'getnada.com', 'mailboxy.fun',
+  'discard.email', 'maildrop.cc', 'binkmail.com',
+  'nospamfor.us', 'mailexpire.com', 'spamex.com', 'spaml.com',
+  'getairmail.com', 'spammotel.com', 'mailscrap.com', 'spamoff.de',
+]);
+
+/**
+ * Email must pass format check AND come from a non-disposable, non-test domain.
+ * Accepts personal providers (gmail, yahoo, etc.) and any legitimate company domain.
+ */
+export const isBusinessEmail = (v: string): boolean => {
+  const email = v.trim().toLowerCase();
+  if (!isValidEmail(email)) return false;
+  const domain = email.split('@')[1] ?? '';
+  if (BLOCKED_DOMAINS.has(domain)) return false;
+  // Domain must have a real-looking structure: at least one dot, TLD ≥ 2 chars
+  const parts = domain.split('.');
+  if (parts.length < 2) return false;
+  const tld = parts[parts.length - 1];
+  if (tld.length < 2) return false;
+  // Local part (before @) must be meaningful
+  const local = email.split('@')[0];
+  if (local.length < 2) return false;
+  return true;
+};
+
+export const businessEmailError =
+  'Use a real email address (e.g. Gmail, Outlook, or your company domain). Disposable and test addresses are not accepted.';
 
 /**
  * US / Canadian phone number.
@@ -71,6 +120,24 @@ export const isValidCompanyName = (v: string) =>
 /** Generic text name (person / city / state) min 2, max given */
 export const isValidName = (v: string, min = 2, max = 100) =>
   v.trim().length >= min && v.trim().length <= max;
+
+/** Person first or last name: letters, spaces, hyphens, apostrophes, 2–50 chars */
+export const isValidPersonName = (v: string) =>
+  /^[a-zA-ZÀ-ÖØ-öø-ÿ'\-\s]{2,50}$/.test(v.trim());
+
+/** Year established: 4-digit year between 1800 and current year */
+export const isValidYearEstablished = (v: string) => {
+  const n = parseInt(v, 10);
+  return !isNaN(n) && String(n).length === 4 && n >= 1800 && n <= new Date().getFullYear();
+};
+
+/** VIN: exactly 17 alphanumeric chars, no I/O/Q */
+export const isValidVin = (v: string) =>
+  /^[A-HJ-NPR-Z0-9]{17}$/i.test(v.trim());
+
+/** Alphanumeric ID (license numbers, auction access #, order IDs): 1–40 printable chars */
+export const isValidAlphanumericId = (v: string) =>
+  /^[a-zA-Z0-9\-\s]{1,40}$/.test(v.trim());
 
 /**
  * Password strength for new account creation.

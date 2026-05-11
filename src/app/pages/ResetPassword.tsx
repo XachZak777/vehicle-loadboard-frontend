@@ -8,6 +8,7 @@ import { Label } from '../components/ui/label';
 import { AuthNavbar } from '../components/AuthNavbar';
 import { useResetPasswordMutation } from '../store/services/hauliusApi';
 import { toast } from 'sonner';
+import { isStrongPassword, passwordRequirementsText } from '../utils/validation';
 
 export function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -44,8 +45,8 @@ export function ResetPassword() {
     e.preventDefault();
     setError('');
 
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters.');
+    if (!isStrongPassword(newPassword)) {
+      setError(passwordRequirementsText);
       return;
     }
     if (newPassword !== confirmPassword) {

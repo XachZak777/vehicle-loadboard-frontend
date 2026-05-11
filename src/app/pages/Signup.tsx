@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { ArrowLeft, Building2, TruckIcon } from 'lucide-react';
+import { ArrowLeft, Building2, Store, TruckIcon } from 'lucide-react';
 import { AuthNavbar } from '../components/AuthNavbar';
 import { APP_NAME } from '../constants';
 
@@ -10,7 +10,7 @@ export function Signup() {
     <div className="min-h-screen bg-background">
       <AuthNavbar subtitle="Choose Your Account Type" showLogin={true} />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex items-center justify-center min-h-[calc(100vh-64px)]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex items-center justify-center min-h-[calc(100vh-64px)]">
         <div className="w-full">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4">
@@ -21,37 +21,37 @@ export function Signup() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {/* Carrier Card */}
             <Card className="border hover:border-amber-500 transition-all hover:shadow-2xl cursor-pointer group">
               <Link to="/signup/carrier">
                 <CardHeader className="text-center pt-10">
-                  <div className="size-24 bg-amber-100 dark:bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-amber-600 dark:group-hover:bg-amber-500 transition-colors">
-                    <TruckIcon className="size-12 text-amber-600 dark:text-amber-500 group-hover:text-white dark:group-hover:text-slate-900 transition-colors" />
+                  <div className="size-20 bg-amber-100 dark:bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-5 group-hover:bg-amber-600 dark:group-hover:bg-amber-500 transition-colors">
+                    <TruckIcon className="size-10 text-amber-600 dark:text-amber-500 group-hover:text-white dark:group-hover:text-slate-900 transition-colors" />
                   </div>
-                  <CardTitle className="text-2xl mb-3">
+                  <CardTitle className="text-2xl mb-2">
                     I'm a Carrier
                   </CardTitle>
-                  <CardDescription className="text-base">
+                  <CardDescription className="text-sm">
                     I transport vehicles and want to find loads
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pb-10">
-                  <ul className="space-y-3 text-foreground">
+                  <ul className="space-y-2.5 text-foreground text-sm">
                     <li className="flex items-center gap-2">
-                      <div className="size-1.5 bg-amber-500 rounded-full"></div>
+                      <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
                       Browse available vehicle transport loads
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="size-1.5 bg-amber-500 rounded-full"></div>
+                      <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
                       Request and book loads instantly
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="size-1.5 bg-amber-500 rounded-full"></div>
+                      <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
                       Track your load history and earnings
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="size-1.5 bg-amber-500 rounded-full"></div>
+                      <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
                       Connect with verified brokers
                     </li>
                   </ul>
@@ -66,37 +66,77 @@ export function Signup() {
             <Card className="border hover:border-amber-500 transition-all hover:shadow-2xl cursor-pointer group">
               <Link to="/signup/broker">
                 <CardHeader className="text-center pt-10">
-                  <div className="size-24 bg-amber-100 dark:bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-amber-600 dark:group-hover:bg-amber-500 transition-colors">
-                    <Building2 className="size-12 text-amber-600 dark:text-amber-500 group-hover:text-white dark:group-hover:text-slate-900 transition-colors" />
+                  <div className="size-20 bg-amber-100 dark:bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-5 group-hover:bg-amber-600 dark:group-hover:bg-amber-500 transition-colors">
+                    <Building2 className="size-10 text-amber-600 dark:text-amber-500 group-hover:text-white dark:group-hover:text-slate-900 transition-colors" />
                   </div>
-                  <CardTitle className="text-2xl mb-3">
+                  <CardTitle className="text-2xl mb-2">
                     I'm a Broker
                   </CardTitle>
-                  <CardDescription className="text-base">
+                  <CardDescription className="text-sm">
                     I ship vehicles and need to find carriers
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pb-10">
-                  <ul className="space-y-3 text-foreground">
+                  <ul className="space-y-2.5 text-foreground text-sm">
                     <li className="flex items-center gap-2">
-                      <div className="size-1.5 bg-amber-500 rounded-full"></div>
+                      <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
                       Post vehicle transport loads
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="size-1.5 bg-amber-500 rounded-full"></div>
+                      <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
                       View and manage booking requests
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="size-1.5 bg-amber-500 rounded-full"></div>
+                      <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
                       Access the full load board
                     </li>
                     <li className="flex items-center gap-2">
-                      <div className="size-1.5 bg-amber-500 rounded-full"></div>
+                      <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
                       Connect with verified carriers
                     </li>
                   </ul>
                   <Button className="w-full mt-6 bg-amber-500 hover:bg-amber-600 text-white">
                     Register as Broker
+                  </Button>
+                </CardContent>
+              </Link>
+            </Card>
+
+            {/* Dealer Card */}
+            <Card className="border hover:border-amber-500 transition-all hover:shadow-2xl cursor-pointer group">
+              <Link to="/signup/dealer">
+                <CardHeader className="text-center pt-10">
+                  <div className="size-20 bg-amber-100 dark:bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-5 group-hover:bg-amber-600 dark:group-hover:bg-amber-500 transition-colors">
+                    <Store className="size-10 text-amber-600 dark:text-amber-500 group-hover:text-white dark:group-hover:text-slate-900 transition-colors" />
+                  </div>
+                  <CardTitle className="text-2xl mb-2">
+                    I'm a Dealer
+                  </CardTitle>
+                  <CardDescription className="text-sm">
+                    I'm a dealership that ships vehicles
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pb-10">
+                  <ul className="space-y-2.5 text-foreground text-sm">
+                    <li className="flex items-center gap-2">
+                      <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
+                      Post vehicle transport loads
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
+                      Manage your shipments
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
+                      Access the full load board
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
+                      Connect with verified carriers
+                    </li>
+                  </ul>
+                  <Button className="w-full mt-6 bg-amber-500 hover:bg-amber-600 text-white">
+                    Register as Dealer
                   </Button>
                 </CardContent>
               </Link>

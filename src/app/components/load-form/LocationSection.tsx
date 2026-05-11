@@ -19,6 +19,10 @@ interface Props {
     state: string;
     zip: string;
     type: string;
+    date: string;
+    facilityName: string;
+    locationContactName: string;
+    locationContactPhone: string;
   };
   fieldErrors: FieldErrors;
   onChange: (field: string, value: string) => void;
@@ -26,6 +30,8 @@ interface Props {
 
 export function LocationSection({ prefix, title, description, formData, fieldErrors, onChange }: Props) {
   const field = (name: string) => `${prefix}${name.charAt(0).toUpperCase() + name.slice(1)}`;
+  const dateField = prefix === 'pickup' ? 'pickupDate' : 'deliveryDate';
+  const dateLabel = prefix === 'pickup' ? 'Pickup Date' : 'Delivery Date';
 
   return (
     <Card className="mb-6">
@@ -34,38 +40,7 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor={field('street')}>Street Address</Label>
-            <Input
-              id={field('street')}
-              placeholder="e.g., 100 Main St"
-              value={formData.street}
-              onChange={(e) => onChange(field('street'), e.target.value.trimStart())}
-              maxLength={200}
-              aria-invalid={!!fieldErrors[field('street')]}
-            />
-            {fieldErrors[field('street')] && (
-              <p className="text-xs text-destructive mt-1">{fieldErrors[field('street')]}</p>
-            )}
-          </div>
-          <div>
-            <Label htmlFor={field('type')}>Location Type</Label>
-            <Select value={formData.type} onValueChange={(v) => onChange(field('type'), v)}>
-              <SelectTrigger id={field('type')}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LOCATION_TYPES.map(t => (
-                  <SelectItem key={t} value={t}>
-                    {t.charAt(0) + t.slice(1).toLowerCase()}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
+        {/* City / State / ZIP row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label htmlFor={field('city')}>City *</Label>
@@ -111,6 +86,90 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
             {fieldErrors[field('zip')] && (
               <p className="text-xs text-destructive mt-1">{fieldErrors[field('zip')]}</p>
             )}
+          </div>
+        </div>
+
+        {/* Date */}
+        <div>
+          <Label htmlFor={dateField}>{dateLabel}</Label>
+          <Input
+            id={dateField}
+            type="date"
+            value={formData.date}
+            onChange={(e) => onChange(dateField, e.target.value)}
+          />
+        </div>
+
+        {/* Street Address — private */}
+        <div>
+          <Label htmlFor={field('street')}>Street Address</Label>
+          <Input
+            id={field('street')}
+            placeholder="e.g., 100 Main St"
+            value={formData.street}
+            onChange={(e) => onChange(field('street'), e.target.value.trimStart())}
+            maxLength={200}
+            aria-invalid={!!fieldErrors[field('street')]}
+          />
+          <p className="text-xs text-muted-foreground mt-1">Not shown on loadboard — only for assigned carrier</p>
+          {fieldErrors[field('street')] && (
+            <p className="text-xs text-destructive mt-1">{fieldErrors[field('street')]}</p>
+          )}
+        </div>
+
+        {/* Location Type + Facility Name */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor={field('type')}>Location Type</Label>
+            <Select value={formData.type} onValueChange={(v) => onChange(field('type'), v)}>
+              <SelectTrigger id={field('type')}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LOCATION_TYPES.map(t => (
+                  <SelectItem key={t} value={t}>
+                    {t.charAt(0) + t.slice(1).toLowerCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor={field('facilityName')}>Facility Name (Optional)</Label>
+            <Input
+              id={field('facilityName')}
+              placeholder="e.g., XYZ Dealership"
+              value={formData.facilityName}
+              onChange={(e) => onChange(field('facilityName'), e.target.value.trimStart())}
+              maxLength={100}
+            />
+            <p className="text-xs text-muted-foreground mt-1">Not shown on loadboard — only for assigned carrier</p>
+          </div>
+        </div>
+
+        {/* Per-location Contact Name + Phone — private */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor={field('locationContactName')}>Contact Name (Optional)</Label>
+            <Input
+              id={field('locationContactName')}
+              placeholder="e.g., Jane Smith"
+              value={formData.locationContactName}
+              onChange={(e) => onChange(field('locationContactName'), e.target.value.trimStart())}
+              maxLength={100}
+            />
+            <p className="text-xs text-muted-foreground mt-1">Not shown on loadboard — only for assigned carrier</p>
+          </div>
+          <div>
+            <Label htmlFor={field('locationContactPhone')}>Contact Phone (Optional)</Label>
+            <Input
+              id={field('locationContactPhone')}
+              placeholder="e.g., (555) 987-6543"
+              value={formData.locationContactPhone}
+              onChange={(e) => onChange(field('locationContactPhone'), e.target.value.trimStart())}
+              maxLength={20}
+            />
+            <p className="text-xs text-muted-foreground mt-1">Not shown on loadboard — only for assigned carrier</p>
           </div>
         </div>
       </CardContent>

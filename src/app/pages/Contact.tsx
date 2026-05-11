@@ -4,6 +4,7 @@ import { Truck, ArrowLeft, Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { APP_NAME } from '../constants';
 import { useState } from 'react';
+import { isBusinessEmail, businessEmailError, isValidName, buildErrors, type FieldErrors } from '../utils/validation';
 
 export function Contact() {
   const [formData, setFormData] = useState({
@@ -13,15 +14,29 @@ export function Contact() {
     message: '',
   });
   const [submitted, setSubmitted] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Placeholder: handle form submission
+    const errs = buildErrors([
+      [!formData.name.trim(), 'name', 'Full name is required.'],
+      [!!formData.name.trim() && !isValidName(formData.name, 2, 100), 'name', 'Name must be 2–100 characters.'],
+      [!formData.email.trim(), 'email', 'Email address is required.'],
+      [!!formData.email.trim() && !isBusinessEmail(formData.email), 'email', businessEmailError],
+      [!formData.subject, 'subject', 'Please select a topic.'],
+      [!formData.message.trim(), 'message', 'Message is required.'],
+      [!!formData.message.trim() && formData.message.trim().length < 10, 'message', 'Message must be at least 10 characters.'],
+      [!!formData.message.trim() && formData.message.trim().length > 2000, 'message', 'Message must be 2,000 characters or fewer.'],
+    ]);
+    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
+    setFieldErrors({});
     setSubmitted(true);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (fieldErrors[name]) setFieldErrors(prev => { const err = { ...prev }; delete err[name]; return err; });
   };
 
   return (
@@ -182,12 +197,12 @@ export function Contact() {
                           id="name"
                           name="name"
                           type="text"
-                          required
                           value={formData.name}
                           onChange={handleChange}
                           placeholder="John Smith"
-                          className="w-full px-3 py-2 text-sm rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
+                          className={`w-full px-3 py-2 text-sm rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-amber-500 transition ${fieldErrors.name ? 'border-destructive' : 'border-border'}`}
                         />
+                        {fieldErrors.name && <p className="text-xs text-destructive mt-1">{fieldErrors.name}</p>}
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1.5" htmlFor="email">
@@ -197,12 +212,12 @@ export function Contact() {
                           id="email"
                           name="email"
                           type="email"
-                          required
                           value={formData.email}
                           onChange={handleChange}
-                          placeholder="john@example.com"
-                          className="w-full px-3 py-2 text-sm rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
+                          placeholder="john@company.com"
+                          className={`w-full px-3 py-2 text-sm rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-amber-500 transition ${fieldErrors.email ? 'border-destructive' : 'border-border'}`}
                         />
+                        {fieldErrors.email && <p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>}
                       </div>
                     </div>
 
@@ -213,10 +228,9 @@ export function Contact() {
                       <select
                         id="subject"
                         name="subject"
-                        required
                         value={formData.subject}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 text-sm rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-500 transition"
+                        className={`w-full px-3 py-2 text-sm rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-amber-500 transition ${fieldErrors.subject ? 'border-destructive' : 'border-border'}`}
                       >
                         <option value="">Select a topic...</option>
                         <option value="carrier-support">Carrier Support</option>
@@ -227,6 +241,7 @@ export function Contact() {
                         <option value="partnership">Partnership Inquiry</option>
                         <option value="other">Other</option>
                       </select>
+                      {fieldErrors.subject && <p className="text-xs text-destructive mt-1">{fieldErrors.subject}</p>}
                     </div>
 
                     <div>
@@ -236,13 +251,18 @@ export function Contact() {
                       <textarea
                         id="message"
                         name="message"
-                        required
                         rows={6}
                         value={formData.message}
                         onChange={handleChange}
                         placeholder="Describe your question or issue in detail..."
-                        className="w-full px-3 py-2 text-sm rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-amber-500 transition resize-none"
+                        className={`w-full px-3 py-2 text-sm rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-amber-500 transition resize-none ${fieldErrors.message ? 'border-destructive' : 'border-border'}`}
                       />
+                      <div className="flex justify-between mt-1">
+                        {fieldErrors.message
+                          ? <p className="text-xs text-destructive">{fieldErrors.message}</p>
+                          : <span />}
+                        <p className="text-xs text-muted-foreground">{formData.message.length}/2000</p>
+                      </div>
                     </div>
 
                     <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-white h-11">

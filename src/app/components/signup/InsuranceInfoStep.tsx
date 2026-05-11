@@ -2,14 +2,19 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { FormGrid, HintText } from '../../styles/signup.styles';
-import { sanitizeDecimal, type FieldErrors } from '../../utils/validation';
+import { HintText } from '../../styles/signup.styles';
+import { type FieldErrors } from '../../utils/validation';
 
 interface Props {
   formData: {
-    insuranceCompany: string;
-    cargoInsurance: string;
-    liabilityInsurance: string;
+    bondCompany: string;
+    bondPolicyNumber: string;
+    bondCoverage: string;
+    bondEffectiveDate: string;
+    bondAgentFirstName: string;
+    bondAgentLastName: string;
+    bondAgentEmail: string;
+    bondAgentPhone: string;
   };
   fieldErrors: FieldErrors;
   onChange: (field: string, value: string) => void;
@@ -21,62 +26,120 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Insurance Information</CardTitle>
-        <CardDescription>Provide your insurance coverage details</CardDescription>
+        <CardTitle>Bond Information</CardTitle>
+        <CardDescription>Provide your surety bond details</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label htmlFor="insuranceCompany">Insurance Company Name *</Label>
+          <Label htmlFor="bondCompany">Bond Company <span className="text-destructive">*</span></Label>
           <Input
-            id="insuranceCompany"
-            value={formData.insuranceCompany}
-            onChange={(e) => onChange('insuranceCompany', e.target.value.trimStart())}
-            placeholder="ABC Insurance Co."
+            id="bondCompany"
+            placeholder="Bond Company Name"
+            value={formData.bondCompany}
+            onChange={e => onChange('bondCompany', e.target.value.trimStart())}
             maxLength={100}
-            aria-invalid={!!fieldErrors.insuranceCompany}
+            aria-invalid={!!fieldErrors.bondCompany}
           />
-          {fieldErrors.insuranceCompany && (
-            <p className="text-xs text-destructive mt-1">{fieldErrors.insuranceCompany}</p>
-          )}
+          {fieldErrors.bondCompany && <p className="text-xs text-destructive mt-1">{fieldErrors.bondCompany}</p>}
         </div>
 
-        <FormGrid>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="cargoInsurance">Cargo Insurance Coverage *</Label>
+            <Label htmlFor="bondPolicyNumber">Bond Policy Number <span className="text-destructive">*</span></Label>
             <Input
-              id="cargoInsurance"
-              inputMode="decimal"
-              value={formData.cargoInsurance}
-              onChange={(e) => onChange('cargoInsurance', sanitizeDecimal(e.target.value))}
-              placeholder="100000"
-              aria-invalid={!!fieldErrors.cargoInsurance}
+              id="bondPolicyNumber"
+              placeholder="XXXXXXXXX"
+              value={formData.bondPolicyNumber}
+              onChange={e => onChange('bondPolicyNumber', e.target.value.trimStart())}
+              maxLength={50}
+              aria-invalid={!!fieldErrors.bondPolicyNumber}
             />
-            {fieldErrors.cargoInsurance
-              ? <p className="text-xs text-destructive mt-1">{fieldErrors.cargoInsurance}</p>
-              : <HintText>Amount in USD</HintText>
-            }
+            {fieldErrors.bondPolicyNumber && <p className="text-xs text-destructive mt-1">{fieldErrors.bondPolicyNumber}</p>}
           </div>
           <div>
-            <Label htmlFor="liabilityInsurance">Liability Insurance Coverage *</Label>
+            <Label htmlFor="bondCoverage">Bond Coverage <span className="text-destructive">*</span></Label>
             <Input
-              id="liabilityInsurance"
-              inputMode="decimal"
-              value={formData.liabilityInsurance}
-              onChange={(e) => onChange('liabilityInsurance', sanitizeDecimal(e.target.value))}
-              placeholder="1000000"
-              aria-invalid={!!fieldErrors.liabilityInsurance}
+              id="bondCoverage"
+              placeholder="XXXXXX"
+              inputMode="numeric"
+              value={formData.bondCoverage}
+              onChange={e => onChange('bondCoverage', e.target.value.replace(/[^\d]/g, ''))}
+              maxLength={20}
+              aria-invalid={!!fieldErrors.bondCoverage}
             />
-            {fieldErrors.liabilityInsurance
-              ? <p className="text-xs text-destructive mt-1">{fieldErrors.liabilityInsurance}</p>
-              : <HintText>Amount in USD</HintText>
-            }
+            <HintText>Amount in USD</HintText>
+            {fieldErrors.bondCoverage && <p className="text-xs text-destructive mt-1">{fieldErrors.bondCoverage}</p>}
           </div>
-        </FormGrid>
+        </div>
 
-        <Button
-          onClick={onSubmit}
-          className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
-        >
+        <div>
+          <Label htmlFor="bondEffectiveDate">Bond Effective Date <span className="text-destructive">*</span></Label>
+          <Input
+            id="bondEffectiveDate"
+            type="date"
+            value={formData.bondEffectiveDate}
+            onChange={e => onChange('bondEffectiveDate', e.target.value)}
+            aria-invalid={!!fieldErrors.bondEffectiveDate}
+          />
+          {fieldErrors.bondEffectiveDate && <p className="text-xs text-destructive mt-1">{fieldErrors.bondEffectiveDate}</p>}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="bondAgentFirstName">Bond Agent First Name <span className="text-destructive">*</span></Label>
+            <Input
+              id="bondAgentFirstName"
+              placeholder="First name"
+              value={formData.bondAgentFirstName}
+              onChange={e => onChange('bondAgentFirstName', e.target.value.trimStart())}
+              maxLength={50}
+              aria-invalid={!!fieldErrors.bondAgentFirstName}
+            />
+            {fieldErrors.bondAgentFirstName && <p className="text-xs text-destructive mt-1">{fieldErrors.bondAgentFirstName}</p>}
+          </div>
+          <div>
+            <Label htmlFor="bondAgentLastName">Bond Agent Last Name <span className="text-destructive">*</span></Label>
+            <Input
+              id="bondAgentLastName"
+              placeholder="Last name"
+              value={formData.bondAgentLastName}
+              onChange={e => onChange('bondAgentLastName', e.target.value.trimStart())}
+              maxLength={50}
+              aria-invalid={!!fieldErrors.bondAgentLastName}
+            />
+            {fieldErrors.bondAgentLastName && <p className="text-xs text-destructive mt-1">{fieldErrors.bondAgentLastName}</p>}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="bondAgentEmail">Bond Agent Email <span className="text-destructive">*</span></Label>
+            <Input
+              id="bondAgentEmail"
+              type="email"
+              placeholder="Email"
+              value={formData.bondAgentEmail}
+              onChange={e => onChange('bondAgentEmail', e.target.value.trim())}
+              maxLength={254}
+              aria-invalid={!!fieldErrors.bondAgentEmail}
+            />
+            {fieldErrors.bondAgentEmail && <p className="text-xs text-destructive mt-1">{fieldErrors.bondAgentEmail}</p>}
+          </div>
+          <div>
+            <Label htmlFor="bondAgentPhone">Bond Agent Phone <span className="text-destructive">*</span></Label>
+            <Input
+              id="bondAgentPhone"
+              placeholder="(XXX) XXX-XXXX"
+              value={formData.bondAgentPhone}
+              onChange={e => onChange('bondAgentPhone', e.target.value.trimStart())}
+              maxLength={20}
+              aria-invalid={!!fieldErrors.bondAgentPhone}
+            />
+            {fieldErrors.bondAgentPhone && <p className="text-xs text-destructive mt-1">{fieldErrors.bondAgentPhone}</p>}
+          </div>
+        </div>
+
+        <Button onClick={onSubmit} className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold">
           Continue to Documents Upload
         </Button>
         <Button type="button" variant="ghost" className="w-full text-sm" onClick={onBack}>

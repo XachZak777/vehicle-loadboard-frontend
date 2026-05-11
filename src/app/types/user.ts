@@ -1,4 +1,4 @@
-export type UserRole = 'carrier' | 'broker' | 'admin';
+export type UserRole = 'carrier' | 'broker' | 'admin' | 'dealer';
 
 export type LoadStatus = 'available' | 'requested' | 'booked' | 'picked-up' | 'in-transit' | 'delivered' | 'paid';
 
@@ -8,32 +8,32 @@ export interface UserProfile {
   email: string;
   /** Whether an admin has approved this account. False until admin acts. */
   adminApproved?: boolean;
-  phoneNumber: string;
-  phoneVerified: boolean;
-  companyName: string;
-  mcNumber: string;
-  dotNumber: string;
-  
+  phoneNumber?: string;
+  phoneVerified?: boolean;
+  companyName?: string;
+  mcNumber?: string;
+  dotNumber?: string;
+
   // Insurance Information
-  insuranceCompany: string;
-  cargoInsurance: number;
-  liabilityInsurance: number;
-  
+  insuranceCompany?: string;
+  cargoInsurance?: number;
+  liabilityInsurance?: number;
+
   // W9 Information
-  w9Document?: string; // File path or base64
-  taxId: string; // SSN or EIN
-  taxIdType: 'SSN' | 'EIN';
-  
+  w9Document?: string;
+  taxId?: string;
+  taxIdType?: 'SSN' | 'EIN';
+
   // FMCSA Verification
-  fmcsaVerified: boolean;
+  fmcsaVerified?: boolean;
   verificationDate?: string;
-  
+
   // Additional Info
-  mailingAddress: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  
+  mailingAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+
   createdAt: string;
 }
 

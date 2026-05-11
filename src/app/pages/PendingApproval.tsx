@@ -1,16 +1,11 @@
-import { useAppDispatch } from '../store/hooks';
-import { logout } from '../store/slices/authSlice';
 import { Clock, LogOut, Mail } from 'lucide-react';
+import { useLogout } from '../hooks/useLogout';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { AuthNavbar } from '../components/AuthNavbar';
 
 export function PendingApproval() {
-  const dispatch = useAppDispatch();
-
-  const handleLogout = () => {
-    dispatch(logout());
-  };
+  const handleLogout = useLogout();
 
   return (
     <div className="min-h-screen bg-background">
