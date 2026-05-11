@@ -25,6 +25,8 @@ const ForgotPassword  = lazy(() => import('./pages/ForgotPassword').then(m => ({
 const ResetPassword   = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
 const SessionExpired  = lazy(() => import('./pages/SessionExpired').then(m => ({ default: m.SessionExpired })));
 const VerifyLogin     = lazy(() => import('./pages/VerifyLogin').then(m => ({ default: m.VerifyLogin })));
+const MyRatings       = lazy(() => import('./pages/MyRatings').then(m => ({ default: m.MyRatings })));
+const CompanyRating   = lazy(() => import('./pages/CompanyRating').then(m => ({ default: m.CompanyRating })));
 const PrivacyPolicy   = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
 const TermsOfService  = lazy(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
 const CookiePolicy    = lazy(() => import('./pages/CookiePolicy').then(m => ({ default: m.CookiePolicy })));
@@ -34,7 +36,13 @@ const Contact         = lazy(() => import('./pages/Contact').then(m => ({ defaul
 // Thin root layout – Redux Provider lives in App.tsx
 function RootLayout() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" /></div>}>
+    <Suspense
+      fallback={
+        <div className='flex items-center justify-center min-h-screen'>
+          <div className='w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin' />
+        </div>
+      }
+    >
       <Outlet />
     </Suspense>
   );
@@ -215,6 +223,22 @@ export const router = createBrowserRouter([
       {
         path: '/contact',
         element: <Contact />,
+      },
+      {
+        path: '/my-rating',
+        element: (
+          <ProtectedRoute>
+            <MyRatings />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/company/:type/:id',
+        element: (
+          <ProtectedRoute>
+            <CompanyRating />
+          </ProtectedRoute>
+        ),
       },
     ],
   },

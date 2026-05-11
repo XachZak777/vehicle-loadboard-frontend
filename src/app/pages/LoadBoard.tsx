@@ -1,13 +1,13 @@
 import { useState, useMemo, memo } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import { useGetLoadsQuery, usePlaceBidMutation, type LoadDto } from '../store/services/hauliusApi';
+import { useGetLoadsQuery, usePlaceBidMutation, useGetBrokerPublicInfoQuery, type LoadDto } from '../store/services/hauliusApi';
 import { useAppSelector } from '../store/hooks';
 import { Navbar } from '../components/Navbar';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Button } from '../components/ui/button';
-import { MapPin, Loader2, Phone, ChevronDown } from 'lucide-react';
+import { MapPin, Loader2, Phone, ChevronDown, Star } from 'lucide-react';
 
 const VEHICLE_TYPES = ['All Types', 'Sedan', 'SUV', 'Truck', 'Van', 'Motorcycle', 'RV', 'Boat', 'ATV'];
 const TRAILER_TYPES = ['All Types', 'Open Trailer', 'Enclosed Trailer'];
@@ -25,6 +25,29 @@ function formatDate(dateStr?: string) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function BrokerHeaderInline({ brokerId }: { brokerId: string }) {
+  const navigate = useNavigate();
+  const { data } = useGetBrokerPublicInfoQuery(brokerId);
+  const name = data?.companyName || data?.legalName || 'Unknown Company';
+
+  return (
+    <div
+      className="flex items-center justify-between px-5 py-2.5 border-b border-border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigate(`/company/broker/${brokerId}`);
+      }}
+    >
+      <span className="text-sm font-semibold text-amber-600 hover:underline">{name}</span>
+      <span className="flex items-center gap-1 text-sm text-muted-foreground">
+        <Star className="size-3.5 fill-amber-400 text-amber-400" />
+        View ratings
+      </span>
+    </div>
+  );
 }
 
 export function LoadBoard() {
@@ -334,6 +357,7 @@ const LoadCard = memo(function LoadCard({ load }: { load: LoadDto }) {
 
   return (
     <div className="border rounded-lg bg-card hover:shadow-md transition-shadow">
+      {load.brokerId && <BrokerHeaderInline brokerId={load.brokerId} />}
       <div className="p-4">
         <div className="flex items-start gap-4">
           {/* Route */}

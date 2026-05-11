@@ -379,6 +379,7 @@ export type CarrierPublicInfo = {
 };
 
 export type BrokerPublicInfo = {
+  id?: string;
   mcNumber?: string;
   dotNumber?: string;
   legalName?: string;
@@ -388,6 +389,39 @@ export type BrokerPublicInfo = {
   state?: string;
   phoneNumber?: string;
   email?: string;
+};
+
+export type SubmitRatingPayload = {
+  targetId: string;
+  targetType: 'broker' | 'carrier';
+  loadId: string;
+  type: 'positive' | 'negative';
+  tags?: string[];
+  comment?: string;
+};
+
+export type RatingDto = {
+  id: string;
+  type: 'positive' | 'negative';
+  fromName?: string;
+  fromRole?: string;
+  loadTitle?: string;
+  tags?: string[];
+  comment?: string;
+  createdAt?: string;
+};
+
+export type RatingTagStat = {
+  tag: string;
+  count: number;
+  total: number;
+};
+
+export type MyRatingsResponse = {
+  positiveCount: number;
+  negativeCount: number;
+  tagStats?: RatingTagStat[];
+  ratings: RatingDto[];
 };
 
 export type AdminDocumentDto = {
@@ -455,10 +489,13 @@ const baseQueryWith401Intercept: BaseQueryFn<string | FetchArgs, unknown, FetchB
 export const hauliusApi = createApi({
   reducerPath: 'hauliusApi',
   baseQuery: baseQueryWith401Intercept,
-  tagTypes: ['Load', 'Bid', 'Profile'],
+  tagTypes: ['Load', 'Bid', 'Profile', 'Rating'],
   endpoints: (builder) => ({
     // ── Auth ──────────────────────────────────────────────────────────────
-    register: builder.mutation<AuthResponse, { email: string; password: string; role: AuthRole }>({
+    register: builder.mutation<
+      AuthResponse,
+      { email: string; password: string; role: AuthRole }
+    >({
       query: (body) => ({ url: '/api/auth/register', method: 'POST', body }),
     }),
     registerDealer: builder.mutation<AuthResponse, RegisterDealerPayload>({
@@ -487,23 +524,52 @@ export const hauliusApi = createApi({
     validateBroker: builder.mutation<LookupResponse, LookupRequest>({
       query: (body) => ({ url: '/api/validate/broker', method: 'POST', body }),
     }),
-    saveCarrierFromValidation: builder.mutation<AuthResponse, SaveFromValidationRequest>({
-      query: (body) => ({ url: '/api/validate/carrier/save', method: 'POST', body }),
+    saveCarrierFromValidation: builder.mutation<
+      AuthResponse,
+      SaveFromValidationRequest
+    >({
+      query: (body) => ({
+        url: '/api/validate/carrier/save',
+        method: 'POST',
+        body,
+      }),
     }),
-    saveBrokerFromValidation: builder.mutation<AuthResponse, SaveFromValidationRequest>({
-      query: (body) => ({ url: '/api/validate/broker/save', method: 'POST', body }),
+    saveBrokerFromValidation: builder.mutation<
+      AuthResponse,
+      SaveFromValidationRequest
+    >({
+      query: (body) => ({
+        url: '/api/validate/broker/save',
+        method: 'POST',
+        body,
+      }),
     }),
     verifyEmail: builder.query<void, string>({
       query: (token) => `/api/auth/verify-email?token=${token}`,
     }),
     resendVerification: builder.mutation<void, { email: string }>({
-      query: (body) => ({ url: '/api/auth/resend-verification', method: 'POST', body }),
+      query: (body) => ({
+        url: '/api/auth/resend-verification',
+        method: 'POST',
+        body,
+      }),
     }),
     forgotPassword: builder.mutation<void, { email: string }>({
-      query: (body) => ({ url: '/api/auth/forgot-password', method: 'POST', body }),
+      query: (body) => ({
+        url: '/api/auth/forgot-password',
+        method: 'POST',
+        body,
+      }),
     }),
-    resetPassword: builder.mutation<void, { token: string; newPassword: string }>({
-      query: (body) => ({ url: '/api/auth/reset-password', method: 'POST', body }),
+    resetPassword: builder.mutation<
+      void,
+      { token: string; newPassword: string }
+    >({
+      query: (body) => ({
+        url: '/api/auth/reset-password',
+        method: 'POST',
+        body,
+      }),
     }),
     requestLoginCode: builder.mutation<{ message: string }, { email: string }>({
       query: (body) => ({ url: '/api/auth/request-login-code', method: 'POST', body }),
@@ -534,8 +600,15 @@ export const hauliusApi = createApi({
       query: (body) => ({ url: '/api/loads', method: 'POST', body }),
       invalidatesTags: ['Load'],
     }),
-    updateLoad: builder.mutation<LoadDto, { id: string; body: CreateLoadPayload }>({
-      query: ({ id, body }) => ({ url: `/api/loads/${id}`, method: 'PUT', body }),
+    updateLoad: builder.mutation<
+      LoadDto,
+      { id: string; body: CreateLoadPayload }
+    >({
+      query: ({ id, body }) => ({
+        url: `/api/loads/${id}`,
+        method: 'PUT',
+        body,
+      }),
       invalidatesTags: ['Load'],
     }),
     deleteLoad: builder.mutation<void, string>({
@@ -554,14 +627,26 @@ export const hauliusApi = createApi({
     }),
     placeBid: builder.mutation<BidDto, BidPayload>({
       query: (body) => ({ url: '/api/loads/bid', method: 'POST', body }),
-      invalidatesTags: (_result, _error, { loadId }) => [{ type: 'Bid', id: loadId }, 'Load'],
+      invalidatesTags: (_result, _error, { loadId }) => [
+        { type: 'Bid', id: loadId },
+        'Load',
+      ],
     }),
     approveBid: builder.mutation<void, { loadId: string; bidId: string }>({
-      query: ({ loadId, bidId }) => ({ url: `/api/loads/${loadId}/approve/${bidId}`, method: 'POST' }),
-      invalidatesTags: (_result, _error, { loadId }) => [{ type: 'Bid', id: loadId }, 'Load'],
+      query: ({ loadId, bidId }) => ({
+        url: `/api/loads/${loadId}/approve/${bidId}`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_result, _error, { loadId }) => [
+        { type: 'Bid', id: loadId },
+        'Load',
+      ],
     }),
     cancelBooking: builder.mutation<void, string>({
-      query: (loadId) => ({ url: `/api/loads/${loadId}/cancel`, method: 'POST' }),
+      query: (loadId) => ({
+        url: `/api/loads/${loadId}/cancel`,
+        method: 'POST',
+      }),
       invalidatesTags: ['Load', 'Bid'],
     }),
     // ── Admin — user management ───────────────────────────────────────────
@@ -590,15 +675,24 @@ export const hauliusApi = createApi({
       invalidatesTags: ['Profile'],
     }),
     approveCarrier: builder.mutation<{ message: string }, string>({
-      query: (id) => ({ url: `/api/admin/carriers/${id}/approve`, method: 'POST' }),
+      query: (id) => ({
+        url: `/api/admin/carriers/${id}/approve`,
+        method: 'POST',
+      }),
       invalidatesTags: ['Profile'],
     }),
     declineCarrier: builder.mutation<{ message: string }, string>({
-      query: (id) => ({ url: `/api/admin/carriers/${id}/decline`, method: 'POST' }),
+      query: (id) => ({
+        url: `/api/admin/carriers/${id}/decline`,
+        method: 'POST',
+      }),
       invalidatesTags: ['Profile'],
     }),
     revokeCarrier: builder.mutation<{ message: string }, string>({
-      query: (id) => ({ url: `/api/admin/carriers/${id}/revoke`, method: 'POST' }),
+      query: (id) => ({
+        url: `/api/admin/carriers/${id}/revoke`,
+        method: 'POST',
+      }),
       invalidatesTags: ['Profile'],
     }),
     deleteAdminCarrier: builder.mutation<void, string>({
@@ -606,15 +700,24 @@ export const hauliusApi = createApi({
       invalidatesTags: ['Profile'],
     }),
     approveBroker: builder.mutation<{ message: string }, string>({
-      query: (id) => ({ url: `/api/admin/brokers/${id}/approve`, method: 'POST' }),
+      query: (id) => ({
+        url: `/api/admin/brokers/${id}/approve`,
+        method: 'POST',
+      }),
       invalidatesTags: ['Profile'],
     }),
     declineBroker: builder.mutation<{ message: string }, string>({
-      query: (id) => ({ url: `/api/admin/brokers/${id}/decline`, method: 'POST' }),
+      query: (id) => ({
+        url: `/api/admin/brokers/${id}/decline`,
+        method: 'POST',
+      }),
       invalidatesTags: ['Profile'],
     }),
     revokeBroker: builder.mutation<{ message: string }, string>({
-      query: (id) => ({ url: `/api/admin/brokers/${id}/revoke`, method: 'POST' }),
+      query: (id) => ({
+        url: `/api/admin/brokers/${id}/revoke`,
+        method: 'POST',
+      }),
       invalidatesTags: ['Profile'],
     }),
     deleteAdminBroker: builder.mutation<void, string>({
@@ -641,12 +744,22 @@ export const hauliusApi = createApi({
     getBrokerPublicInfo: builder.query<BrokerPublicInfo, string>({
       query: (brokerId) => `/api/brokers/${brokerId}/public`,
     }),
-    updateBrokerProfile: builder.mutation<{ message: string }, ProfileUpdatePayload>({
+    updateBrokerProfile: builder.mutation<
+      { message: string },
+      ProfileUpdatePayload
+    >({
       query: (body) => ({ url: '/api/brokers/profile', method: 'PATCH', body }),
       invalidatesTags: ['Profile'],
     }),
-    updateCarrierProfile: builder.mutation<{ message: string }, ProfileUpdatePayload>({
-      query: (body) => ({ url: '/api/carriers/profile', method: 'PATCH', body }),
+    updateCarrierProfile: builder.mutation<
+      { message: string },
+      ProfileUpdatePayload
+    >({
+      query: (body) => ({
+        url: '/api/carriers/profile',
+        method: 'PATCH',
+        body,
+      }),
       invalidatesTags: ['Profile'],
     }),
     uploadBrokerW9: builder.mutation<DocumentUploadResponse, FormData>({
@@ -677,15 +790,17 @@ export const hauliusApi = createApi({
       }),
       invalidatesTags: ['Profile'],
     }),
-    uploadBrokerMcAuthority: builder.mutation<DocumentUploadResponse, FormData>({
-      query: (body) => ({
-        url: '/api/brokers/documents/mc-authority',
-        method: 'POST',
-        body,
-        formData: true,
-      }),
-      invalidatesTags: ['Profile'],
-    }),
+    uploadBrokerMcAuthority: builder.mutation<DocumentUploadResponse, FormData>(
+      {
+        query: (body) => ({
+          url: '/api/brokers/documents/mc-authority',
+          method: 'POST',
+          body,
+          formData: true,
+        }),
+        invalidatesTags: ['Profile'],
+      },
+    ),
     uploadCarrierW9: builder.mutation<DocumentUploadResponse, FormData>({
       query: (body) => ({
         url: '/api/carriers/documents/w9',
@@ -704,7 +819,10 @@ export const hauliusApi = createApi({
       }),
       invalidatesTags: ['Profile'],
     }),
-    uploadCarrierMcAuthority: builder.mutation<DocumentUploadResponse, FormData>({
+    uploadCarrierMcAuthority: builder.mutation<
+      DocumentUploadResponse,
+      FormData
+    >({
       query: (body) => ({
         url: '/api/carriers/documents/mc-authority',
         method: 'POST',
@@ -712,6 +830,24 @@ export const hauliusApi = createApi({
         formData: true,
       }),
       invalidatesTags: ['Profile'],
+    }),
+
+    // ── Ratings ───────────────────────────────────────────────────────────
+    getMyRatings: builder.query<MyRatingsResponse, void>({
+      query: () => '/api/ratings/me',
+      providesTags: ['Rating'],
+    }),
+    submitRating: builder.mutation<void, SubmitRatingPayload>({
+      query: (body) => ({ url: '/api/ratings', method: 'POST', body }),
+      invalidatesTags: ['Rating'],
+    }),
+    getBrokerRatings: builder.query<MyRatingsResponse, string>({
+      query: (id) => `/api/ratings/broker/${id}`,
+      providesTags: (_r, _e, id) => [{ type: 'Rating', id }],
+    }),
+    getCarrierRatings: builder.query<MyRatingsResponse, string>({
+      query: (id) => `/api/ratings/carrier/${id}`,
+      providesTags: (_r, _e, id) => [{ type: 'Rating', id }],
     }),
   }),
 });
@@ -773,4 +909,8 @@ export const {
   useDeclineBrokerMutation,
   useRevokeBrokerMutation,
   useDeleteAdminBrokerMutation,
+  useGetMyRatingsQuery,
+  useGetBrokerRatingsQuery,
+  useGetCarrierRatingsQuery,
+  useSubmitRatingMutation,
 } = hauliusApi;
