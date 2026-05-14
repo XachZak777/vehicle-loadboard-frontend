@@ -16,13 +16,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
           title: "font-semibold",
           description: "opacity-90 text-xs",
           success:
-            "bg-emerald-600 text-white border-emerald-700 [&>[data-icon]]:text-white",
+            "bg-amber-600 text-white border-amber-700 [&>[data-icon]]:text-white",
           error:
             "bg-red-600 text-white border-red-700 [&>[data-icon]]:text-white",
           warning:
             "bg-amber-500 text-white border-amber-600 [&>[data-icon]]:text-white",
           info:
-            "bg-blue-600 text-white border-blue-700 [&>[data-icon]]:text-white",
+            "bg-muted text-foreground border-border [&>[data-icon]]:text-foreground",
         },
       }}
       {...props}

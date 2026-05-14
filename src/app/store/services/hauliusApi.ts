@@ -14,7 +14,13 @@ export type AuthResponse = {
   adminApproved: boolean;
 };
 
-export type LoginPendingResponse = { email: string };
+export type LoginPendingResponse = {
+  email: string;
+  token?: string;
+  userId?: string;
+  role?: string;
+  adminApproved?: boolean;
+};
 
 export type MeResponse = {
   userId: string;
@@ -162,6 +168,17 @@ export type RegisterDealerPayload = {
   howDidYouHear?: string;
 };
 
+export type AdditionalVehicle = {
+  vehicleMake: string;
+  vehicleModel: string;
+  vehicleYear: number;
+  vehicleType?: string;
+  vehicleCondition?: string;
+  vin?: string;
+  vehicleAdditionalInfo?: string;
+  weight?: number;
+};
+
 export type CreateLoadPayload = {
   pickupCity: string;
   pickupState: string;
@@ -193,13 +210,16 @@ export type CreateLoadPayload = {
   weight?: number;
   price?: number;
   pickupDate?: string;
+  pickupTime?: string;
   deliveryDate?: string;
+  deliveryTime?: string;
   contactName?: string;
   contactPhone?: string;
   contactEmail?: string;
   orderId?: string;
   paymentMethod?: string;
   paymentTiming?: string;
+  additionalVehicles?: AdditionalVehicle[];
 };
 
 export type LoadDto = {
@@ -235,7 +255,9 @@ export type LoadDto = {
   price?: number;
   distance?: number;
   pickupDate?: string;
+  pickupTime?: string;
   deliveryDate?: string;
+  deliveryTime?: string;
   createdAt?: string;
   carrierId?: string;
   assignedCarrierId?: string;
@@ -246,29 +268,75 @@ export type LoadDto = {
   orderId?: string;
   paymentMethod?: string;
   paymentTiming?: string;
+  additionalVehicles?: AdditionalVehicle[];
 };
 
 export type VinDecodeResult = {
   vin: string;
+  success: boolean;
+  errorText?: string;
+
+  // Identity
   make?: string;
   model?: string;
   year?: number;
+  manufacturer?: string;
+
+  // Classification
   vehicleType?: string;
   bodyClass?: string;
   trim?: string;
-  driveType?: string;
-  fuelType?: string;
+
+  // Engine
   engineHp?: string;
   cylinders?: string;
   displacementL?: string;
-  success: boolean;
-  errorText?: string;
+  engineConfiguration?: string;
+  engineModel?: string;
+  turbo?: string;
+
+  // Drivetrain & Transmission
+  driveType?: string;
+  transmissionStyle?: string;
+  transmissionSpeeds?: string;
+
+  // Fuel
+  fuelType?: string;
+
+  // Dimensions & Weight
+  doors?: number;
+  seats?: number;
+  wheelbase?: string;
+  wheels?: number;
+  gvwr?: string;
+
+  // Origin
+  plantCountry?: string;
+  plantState?: string;
+  plantCity?: string;
+
+  // Market
+  basePrice?: string;
+  steeringLocation?: string;
 };
 
 export type BidPayload = {
   loadId: string;
   amount: number;
   bookNow: boolean;
+  requestedPickupDate?: string;
+  requestedPickupTime?: string;
+  requestedDropDate?: string;
+  requestedDropTime?: string;
+};
+
+export type UpdateBidPayload = {
+  bidId: string;
+  amount: number;
+  requestedPickupDate?: string;
+  requestedPickupTime?: string;
+  requestedDropDate?: string;
+  requestedDropTime?: string;
 };
 
 export type BidDto = {
@@ -280,6 +348,10 @@ export type BidDto = {
   status: string;
   createdAt?: string;
   updatedAt?: string;
+  requestedPickupDate?: string;
+  requestedPickupTime?: string;
+  requestedDropDate?: string;
+  requestedDropTime?: string;
 };
 
 export type CarrierBidWithLoadDto = {
@@ -290,6 +362,10 @@ export type CarrierBidWithLoadDto = {
   bidStatus: string;
   bidCreatedAt?: string;
   bidUpdatedAt?: string;
+  requestedPickupDate?: string;
+  requestedPickupTime?: string;
+  requestedDropDate?: string;
+  requestedDropTime?: string;
   vehicleMake?: string;
   vehicleModel?: string;
   vehicleYear?: number;
@@ -365,6 +441,7 @@ export type CarrierProfile = {
 };
 
 export type CarrierPublicInfo = {
+  id?: string;
   dotNumber?: string;
   mcNumber?: string;
   legalName?: string;
@@ -376,6 +453,7 @@ export type CarrierPublicInfo = {
   phyState?: string;
   totalPowerUnits?: number;
   phoneNumber?: string;
+  ratingScore?: number | null;
 };
 
 export type BrokerPublicInfo = {
@@ -389,6 +467,7 @@ export type BrokerPublicInfo = {
   state?: string;
   phoneNumber?: string;
   email?: string;
+  ratingScore?: number | null;
 };
 
 export type SubmitRatingPayload = {
@@ -409,6 +488,7 @@ export type RatingDto = {
   tags?: string[];
   comment?: string;
   createdAt?: string;
+  loadId?: string;
 };
 
 export type RatingTagStat = {
@@ -632,6 +712,10 @@ export const hauliusApi = createApi({
         'Load',
       ],
     }),
+    updateBid: builder.mutation<BidDto, UpdateBidPayload>({
+      query: ({ bidId, ...body }) => ({ url: `/api/loads/bid/${bidId}`, method: 'PUT', body }),
+      invalidatesTags: ['Bid', 'Load'],
+    }),
     approveBid: builder.mutation<void, { loadId: string; bidId: string }>({
       query: ({ loadId, bidId }) => ({
         url: `/api/loads/${loadId}/approve/${bidId}`,
@@ -646,6 +730,24 @@ export const hauliusApi = createApi({
       query: (loadId) => ({
         url: `/api/loads/${loadId}/cancel`,
         method: 'POST',
+      }),
+      invalidatesTags: ['Load', 'Bid'],
+    }),
+    autoAssignCarrier: builder.mutation<LoadDto, string>({
+      query: (loadId) => ({
+        url: `/api/loads/${loadId}/auto-assign`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Load', 'Bid'],
+    }),
+    getLoad: builder.query<LoadDto, string>({
+      query: (id) => `/api/loads/${id}`,
+      providesTags: (_result, _error, id) => [{ type: 'Load', id }],
+    }),
+    updateLoadStatus: builder.mutation<LoadDto, string>({
+      query: (loadId) => ({
+        url: `/api/loads/${loadId}/status`,
+        method: 'PATCH',
       }),
       invalidatesTags: ['Load', 'Bid'],
     }),
@@ -740,6 +842,16 @@ export const hauliusApi = createApi({
     }),
     getCarrierPublicInfo: builder.query<CarrierPublicInfo, string>({
       query: (carrierId) => `/api/carriers/${carrierId}/public`,
+    }),
+    searchCarriers: builder.query<CarrierPublicInfo[], string>({
+      query: (q) => `/api/carriers/search?q=${encodeURIComponent(q)}`,
+    }),
+    directAssignCarrier: builder.mutation<LoadDto, { loadId: string; carrierId: string }>({
+      query: ({ loadId, carrierId }) => ({
+        url: `/api/loads/${loadId}/assign/${carrierId}`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Load', 'Bid'],
     }),
     getBrokerPublicInfo: builder.query<BrokerPublicInfo, string>({
       query: (brokerId) => `/api/brokers/${brokerId}/public`,
@@ -841,13 +953,13 @@ export const hauliusApi = createApi({
       query: (body) => ({ url: '/api/ratings', method: 'POST', body }),
       invalidatesTags: ['Rating'],
     }),
-    getBrokerRatings: builder.query<MyRatingsResponse, string>({
-      query: (id) => `/api/ratings/broker/${id}`,
-      providesTags: (_r, _e, id) => [{ type: 'Rating', id }],
+    getCompanyRatings: builder.query<MyRatingsResponse, { targetType: 'broker' | 'carrier'; id: string }>({
+      query: ({ targetType, id }) => `/api/ratings/${targetType}/${id}`,
+      providesTags: (_r, _e, { id }) => [{ type: 'Rating', id }],
     }),
-    getCarrierRatings: builder.query<MyRatingsResponse, string>({
-      query: (id) => `/api/ratings/carrier/${id}`,
-      providesTags: (_r, _e, id) => [{ type: 'Rating', id }],
+    getMySubmittedLoadIds: builder.query<string[], void>({
+      query: () => '/api/ratings/my-submitted-load-ids',
+      providesTags: ['Rating'],
     }),
   }),
 });
@@ -879,11 +991,17 @@ export const {
   useGetBidsForLoadQuery,
   useGetMyCarrierBidsQuery,
   usePlaceBidMutation,
+  useUpdateBidMutation,
   useApproveBidMutation,
   useCancelBookingMutation,
+  useAutoAssignCarrierMutation,
+  useGetLoadQuery,
+  useUpdateLoadStatusMutation,
   useGetMyBrokerProfileQuery,
   useGetMyCarrierProfileQuery,
   useGetCarrierPublicInfoQuery,
+  useLazySearchCarriersQuery,
+  useDirectAssignCarrierMutation,
   useGetBrokerPublicInfoQuery,
   useUpdateBrokerProfileMutation,
   useUpdateCarrierProfileMutation,
@@ -910,7 +1028,7 @@ export const {
   useRevokeBrokerMutation,
   useDeleteAdminBrokerMutation,
   useGetMyRatingsQuery,
-  useGetBrokerRatingsQuery,
-  useGetCarrierRatingsQuery,
+  useGetCompanyRatingsQuery,
   useSubmitRatingMutation,
+  useGetMySubmittedLoadIdsQuery,
 } = hauliusApi;

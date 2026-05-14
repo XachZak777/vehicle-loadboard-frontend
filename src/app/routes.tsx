@@ -32,6 +32,8 @@ const TermsOfService  = lazy(() => import('./pages/TermsOfService').then(m => ({
 const CookiePolicy    = lazy(() => import('./pages/CookiePolicy').then(m => ({ default: m.CookiePolicy })));
 const AboutUs         = lazy(() => import('./pages/AboutUs').then(m => ({ default: m.AboutUs })));
 const Contact         = lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
+const Settings        = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const DispatchSheetPage = lazy(() => import('./pages/DispatchSheetPage').then(m => ({ default: m.DispatchSheetPage })));
 
 // Thin root layout – Redux Provider lives in App.tsx
 function RootLayout() {
@@ -137,6 +139,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: '/carrier/dispatch/:bidId',
+        element: (
+          <ProtectedRoute allowedRoles={['carrier']}>
+            <DispatchSheetPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: '/carrier/company',
         element: (
           <ProtectedRoute allowedRoles={['carrier']}>
@@ -237,6 +247,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <CompanyRating />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/settings',
+        element: (
+          <ProtectedRoute>
+            <Settings />
           </ProtectedRoute>
         ),
       },

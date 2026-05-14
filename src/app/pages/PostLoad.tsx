@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { ArrowLeft, Truck, CheckCircle, Plus, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   isValidVehicleYear, isValidPrice, isValidZip, isValidCity,
@@ -54,10 +54,10 @@ export function PostLoad() {
 
   const [formData, setFormData] = useState({
     pickupStreet: '', pickupCity: '', pickupState: '', pickupZip: '',
-    pickupType: 'BUSINESS', pickupDate: '',
+    pickupType: 'BUSINESS', pickupDate: '', pickupTime: '',
     pickupFacilityName: '', pickupLocationContactName: '', pickupLocationContactPhone: '',
     dropStreet: '', dropCity: '', dropState: '', dropZip: '',
-    dropType: 'RESIDENCE', deliveryDate: '',
+    dropType: 'RESIDENCE', deliveryDate: '', deliveryTime: '',
     dropFacilityName: '', dropLocationContactName: '', dropLocationContactPhone: '',
     price: '', paymentMethod: '', paymentTiming: '', description: '',
     contactName: '', contactPhone: '', contactEmail: '', orderId: '', additionalNotes: '',
@@ -152,16 +152,22 @@ export function PostLoad() {
 
     // Validate shared fields
     const errs = buildErrors([
+      [!formData.pickupStreet.trim(), 'pickupStreet', 'Pickup street address is required.'],
       [!!formData.pickupStreet.trim() && formData.pickupStreet.trim().length < 5, 'pickupStreet', 'Street address must be at least 5 characters.'],
       [!formData.pickupCity.trim(), 'pickupCity', 'Pickup city is required.'],
       [!!formData.pickupCity.trim() && !isValidCity(formData.pickupCity), 'pickupCity', 'Enter a valid city name.'],
       [!formData.pickupState, 'pickupState', 'Pickup state is required.'],
+      [!formData.pickupZip.trim(), 'pickupZip', 'Pickup ZIP code is required.'],
       [!!formData.pickupZip.trim() && !isValidZip(formData.pickupZip), 'pickupZip', 'ZIP code must be 5 digits.'],
+      [!formData.pickupDate, 'pickupDate', 'Pickup date is required.'],
+      [!formData.dropStreet.trim(), 'dropStreet', 'Delivery street address is required.'],
       [!!formData.dropStreet.trim() && formData.dropStreet.trim().length < 5, 'dropStreet', 'Street address must be at least 5 characters.'],
       [!formData.dropCity.trim(), 'dropCity', 'Delivery city is required.'],
       [!!formData.dropCity.trim() && !isValidCity(formData.dropCity), 'dropCity', 'Enter a valid city name.'],
       [!formData.dropState, 'dropState', 'Delivery state is required.'],
+      [!formData.dropZip.trim(), 'dropZip', 'Delivery ZIP code is required.'],
       [!!formData.dropZip.trim() && !isValidZip(formData.dropZip), 'dropZip', 'ZIP code must be 5 digits.'],
+      [!formData.deliveryDate, 'deliveryDate', 'Delivery date is required.'],
       [!formData.price.trim(), 'price', 'Price is required.'],
       [!!formData.price.trim() && !isValidPrice(formData.price), 'price', 'Price must be between $1 and $999,999.'],
       [!formData.contactName.trim(), 'contactName', 'Contact name is required.'],
@@ -170,6 +176,7 @@ export function PostLoad() {
       [!!formData.contactPhone.trim() && !isValidPhone(formData.contactPhone), 'contactPhone', 'Enter a valid US phone number (e.g. (555) 123-4567).'],
       [!formData.contactEmail.trim(), 'contactEmail', 'Email address is required.'],
       [!!formData.contactEmail.trim() && !isValidEmail(formData.contactEmail), 'contactEmail', 'Enter a valid email address.'],
+      [!formData.orderId.trim(), 'orderId', 'Order ID is required.'],
       [!!formData.description.trim() && formData.description.trim().length > 1000, 'description', 'Notes must be 1,000 characters or fewer.'],
     ]);
     setSharedErrors(errs);
@@ -184,73 +191,78 @@ export function PostLoad() {
     }
 
     setIsSubmitting(true);
-    let successCount = 0;
     try {
-      for (const vehicle of vehicles) {
-        await createLoad({
-          vehicleMake: vehicle.make,
-          vehicleModel: vehicle.model,
-          vehicleYear: parseInt(vehicle.year, 10),
-          vehicleType: vehicle.vehicleType || undefined,
-          vehicleCondition: vehicle.condition || undefined,
-          vin: vehicle.vin || undefined,
-          trailerType: sharedTrailerType,
-          vehicleAdditionalInfo: vehicle.additionalInfo || undefined,
-          pickupStreet: formData.pickupStreet || undefined,
-          pickupCity: formData.pickupCity,
-          pickupState: formData.pickupState,
-          pickupZip: formData.pickupZip || undefined,
-          pickupCountry: 'US',
-          pickupType: formData.pickupType,
-          pickupLotNumber: formData.pickupFacilityName || undefined,
-          pickupContactName: formData.pickupLocationContactName || undefined,
-          pickupContactPhone: formData.pickupLocationContactPhone || undefined,
-          dropStreet: formData.dropStreet || undefined,
-          dropCity: formData.dropCity,
-          dropState: formData.dropState,
-          dropZip: formData.dropZip || undefined,
-          dropCountry: 'US',
-          dropType: formData.dropType,
-          dropLotNumber: formData.dropFacilityName || undefined,
-          dropContactName: formData.dropLocationContactName || undefined,
-          dropContactPhone: formData.dropLocationContactPhone || undefined,
-          price: parseFloat(formData.price),
-          paymentMethod: formData.paymentMethod || undefined,
-          paymentTiming: formData.paymentTiming || undefined,
-          pickupDate: formData.pickupDate || undefined,
-          deliveryDate: formData.deliveryDate || undefined,
-          description: formData.description || undefined,
-          contactName: formData.contactName || undefined,
-          contactPhone: formData.contactPhone || undefined,
-          contactEmail: formData.contactEmail || undefined,
-          orderId: formData.orderId || undefined,
-        }).unwrap();
-        successCount++;
-      }
+      const primary = vehicles[0];
+      const additionalVehicles = vehicles.slice(1).map(v => ({
+        vehicleMake: v.make,
+        vehicleModel: v.model,
+        vehicleYear: parseInt(v.year, 10),
+        vehicleType: v.vehicleType || undefined,
+        vehicleCondition: v.condition || undefined,
+        vin: v.vin || undefined,
+        vehicleAdditionalInfo: v.additionalInfo || undefined,
+        weight: v.weight ? parseFloat(v.weight) : undefined,
+      }));
 
-      toast.success(
-        vehicles.length === 1 ? 'Load posted successfully!' : `${successCount} loads posted successfully!`,
-        {
-          description: 'Your load(s) have been added to the board and are now visible to carriers.',
-          icon: <CheckCircle className="size-5 text-green-600" />,
-        }
-      );
+      await createLoad({
+        vehicleMake: primary.make,
+        vehicleModel: primary.model,
+        vehicleYear: parseInt(primary.year, 10),
+        vehicleType: primary.vehicleType || undefined,
+        vehicleCondition: primary.condition || undefined,
+        vin: primary.vin || undefined,
+        trailerType: sharedTrailerType,
+        vehicleAdditionalInfo: primary.additionalInfo || undefined,
+        pickupStreet: formData.pickupStreet,
+        pickupCity: formData.pickupCity,
+        pickupState: formData.pickupState,
+        pickupZip: formData.pickupZip,
+        pickupCountry: 'US',
+        pickupType: formData.pickupType,
+        pickupLotNumber: formData.pickupFacilityName || undefined,
+        pickupContactName: formData.pickupLocationContactName || undefined,
+        pickupContactPhone: formData.pickupLocationContactPhone || undefined,
+        dropStreet: formData.dropStreet,
+        dropCity: formData.dropCity,
+        dropState: formData.dropState,
+        dropZip: formData.dropZip,
+        dropCountry: 'US',
+        dropType: formData.dropType,
+        dropLotNumber: formData.dropFacilityName || undefined,
+        dropContactName: formData.dropLocationContactName || undefined,
+        dropContactPhone: formData.dropLocationContactPhone || undefined,
+        price: parseFloat(formData.price),
+        paymentMethod: formData.paymentMethod || undefined,
+        paymentTiming: formData.paymentTiming || undefined,
+        pickupDate: formData.pickupDate,
+        pickupTime: formData.pickupTime,
+        deliveryDate: formData.deliveryDate,
+        deliveryTime: formData.deliveryTime,
+        description: formData.description || undefined,
+        contactName: formData.contactName || undefined,
+        contactPhone: formData.contactPhone || undefined,
+        contactEmail: formData.contactEmail || undefined,
+        orderId: formData.orderId || undefined,
+        additionalVehicles: additionalVehicles.length > 0 ? additionalVehicles : undefined,
+      }).unwrap();
+
+      toast.success('Load posted successfully!', {
+        description: vehicles.length > 1
+          ? `${vehicles.length} vehicles included in this load.`
+          : 'Your load has been added to the board and is now visible to carriers.',
+        icon: <CheckCircle className="size-5 text-green-600" />,
+      });
       navigate('/loads');
     } catch (error: any) {
       const message = error?.data?.message || error?.message || 'Failed to post load. Please try again.';
-      if (successCount > 0) {
-        toast.warning(`${successCount} of ${vehicles.length} loads posted. One or more failed.`, { description: message });
-        navigate('/loads');
-      } else {
-        toast.error('Failed to post load', { description: message });
-      }
+      toast.error('Failed to post load', { description: message });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
@@ -262,9 +274,7 @@ export function PostLoad() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold flex items-center gap-2">
-                <Truck className="size-7 text-amber-500" /> Post a Load
-              </h1>
+              <h1 className="text-3xl font-bold">Post a Load</h1>
               <p className="text-muted-foreground">Add a new vehicle transport request</p>
             </div>
           </div>
@@ -342,7 +352,7 @@ export function PostLoad() {
               prefix="pickup"
               title="Pickup Location"
               description="Where will the vehicle be picked up?"
-              formData={{ street: formData.pickupStreet, city: formData.pickupCity, state: formData.pickupState, zip: formData.pickupZip, type: formData.pickupType, date: formData.pickupDate, facilityName: formData.pickupFacilityName, locationContactName: formData.pickupLocationContactName, locationContactPhone: formData.pickupLocationContactPhone }}
+              formData={{ street: formData.pickupStreet, city: formData.pickupCity, state: formData.pickupState, zip: formData.pickupZip, type: formData.pickupType, date: formData.pickupDate, time: formData.pickupTime, facilityName: formData.pickupFacilityName, locationContactName: formData.pickupLocationContactName, locationContactPhone: formData.pickupLocationContactPhone }}
               fieldErrors={sharedErrors}
               onChange={handleSharedInputChange}
             />
@@ -350,7 +360,7 @@ export function PostLoad() {
               prefix="drop"
               title="Delivery Location"
               description="Where should the vehicle be delivered?"
-              formData={{ street: formData.dropStreet, city: formData.dropCity, state: formData.dropState, zip: formData.dropZip, type: formData.dropType, date: formData.deliveryDate, facilityName: formData.dropFacilityName, locationContactName: formData.dropLocationContactName, locationContactPhone: formData.dropLocationContactPhone }}
+              formData={{ street: formData.dropStreet, city: formData.dropCity, state: formData.dropState, zip: formData.dropZip, type: formData.dropType, date: formData.deliveryDate, time: formData.deliveryTime, facilityName: formData.dropFacilityName, locationContactName: formData.dropLocationContactName, locationContactPhone: formData.dropLocationContactPhone }}
               fieldErrors={sharedErrors}
               onChange={handleSharedInputChange}
             />
@@ -384,7 +394,7 @@ export function PostLoad() {
               >
                 {isSubmitting
                   ? 'Posting...'
-                  : vehicles.length === 1 ? 'Post Load' : `Post ${vehicles.length} Loads`}
+                  : vehicles.length === 1 ? 'Post Load' : `Post Load (${vehicles.length} vehicles)`}
               </Button>
               <Link to="/loads" className="flex-1">
                 <Button type="button" variant="outline" size="lg" className="w-full">

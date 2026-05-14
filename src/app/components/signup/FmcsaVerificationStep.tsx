@@ -1,6 +1,7 @@
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Loader2, CheckCircle, ShieldCheck, Building2, MapPin } from 'lucide-react';
+import { formatPhone } from '../../utils/phone';
 import { InfoBox, SuccessBox, SuccessBoxHeader, SuccessBoxText } from '../../styles/signup.styles';
 import type { LookupResponse } from '../../store/services/hauliusApi';
 
@@ -121,19 +122,19 @@ export function FmcsaVerificationStep({
                 {formData.phoneNumber && (
                   <div>
                     <span className="text-muted-foreground">Phone</span>
-                    <p className="font-medium">{formData.phoneNumber}</p>
+                    <p className="font-medium">{formatPhone(formData.phoneNumber)}</p>
                   </div>
                 )}
                 <div>
                   <span className="text-muted-foreground">Operating Status</span>
-                  <p className={`font-medium ${fmcsaData?.operatingStatus === 'AUTHORIZED' ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`font-medium ${fmcsaData?.operatingStatus === 'AUTHORIZED' ? 'text-amber-600' : 'text-destructive'}`}>
                     {fmcsaData?.operatingStatus || '—'}
                   </p>
                 </div>
                 {role === 'carrier' && fmcsaData?.allowedToOperate && (
                   <div>
                     <span className="text-muted-foreground">Allowed to Operate</span>
-                    <p className={`font-medium ${fmcsaData.allowedToOperate === 'Y' ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className={`font-medium ${fmcsaData.allowedToOperate === 'Y' ? 'text-amber-600' : 'text-destructive'}`}>
                       {fmcsaData.allowedToOperate === 'Y' ? 'Yes' : 'No'}
                     </p>
                   </div>
@@ -141,7 +142,7 @@ export function FmcsaVerificationStep({
                 {role === 'broker' && fmcsaData?.brokerAuthorityActive != null && (
                   <div>
                     <span className="text-muted-foreground">Broker Authority</span>
-                    <p className={`font-medium ${fmcsaData.brokerAuthorityActive ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className={`font-medium ${fmcsaData.brokerAuthorityActive ? 'text-amber-600' : 'text-destructive'}`}>
                       {fmcsaData.brokerAuthorityActive ? 'Active' : 'Inactive'}
                     </p>
                   </div>

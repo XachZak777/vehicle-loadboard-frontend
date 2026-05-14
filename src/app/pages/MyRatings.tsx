@@ -1,6 +1,7 @@
 import { ThumbsUp, ThumbsDown, Star } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
-import { Card, CardContent } from '../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
 import { useGetMyRatingsQuery } from '../store/services/hauliusApi';
 import type { MyRatingsResponse } from '../store/services/hauliusApi';
 import { useAppSelector } from '../store/hooks';
@@ -47,9 +48,9 @@ const TAG_LABELS: Record<string, string> = {
 
 function ratingLabel(score: number, total: number): { text: string; color: string } {
   if (total === 0) return { text: 'Needs Improvement', color: 'text-muted-foreground' };
-  if (score >= 80) return { text: 'Excellent', color: 'text-green-600' };
-  if (score >= 60) return { text: 'Good', color: 'text-blue-600' };
-  if (score >= 40) return { text: 'Fair', color: 'text-yellow-600' };
+  if (score >= 80) return { text: 'Excellent', color: 'text-amber-600' };
+  if (score >= 60) return { text: 'Good', color: 'text-muted-foreground' };
+  if (score >= 40) return { text: 'Fair', color: 'text-muted-foreground' };
   return { text: 'Needs Improvement', color: 'text-orange-500' };
 }
 
@@ -59,9 +60,9 @@ function fmtDate(d?: string | null) {
 }
 
 function tagBarColor(pct: number) {
-  if (pct >= 80) return 'bg-green-500';
+  if (pct >= 80) return 'bg-amber-500';
   if (pct >= 50) return 'bg-amber-400';
-  return 'bg-orange-500';
+  return 'bg-gray-500';
 }
 
 export function MyRatings() {
@@ -79,49 +80,50 @@ export function MyRatings() {
   const tagStats = data?.tagStats ?? [];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <h1 className="text-3xl font-bold mb-1">My Ratings</h1>
-        <p className="text-muted-foreground mb-8">Your performance and reputation overview</p>
+      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">My Ratings</h1>
+          <p className="text-muted-foreground mt-1">Your performance and reputation overview</p>
+        </div>
 
         {/* Score card */}
-        <Card className="border-2 border-amber-400 mb-6">
-          <CardContent className="pt-6 pb-6">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Overall Rating Score</p>
-                <div className="flex items-baseline gap-3 mb-1">
-                  <span className="text-5xl font-black">{score}%</span>
-                  <span className={`text-xl font-semibold ${labelColor}`}>{label}</span>
+        <Card className="border-[3px] border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20 mb-6">
+          <CardContent className="p-6 sm:p-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="text-center md:text-left">
+                <div className="text-sm uppercase tracking-wide text-muted-foreground mb-2">Overall Rating Score</div>
+                <div className="flex items-baseline gap-3">
+                  <span className="text-6xl sm:text-7xl font-bold">{score}%</span>
+                  <span className={`text-2xl font-semibold ${labelColor}`}>{label}</span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">Based on {total} rating{total !== 1 ? 's' : ''}</p>
-
-                <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="absolute inset-y-0 left-0 bg-amber-400 rounded-full transition-all duration-500"
-                    style={{ width: `${score}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>0%</span>
-                  <span>50%</span>
-                  <span>100%</span>
-                </div>
+                <p className="text-sm text-muted-foreground mt-3">Based on {total} rating{total !== 1 ? 's' : ''}</p>
               </div>
 
-              <div className="flex gap-3 flex-shrink-0">
-                <div className="flex flex-col items-center gap-1 border-2 border-green-400 rounded-xl px-5 py-4">
-                  <ThumbsUp className="size-6 text-green-600" />
-                  <span className="text-2xl font-bold text-green-700">{positive}</span>
-                  <span className="text-xs text-green-600 font-medium">Positive</span>
+              <div className="flex gap-6">
+                <div className="text-center p-4 border-2 border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20">
+                  <ThumbsUp className="size-6 mx-auto mb-2 text-amber-600 dark:text-amber-500" />
+                  <div className="text-2xl font-bold text-amber-900 dark:text-amber-100">{positive}</div>
+                  <div className="text-xs text-amber-700 dark:text-amber-400">Positive</div>
                 </div>
-                <div className="flex flex-col items-center gap-1 border-2 border-orange-400 rounded-xl px-5 py-4">
-                  <ThumbsDown className="size-6 text-orange-500" />
-                  <span className="text-2xl font-bold text-orange-600">{negative}</span>
-                  <span className="text-xs text-orange-500 font-medium">Negative</span>
+                <div className="text-center p-4 border-2 border-orange-300 dark:border-orange-700 bg-orange-50/30 dark:bg-orange-950/20">
+                  <ThumbsDown className="size-6 mx-auto mb-2 text-orange-600 dark:text-orange-500" />
+                  <div className="text-2xl font-bold text-orange-900 dark:text-orange-100">{negative}</div>
+                  <div className="text-xs text-orange-700 dark:text-orange-400">Negative</div>
                 </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <div className="relative h-2 bg-muted overflow-hidden">
+                <div className="absolute inset-y-0 left-0 bg-amber-400 transition-all duration-500" style={{ width: `${score}%` }} />
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>0%</span>
+                <span>50%</span>
+                <span>100%</span>
               </div>
             </div>
           </CardContent>
@@ -129,24 +131,31 @@ export function MyRatings() {
 
         {/* Performance Breakdown */}
         {tagStats.length > 0 && (
-          <Card className="mb-6">
-            <CardContent className="pt-6 pb-6">
-              <h2 className="text-base font-semibold mb-1">Performance Breakdown</h2>
-              <p className="text-sm text-muted-foreground mb-4">Detailed feedback from your customers</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Card className="border-2 border-gray-300 dark:border-gray-600 mb-6">
+            <CardHeader className="border-b-2 border-gray-200 dark:border-gray-700">
+              <CardTitle className="text-gray-900 dark:text-gray-100">Performance Breakdown</CardTitle>
+              <CardDescription>Detailed feedback from your customers</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {tagStats.map((stat) => {
                   const pct = stat.total > 0 ? Math.round((stat.count / stat.total) * 100) : 0;
+                  const cfg = stat.tag === 'communication'
+                    ? { border: 'border-2 border-amber-300 dark:border-amber-700', bg: 'bg-amber-50/20 dark:bg-amber-950/10', badgeCls: 'bg-amber-500 border-2 border-amber-600', valueCls: 'text-amber-600 dark:text-amber-500' }
+                    : stat.tag === 'payment'
+                      ? { border: 'border-2 border-amber-300 dark:border-amber-700', bg: 'bg-amber-50/20 dark:bg-amber-950/10', badgeCls: 'bg-amber-500 border-2 border-amber-600', valueCls: 'text-amber-600 dark:text-amber-500' }
+                      : { border: 'border-2 border-gray-300 dark:border-gray-700', bg: 'bg-gray-50/20 dark:bg-gray-950/10', badgeCls: 'bg-gray-500 border-2 border-gray-600', valueCls: 'text-gray-600 dark:text-gray-400' };
                   const barColor = tagBarColor(pct);
                   return (
-                    <div key={stat.tag} className="border border-border rounded-xl px-4 py-4 flex flex-col">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <p className="text-sm font-semibold leading-snug">{TAG_LABELS[stat.tag] ?? stat.tag}</p>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full text-white flex-shrink-0 ${barColor}`}>{pct}%</span>
+                    <div key={stat.tag} className={`p-5 ${cfg.border} ${cfg.bg}`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{TAG_LABELS[stat.tag] ?? stat.tag}</div>
+                        <Badge className={cfg.badgeCls}>{pct}%</Badge>
                       </div>
-                      <p className="text-2xl font-bold mb-0.5">{stat.count}</p>
-                      <p className="text-xs text-muted-foreground mb-2">out of {stat.total} ratings</p>
-                      <div className="mt-auto h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div className={`h-full ${barColor} rounded-full transition-all`} style={{ width: `${pct}%` }} />
+                      <div className={`text-3xl font-bold ${cfg.valueCls}`}>{stat.count}</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">out of {stat.total} ratings</div>
+                      <div className="mt-3 h-1.5 bg-muted overflow-hidden">
+                        <div className={`h-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   );
@@ -157,11 +166,12 @@ export function MyRatings() {
         )}
 
         {/* Ratings list */}
-        <Card>
-          <CardContent className="pt-6 pb-6">
-            <h2 className="text-base font-semibold mb-1">Recent Reviews</h2>
-            <p className="text-sm text-muted-foreground mb-4">Latest feedback from your customers</p>
-
+        <Card className="border-2 border-gray-300 dark:border-gray-600">
+          <CardHeader className="border-b-2 border-gray-200 dark:border-gray-700">
+            <CardTitle className="text-gray-900 dark:text-gray-100">Recent Reviews</CardTitle>
+            <CardDescription>Latest feedback from your customers</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
             {ratings.length === 0 ? (
               <div className="py-10 text-center">
                 <Star className="size-10 mx-auto mb-3 text-muted-foreground opacity-40" />
@@ -173,22 +183,20 @@ export function MyRatings() {
             ) : (
               <div className="space-y-4">
                 {ratings.map((r) => (
-                  <div key={r.id} className="border border-border rounded-xl p-4">
+                  <div key={r.id} className="p-4 border-2 border-gray-200 dark:border-gray-700 hover:border-amber-400 dark:hover:border-amber-600 transition-colors">
                     <div className="flex items-start gap-3 mb-2">
-                      <div className={`mt-0.5 rounded-full p-2 flex-shrink-0 ${r.type === 'positive' ? 'bg-green-100 dark:bg-green-900/30' : 'bg-orange-100 dark:bg-orange-900/30'}`}>
+                      <div className={`mt-0.5 p-2 flex-shrink-0 ${r.type === 'positive' ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
                         {r.type === 'positive'
-                          ? <ThumbsUp className="size-4 text-green-600" />
-                          : <ThumbsDown className="size-4 text-orange-500" />}
+                          ? <ThumbsUp className="size-4 text-amber-600" />
+                          : <ThumbsDown className="size-4 text-gray-500" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-semibold text-sm">{r.fromName || 'Anonymous'}</p>
                           <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(r.createdAt)}</span>
                         </div>
-                        {(r.fromRole) && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {r.fromRole}
-                          </p>
+                        {r.fromRole && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{r.fromRole}</p>
                         )}
                       </div>
                     </div>
@@ -196,16 +204,12 @@ export function MyRatings() {
                       <p className="text-xs text-muted-foreground mb-2">Load: {r.loadTitle}</p>
                     )}
                     {r.comment && (
-                      <div className="bg-muted rounded-lg px-3 py-2 mb-2">
-                        <p className="text-sm text-muted-foreground">"{r.comment}"</p>
-                      </div>
+                      <p className="text-sm bg-muted p-3 mb-2">"{r.comment}"</p>
                     )}
                     {r.tags && r.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {r.tags.map((tag) => (
-                          <span key={tag} className="text-xs bg-muted rounded-full px-2.5 py-1 font-medium">
-                            {TAG_LABELS[tag] ?? tag}
-                          </span>
+                          <Badge key={tag} variant="secondary">{TAG_LABELS[tag] ?? tag}</Badge>
                         ))}
                       </div>
                     )}

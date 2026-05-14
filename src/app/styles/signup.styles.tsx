@@ -91,13 +91,13 @@ export function InfoBox({ children }: React.PropsWithChildren) {
 
 export function SuccessBox({ children }: React.PropsWithChildren) {
   return (
-    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">{children}</div>
+    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">{children}</div>
   );
 }
 
 export function SuccessBoxHeader({ children }: React.PropsWithChildren) {
   return (
-    <div className="flex items-center gap-2 text-green-600 font-semibold mb-2">{children}</div>
+    <div className="flex items-center gap-2 text-amber-600 font-semibold mb-2">{children}</div>
   );
 }
 
@@ -135,6 +135,6 @@ export function DropZoneHint({ children }: React.PropsWithChildren) {
 
 export function DropZoneSuccess({ children }: React.PropsWithChildren) {
   return (
-    <div className="flex items-center justify-center gap-2 text-green-600 text-sm mt-4">{children}</div>
+    <div className="flex items-center justify-center gap-2 text-amber-600 text-sm mt-4">{children}</div>
   );
 }

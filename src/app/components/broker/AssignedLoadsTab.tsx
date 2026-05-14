@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Truck, MapPin, DollarSign, X, Star, CheckCircle } from 'lucide-react';
+import { Truck, MapPin, DollarSign, X, Star, CheckCircle, ArrowRight } from 'lucide-react';
 import { CarrierInfoInline } from './CarrierInfoInline';
 import { RateModal } from '../RateModal';
-import { useGetCarrierPublicInfoQuery } from '../../store/services/hauliusApi';
+import { useGetCarrierPublicInfoQuery, useGetMySubmittedLoadIdsQuery } from '../../store/services/hauliusApi';
 import type { LoadDto } from '../../store/services/hauliusApi';
 import type { ReactNode } from 'react';
 
-const COMPLETED_STATUSES = ['DELIVERED', 'PAID', 'COMPLETED'];
+const RATEABLE_STATUSES = new Set(['DELIVERED', 'PAID', 'COMPLETED']);
 
 function AssignedLoadCard({
   load,
@@ -22,15 +22,17 @@ function AssignedLoadCard({
   actionLoading: boolean;
 }) {
   const [ratingOpen, setRatingOpen] = useState(false);
-  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [ratingSubmittedLocal, setRatingSubmittedLocal] = useState(false);
   const { data: carrierInfo } = useGetCarrierPublicInfoQuery(load.assignedCarrierId ?? '', {
     skip: !load.assignedCarrierId || load.assignedCarrierId === 'mock-carrier-001',
   });
+  const { data: submittedLoadIds } = useGetMySubmittedLoadIdsQuery();
+  const alreadyRated = ratingSubmittedLocal || (submittedLoadIds?.includes(load.id) ?? false);
+  const canRate = !!load.assignedCarrierId && RATEABLE_STATUSES.has(load.status ?? '');
   const carrierName = load.assignedCarrierId === 'mock-carrier-001'
     ? 'Swift Logistics LLC'
     : (carrierInfo?.companyName || carrierInfo?.legalName || 'the carrier');
   const vehicleTitle = [load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ') || `Load #${load.id.slice(0, 8)}`;
-  const isCompleted = COMPLETED_STATUSES.includes(load.status ?? '');
 
   return (
     <Card>
@@ -47,15 +49,25 @@ function AssignedLoadCard({
           {getStatusBadge(load)}
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="flex items-center gap-2 text-sm">
-          <MapPin className="w-4 h-4 text-muted-foreground" />
-          <span>{load.pickupCity}, {load.pickupState} → {load.dropCity}, {load.dropState}</span>
+      <CardContent className="space-y-3">
+        {/* Route display */}
+        <div className="p-3 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200/50 dark:border-amber-800/50">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+              <span className="text-sm font-medium truncate">{load.pickupCity}, {load.pickupState}</span>
+            </div>
+            <ArrowRight className="size-4 text-amber-500 flex-shrink-0" />
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+              <span className="text-sm font-medium truncate">{load.dropCity}, {load.dropState}</span>
+            </div>
+          </div>
         </div>
         {load.price != null && (
           <div className="flex items-center gap-2 text-sm">
             <DollarSign className="w-4 h-4 text-muted-foreground" />
-            <span className="font-semibold">${load.price.toLocaleString()}</span>
+            <span className="font-bold text-amber-600 dark:text-amber-500">${load.price.toLocaleString()}</span>
           </div>
         )}
         <div className="pt-2 flex items-center gap-2 flex-wrap">
@@ -68,9 +80,9 @@ function AssignedLoadCard({
             <X className="w-4 h-4 mr-1" />
             Cancel Booking
           </Button>
-          {isCompleted && load.assignedCarrierId && (
-            ratingSubmitted ? (
-              <span className="flex items-center gap-1.5 text-sm font-medium text-green-600">
+          {canRate && (
+            alreadyRated ? (
+              <span className="flex items-center gap-1.5 text-sm font-medium text-amber-600">
                 <CheckCircle className="size-4" />
                 Rating Submitted
               </span>
@@ -88,12 +100,12 @@ function AssignedLoadCard({
         </div>
       </CardContent>
 
-      {load.assignedCarrierId && (
+      {canRate && !alreadyRated && (
         <RateModal
           open={ratingOpen}
           onClose={() => setRatingOpen(false)}
-          onSubmitted={() => setRatingSubmitted(true)}
-          targetId={load.assignedCarrierId}
+          onSubmitted={() => setRatingSubmittedLocal(true)}
+          targetId={load.assignedCarrierId!}
           targetType="carrier"
           targetName={carrierName}
           loadId={load.id}

@@ -103,20 +103,20 @@ export function BrokerDashboard() {
       load.status === 'COMPLETED'
     ) {
       return (
-        <Badge className='bg-blue-600 text-white'>
+        <Badge className='bg-muted text-muted-foreground'>
           {load.status.charAt(0) + load.status.slice(1).toLowerCase()}
         </Badge>
       );
     }
     if (load.assignedCarrierId) {
-      return <Badge className='bg-green-600 text-white'>Assigned</Badge>;
+      return <Badge className='bg-amber-500 text-white'>Assigned</Badge>;
     }
     return <Badge variant='secondary'>{load.status}</Badge>;
   };
 
   if (fetching) {
     return (
-      <div className='min-h-screen bg-background'>
+      <div className='min-h-screen bg-background map-background-detailed'>
         <Navbar />
         <div className='flex items-center justify-center h-64'>
           <Loader2 className='w-8 h-8 animate-spin text-muted-foreground' />
@@ -139,7 +139,7 @@ export function BrokerDashboard() {
   // }
 
   return (
-    <div className='min-h-screen bg-background'>
+    <div className='min-h-screen bg-background map-background-detailed'>
       <Navbar />
 
       <div className='container mx-auto px-4 py-8'>

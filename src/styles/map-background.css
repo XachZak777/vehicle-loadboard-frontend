@@ -1,0 +1,42 @@
+/* Map background for authenticated pages */
+
+.map-background-detailed {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Light mode — white overlay to fade the background */
+html:not(.dark) .map-background-detailed::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: grayscale(60%) brightness(1.2);
+}
+
+/* Dark mode — dark overlay with slight orange tint */
+html.dark .map-background-detailed::before,
+.dark .map-background-detailed::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: brightness(0.9) contrast(1.1);
+  animation: mapGlow 10s ease-in-out infinite;
+}
+
+/* Ensure content is above background overlay */
+.map-background-detailed > * {
+  position: relative;
+  z-index: 1;
+}

@@ -2,6 +2,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { PhoneInput } from '../ui/PhoneInput';
 import { HintText } from '../../styles/signup.styles';
 import { type FieldErrors } from '../../utils/validation';
 
@@ -127,12 +128,10 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
           </div>
           <div>
             <Label htmlFor="bondAgentPhone">Bond Agent Phone <span className="text-destructive">*</span></Label>
-            <Input
+            <PhoneInput
               id="bondAgentPhone"
-              placeholder="(XXX) XXX-XXXX"
               value={formData.bondAgentPhone}
-              onChange={e => onChange('bondAgentPhone', e.target.value.trimStart())}
-              maxLength={20}
+              onChange={v => onChange('bondAgentPhone', v)}
               aria-invalid={!!fieldErrors.bondAgentPhone}
             />
             {fieldErrors.bondAgentPhone && <p className="text-xs text-destructive mt-1">{fieldErrors.bondAgentPhone}</p>}

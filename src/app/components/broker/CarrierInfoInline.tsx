@@ -1,5 +1,6 @@
 import { Building2, MapPin, Phone, ShieldCheck } from 'lucide-react';
 import { useGetCarrierPublicInfoQuery } from '../../store/services/hauliusApi';
+import { formatPhone } from '../../utils/phone';
 
 interface Props {
   carrierId: string;
@@ -34,7 +35,7 @@ export function CarrierInfoInline({ carrierId }: Props) {
       {data.phoneNumber && (
         <div className="flex items-center gap-1">
           <Phone className="w-3 h-3" />
-          <span>{data.phoneNumber}</span>
+          <span>{formatPhone(data.phoneNumber)}</span>
         </div>
       )}
       {data.operatingStatus && (

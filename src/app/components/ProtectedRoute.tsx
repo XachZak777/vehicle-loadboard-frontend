@@ -14,7 +14,7 @@ export function ProtectedRoute({ children, allowedRoles, requireAuth = true, ski
   const { user, isAuthenticated, adminApproved, sessionExpired } = useAppSelector((s) => s.auth);
 
   if (sessionExpired) {
-    return <Navigate to="/session-expired" replace />;
+    return <Navigate to={user?.role === 'admin' ? '/login' : '/session-expired'} replace />;
   }
 
   if (requireAuth && !isAuthenticated) {

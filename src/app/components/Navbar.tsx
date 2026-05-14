@@ -5,8 +5,8 @@ import { useGetMyBrokerProfileQuery, useGetMyCarrierProfileQuery } from '../stor
 import { useLogout } from '../hooks/useLogout';
 import { Button } from './ui/button';
 import {
-  Truck, LayoutDashboard, Building2, LogOut, Plus, FileText,
-  Star, Settings, ChevronDown, Menu, X, Search, ClipboardList, Send, Tag,
+  LayoutDashboard, Building2, LogOut, Plus, FileText,
+  Star, Settings, ChevronDown, Menu, X, Search, History, Truck, Package,
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { APP_NAME } from '../constants';
@@ -63,9 +63,6 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
           <Link to="/loads" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
-            <div className="bg-amber-500 p-2 rounded-lg">
-              <Truck className="h-5 w-5 text-white" />
-            </div>
             <span className="text-lg font-bold hidden sm:block">{APP_NAME}</span>
           </Link>
 
@@ -122,25 +119,29 @@ export function Navbar() {
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <Link to="/carrier/history" className="flex items-center gap-2 cursor-pointer">
-                      <FileText className="h-4 w-4" /> My Loads
+                <DropdownMenuContent align="start" className="w-72 p-0">
+                  <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
+                    <Link to="/carrier/history" className="flex items-center gap-3 w-full">
+                      <History className="h-5 w-5 flex-shrink-0" />
+                      <span className="text-base">My Loads</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/carrier/assigned" className="flex items-center gap-2 cursor-pointer">
-                      <ClipboardList className="h-4 w-4" /> Assigned Loads
+                  <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
+                    <Link to="/carrier/assigned" className="flex items-center gap-3 w-full">
+                      <Truck className="h-5 w-5 flex-shrink-0" />
+                      <span className="text-base">Assigned Loads</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/carrier/requested" className="flex items-center gap-2 cursor-pointer">
-                      <Send className="h-4 w-4" /> Requested Loads
+                  <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
+                    <Link to="/carrier/requested" className="flex items-center gap-3 w-full">
+                      <FileText className="h-5 w-5 flex-shrink-0" />
+                      <span className="text-base">Requested Loads</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/carrier/offers" className="flex items-center gap-2 cursor-pointer">
-                      <Tag className="h-4 w-4" /> Offers
+                  <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
+                    <Link to="/carrier/offers" className="flex items-center gap-3 w-full">
+                      <Package className="h-5 w-5 flex-shrink-0" />
+                      <span className="text-base">Offers</span>
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -204,11 +205,15 @@ export function Navbar() {
                     </Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                  <Star className="h-4 w-4" /> My Ratings
+                <DropdownMenuItem asChild>
+                  <Link to="/my-rating" className="flex items-center gap-2 cursor-pointer">
+                    <Star className="h-4 w-4" /> My Ratings
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                  <Settings className="h-4 w-4" /> Settings
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
+                    <Settings className="h-4 w-4" /> Settings
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
@@ -263,25 +268,25 @@ export function Navbar() {
                 <Link to="/carrier/history" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant={isActive('/carrier/history') ? 'default' : 'ghost'} size="sm"
                     className={`w-full justify-start gap-2 ${isActive('/carrier/history') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
-                    <FileText className="h-4 w-4" /> My Loads
+                    <History className="h-4 w-4" /> My Loads
                   </Button>
                 </Link>
                 <Link to="/carrier/assigned" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant={isActive('/carrier/assigned') ? 'default' : 'ghost'} size="sm"
                     className={`w-full justify-start gap-2 ${isActive('/carrier/assigned') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
-                    <ClipboardList className="h-4 w-4" /> Assigned Loads
+                    <Truck className="h-4 w-4" /> Assigned Loads
                   </Button>
                 </Link>
                 <Link to="/carrier/requested" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant={isActive('/carrier/requested') ? 'default' : 'ghost'} size="sm"
                     className={`w-full justify-start gap-2 ${isActive('/carrier/requested') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
-                    <Send className="h-4 w-4" /> Requested Loads
+                    <FileText className="h-4 w-4" /> Requested Loads
                   </Button>
                 </Link>
                 <Link to="/carrier/offers" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant={isActive('/carrier/offers') ? 'default' : 'ghost'} size="sm"
                     className={`w-full justify-start gap-2 ${isActive('/carrier/offers') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
-                    <Tag className="h-4 w-4" /> Offers
+                    <Package className="h-4 w-4" /> Offers
                   </Button>
                 </Link>
                 <Link to="/carrier/company" onClick={() => setMobileMenuOpen(false)}>
@@ -301,11 +306,25 @@ export function Navbar() {
               </Link>
             )}
 
+            {(isBrokerOrDealer || isCarrier) && (
+              <Link to="/my-rating" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant={isActive('/my-rating') ? 'default' : 'ghost'} size="sm"
+                  className={`w-full justify-start gap-2 ${isActive('/my-rating') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
+                  <Star className="h-4 w-4" /> My Ratings
+                </Button>
+              </Link>
+            )}
+
             <div className="pt-3 border-t border-border space-y-2">
               <div className="px-3 py-2">
                 <p className="text-sm font-medium">{displayName}</p>
                 <p className="text-xs text-muted-foreground">{roleLabel}</p>
               </div>
+              <Link to="/settings" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
+                  <Settings className="h-4 w-4" /> Settings
+                </Button>
+              </Link>
               <Button variant="outline" size="sm" onClick={handleLogout} className="w-full justify-start gap-2">
                 <LogOut className="h-4 w-4" /> Logout
               </Button>

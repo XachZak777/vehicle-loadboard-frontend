@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { PhoneInput } from '../ui/PhoneInput';
 import { Textarea } from '../ui/textarea';
 import { type FieldErrors } from '../../utils/validation';
 
@@ -38,11 +39,10 @@ export function ContactInfoSection({ formData, fieldErrors, onChange }: Props) {
           </div>
           <div>
             <Label htmlFor="contactPhone">Phone Number *</Label>
-            <Input
+            <PhoneInput
               id="contactPhone"
-              placeholder="(555) 123-4567"
               value={formData.contactPhone}
-              onChange={e => onChange('contactPhone', e.target.value)}
+              onChange={v => onChange('contactPhone', v)}
               aria-invalid={!!fieldErrors.contactPhone}
             />
             {fieldErrors.contactPhone && <p className="text-xs text-destructive mt-1">{fieldErrors.contactPhone}</p>}
@@ -63,14 +63,16 @@ export function ContactInfoSection({ formData, fieldErrors, onChange }: Props) {
         </div>
 
         <div>
-          <Label htmlFor="orderId">Order ID (Optional)</Label>
+          <Label htmlFor="orderId">Order ID *</Label>
           <Input
             id="orderId"
             placeholder="e.g., ORD-12345"
             value={formData.orderId}
             onChange={e => onChange('orderId', e.target.value)}
+            aria-invalid={!!fieldErrors.orderId}
           />
           <p className="text-xs text-muted-foreground mt-1">Your internal order reference number - will be shown on the loadboard</p>
+          {fieldErrors.orderId && <p className="text-xs text-destructive mt-1">{fieldErrors.orderId}</p>}
         </div>
 
         <div>

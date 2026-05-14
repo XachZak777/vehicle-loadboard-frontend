@@ -63,7 +63,7 @@ export function CheckEmail() {
             </div>
 
             {resent && (
-              <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-400">
+              <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-800 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
                 <CheckCircle className="size-4 shrink-0" />
                 Email resent! Please check your inbox.
               </div>

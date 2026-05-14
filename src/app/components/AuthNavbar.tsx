@@ -1,5 +1,4 @@
 import { Link } from 'react-router';
-import { Truck } from 'lucide-react';
 import { Button } from './ui/button';
 import { ThemeToggle } from './ThemeToggle';
 import { APP_NAME } from '../constants';
@@ -20,9 +19,6 @@ export function AuthNavbar({ subtitle, showLogin, showSignup }: AuthNavbarProps)
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="bg-amber-500 p-2 rounded-lg">
-              <Truck className="size-6 text-white" />
-            </div>
             <div>
               <span className="text-lg font-bold">{APP_NAME}</span>
               {subtitle && (

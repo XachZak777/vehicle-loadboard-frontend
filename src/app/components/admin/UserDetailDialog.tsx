@@ -19,7 +19,7 @@ function toAbsoluteUrl(url: string): string {
 
 function ApprovalBadge({ approved, declined }: { approved: boolean; declined: boolean }) {
   if (approved)
-    return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Approved</Badge>;
+    return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Approved</Badge>;
   if (declined)
     return <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Rejected</Badge>;
   return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</Badge>;
@@ -50,8 +50,8 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {user.role === 'CARRIER'
-              ? <Badge variant="outline" className="text-blue-600 border-blue-300">Carrier</Badge>
-              : <Badge variant="outline" className="text-purple-600 border-purple-300">Broker</Badge>
+              ? <Badge variant="outline" className="text-muted-foreground border-border">Carrier</Badge>
+              : <Badge variant="outline" className="text-muted-foreground border-border">Broker</Badge>
             }
             {user.email}
           </DialogTitle>
@@ -64,11 +64,11 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
           <div className="flex flex-wrap items-center gap-2">
             <ApprovalBadge approved={user.adminApproved} declined={user.declined} />
             {user.emailVerified
-              ? <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1"><Mail className="size-3" />Email Verified</Badge>
+              ? <Badge className="bg-muted text-muted-foreground flex items-center gap-1"><Mail className="size-3" />Email Verified</Badge>
               : <Badge variant="outline" className="text-muted-foreground flex items-center gap-1"><Mail className="size-3" />Email Unverified</Badge>
             }
             {user.fmcsaVerified && (
-              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+              <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-1">
                 <ShieldCheck className="size-3" />FMCSA Verified
               </Badge>
             )}

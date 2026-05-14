@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { Button } from '../components/ui/button';
-import { Truck, ArrowLeft, Shield, Users, Globe, Award } from 'lucide-react';
+import { ArrowLeft, Shield, Users, Globe, Award } from 'lucide-react';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { APP_NAME } from '../constants';
 
@@ -12,9 +12,6 @@ export function AboutUs() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-3">
-              <div className="bg-amber-500 p-2 rounded-lg">
-                <Truck className="size-6 text-white" />
-              </div>
               <div>
                 <h1 className="text-lg font-bold">{APP_NAME}</h1>
                 <p className="text-xs text-muted-foreground">Vehicle Transport Network</p>
@@ -36,9 +33,6 @@ export function AboutUs() {
       {/* Hero */}
       <div className="bg-amber-500/10 border-b border-border py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="bg-amber-500 p-4 rounded-2xl w-fit mx-auto mb-6">
-            <Truck className="size-10 text-white" />
-          </div>
           <h1 className="text-4xl font-bold mb-4">About {APP_NAME}</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             We're building the most trusted vehicle transportation marketplace, connecting verified carriers and brokers across the United States.
@@ -141,9 +135,6 @@ export function AboutUs() {
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="bg-amber-500 p-1.5 rounded-lg">
-                  <Truck className="size-5 text-white" />
-                </div>
                 <span className="text-base font-bold">{APP_NAME}</span>
               </div>
               <p className="text-sm text-muted-foreground">

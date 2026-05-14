@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { PhoneInput } from '../ui/PhoneInput';
 import { US_STATES } from '../../constants';
 import { sanitizeDigits, type FieldErrors } from '../../utils/validation';
 
@@ -20,6 +21,7 @@ interface Props {
     zip: string;
     type: string;
     date: string;
+    time: string;
     facilityName: string;
     locationContactName: string;
     locationContactPhone: string;
@@ -32,6 +34,8 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
   const field = (name: string) => `${prefix}${name.charAt(0).toUpperCase() + name.slice(1)}`;
   const dateField = prefix === 'pickup' ? 'pickupDate' : 'deliveryDate';
   const dateLabel = prefix === 'pickup' ? 'Pickup Date' : 'Delivery Date';
+  const timeField = prefix === 'pickup' ? 'pickupTime' : 'deliveryTime';
+  const timeLabel = prefix === 'pickup' ? 'Pickup Time' : 'Delivery Time';
 
   return (
     <Card className="mb-6">
@@ -73,7 +77,7 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
             )}
           </div>
           <div>
-            <Label htmlFor={field('zip')}>ZIP Code</Label>
+            <Label htmlFor={field('zip')}>ZIP Code *</Label>
             <Input
               id={field('zip')}
               placeholder="e.g., 60601"
@@ -89,20 +93,35 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
           </div>
         </div>
 
-        {/* Date */}
-        <div>
-          <Label htmlFor={dateField}>{dateLabel}</Label>
-          <Input
-            id={dateField}
-            type="date"
-            value={formData.date}
-            onChange={(e) => onChange(dateField, e.target.value)}
-          />
+        {/* Date & Time */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor={dateField}>{dateLabel} *</Label>
+            <Input
+              id={dateField}
+              type="date"
+              value={formData.date}
+              onChange={(e) => onChange(dateField, e.target.value)}
+              aria-invalid={!!fieldErrors[dateField]}
+            />
+            {fieldErrors[dateField] && (
+              <p className="text-xs text-destructive mt-1">{fieldErrors[dateField]}</p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor={timeField}>{timeLabel}</Label>
+            <Input
+              id={timeField}
+              type="time"
+              value={formData.time}
+              onChange={(e) => onChange(timeField, e.target.value)}
+            />
+          </div>
         </div>
 
         {/* Street Address — private */}
         <div>
-          <Label htmlFor={field('street')}>Street Address</Label>
+          <Label htmlFor={field('street')}>Street Address *</Label>
           <Input
             id={field('street')}
             placeholder="e.g., 100 Main St"
@@ -162,12 +181,10 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
           </div>
           <div>
             <Label htmlFor={field('locationContactPhone')}>Contact Phone (Optional)</Label>
-            <Input
+            <PhoneInput
               id={field('locationContactPhone')}
-              placeholder="e.g., (555) 987-6543"
               value={formData.locationContactPhone}
-              onChange={(e) => onChange(field('locationContactPhone'), e.target.value.trimStart())}
-              maxLength={20}
+              onChange={(v) => onChange(field('locationContactPhone'), v)}
             />
             <p className="text-xs text-muted-foreground mt-1">Not shown on loadboard — only for assigned carrier</p>
           </div>

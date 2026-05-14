@@ -1,8 +1,8 @@
 import { Link, useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
-import { Card, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Truck, MapPin, DollarSign, Shield, Clock, Users, CheckCircle, ArrowRight, Menu, X } from 'lucide-react';
+import { MapPin, DollarSign, Shield, Clock, Users, CheckCircle, ArrowRight, Menu, X, Truck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -56,7 +56,7 @@ export function Welcome() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="bg-amber-500 p-2 rounded-lg">
+              <div className="bg-amber-500 p-2 rounded-none">
                 <Truck className="size-6 text-white" />
               </div>
               <div>
@@ -70,14 +70,14 @@ export function Welcome() {
               <a
                 href="#features"
                 onClick={(e) => scrollToSection(e, 'features')}
-                className="text-sm font-medium px-3 py-1.5 rounded-md border border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors"
+                className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
               >
                 Features
               </a>
               <a
                 href="#how-it-works"
                 onClick={(e) => scrollToSection(e, 'how-it-works')}
-                className="text-sm font-medium px-3 py-1.5 rounded-md border border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors"
+                className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
               >
                 How It Works
               </a>
@@ -123,17 +123,24 @@ export function Welcome() {
             <div className="md:hidden py-4 space-y-3 border-t border-border">
               <a
                 href="#features"
-                className="block text-sm font-medium px-3 py-1.5 rounded-md border border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors"
+                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
                 onClick={(e) => { scrollToSection(e, 'features'); setMobileMenuOpen(false); }}
               >
                 Features
               </a>
               <a
                 href="#how-it-works"
-                className="block text-sm font-medium px-3 py-1.5 rounded-md border border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors"
+                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
                 onClick={(e) => { scrollToSection(e, 'how-it-works'); setMobileMenuOpen(false); }}
               >
                 How It Works
+              </a>
+              <a
+                href="#pricing"
+                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
+                onClick={(e) => { scrollToSection(e, 'pricing'); setMobileMenuOpen(false); }}
+              >
+                Pricing
               </a>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm text-muted-foreground">Theme</span>
@@ -209,16 +216,16 @@ export function Welcome() {
 
             {/* Right: Top Loads card */}
             <div className="w-full">
-              <div className="bg-card rounded-xl shadow-2xl p-6 border border-border">
+              <div className="bg-card rounded-none shadow-2xl p-6 border border-border">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold">Top Paying Loads</h3>
-                  <Badge className="bg-green-600 text-white">Live</Badge>
+                  <Badge className="bg-amber-500 text-white">Live</Badge>
                 </div>
                 <div className="space-y-3">
                   {topLoads.map((load) => (
                     <div
                       key={load.id}
-                      className="flex items-center justify-between p-3 sm:p-4 bg-muted/50 rounded-lg border border-border"
+                      className="flex items-center justify-between p-4 bg-muted/50 rounded-none border border-border hover:border-amber-500 transition-colors"
                     >
                       <div className="flex-1 min-w-0 pr-4">
                         <div className="font-semibold text-sm mb-1 truncate">
@@ -235,7 +242,7 @@ export function Welcome() {
                         <div className="font-bold text-amber-500 text-lg">
                           ${load.price.toLocaleString()}
                         </div>
-                        <div className="text-xs text-green-600 font-semibold">
+                        <div className="text-xs text-amber-600 font-semibold">
                           ${load.pricePerMile.toFixed(2)}/mi
                         </div>
                       </div>
@@ -267,15 +274,15 @@ export function Welcome() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               { icon: MapPin,      title: 'Nationwide Coverage',    desc: 'Access loads from coast to coast with real-time availability updates' },
-              { icon: Shield,      title: 'Verified Carriers',         desc: 'All carriers are verified for compliance before gaining platform access' },
+              { icon: Shield,      title: 'FMCSA Verified',         desc: 'All carriers verified through FMCSA database for compliance' },
               { icon: DollarSign,  title: 'Transparent Pricing',    desc: 'Clear pricing with no hidden fees or surprise charges' },
               { icon: Clock,       title: 'Real-Time Tracking',     desc: 'Track every load from pickup to delivery with status updates' },
               { icon: Users,       title: 'Direct Communication',   desc: 'Connect directly with carriers and brokers through the platform' },
               { icon: CheckCircle, title: 'Secure Payments',        desc: 'Protected transactions with automated payment processing' },
             ].map(({ icon: Icon, title, desc }) => (
-              <Card key={title} className="border border-border">
+              <Card key={title} className="border border-border hover:border-amber-500 transition-all hover:shadow-md">
                 <CardHeader className="px-5 pt-5 pb-5 gap-3">
-                  <div className="bg-amber-500 p-2.5 rounded-lg w-fit">
+                  <div className="bg-amber-500 p-2.5 rounded-none w-fit">
                     <Icon className="size-5 text-white" />
                   </div>
                   <CardTitle className="text-base">{title}</CardTitle>
@@ -354,10 +361,10 @@ export function Welcome() {
       {/* Footer */}
       <footer className="bg-muted text-foreground py-12 border-t border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="bg-amber-500 p-1.5 rounded-lg">
+                <div className="bg-amber-500 p-1.5 rounded-none">
                   <Truck className="size-5 text-white" />
                 </div>
                 <span className="text-base font-bold">{APP_NAME}</span>
@@ -366,22 +373,28 @@ export function Welcome() {
                 Professional vehicle transport marketplace connecting carriers and brokers nationwide.
               </p>
             </div>
-            <div className="flex gap-8 md:gap-12 md:col-span-2">
-              <div>
-                <h4 className="font-semibold mb-3 text-sm">Company</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><Link to="/about" className="hover:text-amber-500 transition-colors">About Us</Link></li>
-                  <li><Link to="/contact" className="hover:text-amber-500 transition-colors">Contact</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-3 text-sm">Legal</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><Link to="/privacy" className="hover:text-amber-500 transition-colors">Privacy Policy</Link></li>
-                  <li><Link to="/terms" className="hover:text-amber-500 transition-colors">Terms of Service</Link></li>
-                  <li><Link to="/cookies" className="hover:text-amber-500 transition-colors">Cookie Policy</Link></li>
-                </ul>
-              </div>
+            <div>
+              <h4 className="font-semibold mb-3 text-sm">Company</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link to="/about" className="hover:text-amber-500 transition-colors">About Us</Link></li>
+                <li><Link to="/contact" className="hover:text-amber-500 transition-colors">Contact</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3 text-sm">Resources</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#features" onClick={(e) => scrollToSection(e, 'features')} className="hover:text-amber-500 transition-colors">Features</a></li>
+                <li><a href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')} className="hover:text-amber-500 transition-colors">How It Works</a></li>
+                <li><a href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')} className="hover:text-amber-500 transition-colors">Pricing</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3 text-sm">Legal</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link to="/privacy" className="hover:text-amber-500 transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="hover:text-amber-500 transition-colors">Terms of Service</Link></li>
+                <li><Link to="/cookies" className="hover:text-amber-500 transition-colors">Cookie Policy</Link></li>
+              </ul>
             </div>
           </div>
           <div className="border-t border-border pt-6 text-center text-sm text-muted-foreground">

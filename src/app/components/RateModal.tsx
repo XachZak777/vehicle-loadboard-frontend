@@ -59,8 +59,9 @@ export function RateModal({ open, onClose, onSubmitted, targetId, targetType, ta
       toast.success('Rating submitted successfully');
       onSubmitted();
       handleClose();
-    } catch {
-      toast.error('Failed to submit rating. Please try again.');
+    } catch (err: any) {
+      const msg = err?.data?.message || err?.message || 'Please try again.';
+      toast.error('Failed to submit rating', { description: msg });
     }
   };
 
@@ -107,19 +108,19 @@ export function RateModal({ open, onClose, onSubmitted, targetId, targetType, ta
                 onClick={() => handleTypeSelect('positive')}
                 className={`relative flex flex-col items-center gap-3 rounded-xl border-2 py-6 transition-all ${
                   ratingType === 'positive'
-                    ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                    : 'border-border bg-background hover:border-green-300 hover:bg-green-50/50 dark:hover:bg-green-900/10'
+                    ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                    : 'border-border bg-background hover:border-amber-300 hover:bg-amber-50/50 dark:hover:bg-amber-900/10'
                 }`}
               >
                 {ratingType === 'positive' && (
-                  <span className="absolute top-2 right-2 size-5 rounded-full border-2 border-green-500 bg-background flex items-center justify-center">
-                    <CheckCircle className="size-3.5 text-green-500 fill-green-500" />
+                  <span className="absolute top-2 right-2 size-5 rounded-full border-2 border-amber-500 bg-background flex items-center justify-center">
+                    <CheckCircle className="size-3.5 text-amber-500 fill-amber-500" />
                   </span>
                 )}
-                <span className={`size-14 rounded-full flex items-center justify-center transition-colors ${ratingType === 'positive' ? 'bg-green-500' : 'bg-muted'}`}>
+                <span className={`size-14 rounded-full flex items-center justify-center transition-colors ${ratingType === 'positive' ? 'bg-amber-500' : 'bg-muted'}`}>
                   <ThumbsUp className={`size-7 ${ratingType === 'positive' ? 'text-white' : 'text-muted-foreground'}`} />
                 </span>
-                <span className={`font-semibold text-base ${ratingType === 'positive' ? 'text-green-600' : 'text-muted-foreground'}`}>Positive</span>
+                <span className={`font-semibold text-base ${ratingType === 'positive' ? 'text-amber-600' : 'text-muted-foreground'}`}>Positive</span>
                 <span className="text-xs text-muted-foreground">Great experience</span>
               </button>
 
@@ -147,9 +148,9 @@ export function RateModal({ open, onClose, onSubmitted, targetId, targetType, ta
 
           {/* Tags */}
           {ratingType && (
-            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-4">
+            <div className="bg-muted rounded-xl p-4">
               <p className="text-sm font-semibold mb-3 flex items-center gap-1.5">
-                <CheckCircle className="size-4 text-blue-500" />
+                <CheckCircle className="size-4 text-amber-500" />
                 {ratingType === 'positive' ? 'What went well?' : 'What went wrong?'}
                 <span className="text-muted-foreground font-normal">(Optional)</span>
               </p>

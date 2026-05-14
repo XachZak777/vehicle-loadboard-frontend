@@ -6,6 +6,7 @@ import { Label } from '../ui/label';
 import { Loader2, Mail, Eye, EyeOff } from 'lucide-react';
 import { InfoBox, HintText } from '../../styles/signup.styles';
 import type { FieldErrors } from '../../utils/validation';
+import { Checkbox } from '../ui/checkbox';
 
 interface Props {
   role: 'carrier' | 'broker' | 'dealer';
@@ -30,6 +31,14 @@ export function CreateAccountStep({
   const entityLabel = role === 'carrier' ? 'Carrier' : role === 'broker' ? 'Broker' : 'Dealer';
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState(false);
+
+  const handleSubmit = () => {
+    if (!termsAccepted) { setTermsError(true); return; }
+    setTermsError(false);
+    onSubmit();
+  };
 
   return (
     <Card>
@@ -130,8 +139,37 @@ export function CreateAccountStep({
           )}
         </div>
 
+        <div className={`border-2 ${termsError ? 'border-destructive bg-destructive/5' : 'border-gray-200 dark:border-gray-700 bg-muted/40'} p-4 space-y-3 transition-colors`}>
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Terms &amp; Agreement</p>
+          <ul className="text-xs text-muted-foreground space-y-1.5 list-none">
+            <li className="flex items-start gap-2"><span className="text-amber-500 mt-0.5 flex-shrink-0">✓</span>All information I've provided is accurate and complete.</li>
+            <li className="flex items-start gap-2"><span className="text-amber-500 mt-0.5 flex-shrink-0">✓</span>I understand my account is subject to admin review and approval.</li>
+            <li className="flex items-start gap-2"><span className="text-amber-500 mt-0.5 flex-shrink-0">✓</span>I agree to the platform's{' '}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline font-medium">Terms of Service</a>
+              {' '}and{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline font-medium">Privacy Policy</a>.
+            </li>
+          </ul>
+          <div className="flex items-center gap-3 pt-1 border-t border-gray-200 dark:border-gray-700">
+            <Checkbox
+              id="terms"
+              checked={termsAccepted}
+              onCheckedChange={(checked) => {
+                setTermsAccepted(!!checked);
+                if (checked) setTermsError(false);
+              }}
+            />
+            <Label htmlFor="terms" className="text-sm font-medium cursor-pointer select-none">
+              I have read and agree to all of the above
+            </Label>
+          </div>
+          {termsError && (
+            <p className="text-xs text-destructive font-medium">Please accept the terms before creating your account.</p>
+          )}
+        </div>
+
         <Button
-          onClick={onSubmit}
+          onClick={handleSubmit}
           disabled={isLoading}
           className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold"
         >

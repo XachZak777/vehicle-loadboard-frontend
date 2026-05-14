@@ -23,6 +23,7 @@ import { CreateAccountStep } from '../components/signup/CreateAccountStep';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { PhoneInput } from '../components/ui/PhoneInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
@@ -308,8 +309,8 @@ export function DealerSignup() {
               </div>
               <div>
                 <Label htmlFor="businessPhone">Business Phone Number *</Label>
-                <Input id="businessPhone" placeholder="(555) 987-6543" value={formData.businessPhone}
-                  onChange={e => handleChange('businessPhone', e.target.value)} aria-invalid={!!fieldErrors.businessPhone} />
+                <PhoneInput id="businessPhone" value={formData.businessPhone}
+                  onChange={v => handleChange('businessPhone', v)} aria-invalid={!!fieldErrors.businessPhone} />
                 {fieldErrors.businessPhone && <p className="text-xs text-destructive mt-1">{fieldErrors.businessPhone}</p>}
               </div>
               <div>
@@ -381,8 +382,8 @@ export function DealerSignup() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="phoneNumber">Phone Number *</Label>
-                <Input id="phoneNumber" placeholder="(555) 123-4567" value={formData.phoneNumber}
-                  onChange={e => handleChange('phoneNumber', e.target.value)} aria-invalid={!!fieldErrors.phoneNumber} />
+                <PhoneInput id="phoneNumber" value={formData.phoneNumber}
+                  onChange={v => handleChange('phoneNumber', v)} aria-invalid={!!fieldErrors.phoneNumber} />
                 {fieldErrors.phoneNumber && <p className="text-xs text-destructive mt-1">{fieldErrors.phoneNumber}</p>}
               </div>
               <p className="text-sm text-muted-foreground">

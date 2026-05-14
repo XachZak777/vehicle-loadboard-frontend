@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { logout } from '../store/slices/authSlice';
+import { logout, setCredentials } from '../store/slices/authSlice';
 import { hauliusApi, useLoginUserMutation, useLogoutUserMutation } from '../store/services/hauliusApi';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { AuthNavbar } from '../components/AuthNavbar';
 import { APP_NAME } from '../constants';
 import { isBusinessEmail, businessEmailError } from '../utils/validation';
+import type { UserProfile } from '../types/user';
 
 export function Login() {
   const navigate = useNavigate();
@@ -27,17 +28,12 @@ export function Login() {
   const [showResend, setShowResend] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // If an authenticated user navigates back to the login page, clear their session
-  // and replace the history entry so the forward button no longer leads to the dashboard.
   useEffect(() => {
     if (isAuthenticated) {
       logoutUser().finally(() => {
         dispatch(logout());
         dispatch(hauliusApi.util.resetApiState());
         navigate('/login', { replace: true });
-        toast.info('Session cleared', {
-          description: 'You were signed out. Please log in again to continue.',
-        });
       });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -71,6 +67,30 @@ export function Login() {
 
     try {
       const res = await loginUser({ email: email.trim(), password }).unwrap();
+
+      // Admin users get a token directly — no email code step
+      if (res.token && res.role?.toLowerCase() === 'admin') {
+        const user: UserProfile = {
+          id: res.userId!,
+          role: 'admin',
+          email: res.email,
+          phoneNumber: '',
+          phoneVerified: true,
+          companyName: 'Admin',
+          createdAt: new Date().toISOString(),
+        };
+        dispatch(setCredentials({
+          user,
+          token: res.token,
+          userId: res.userId!,
+          email: res.email,
+          role: res.role,
+          adminApproved: res.adminApproved ?? true,
+        }));
+        navigate('/admin/dashboard', { replace: true });
+        return;
+      }
+
       navigate('/verify-login', { state: { email: res.email } });
     } catch (e: any) {
       const status = e?.status ?? e?.originalStatus;
@@ -104,13 +124,13 @@ export function Login() {
             </CardHeader>
           <CardContent>
             {justVerified && (
-              <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-400">
+              <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-800 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
                 <CheckCircle className="size-4 shrink-0" />
                 Email verified successfully! You can now log in.
               </div>
             )}
             {justResetPassword && (
-              <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-400">
+              <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-800 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
                 <CheckCircle className="size-4 shrink-0" />
                 Password reset successfully! Please log in with your new password.
               </div>

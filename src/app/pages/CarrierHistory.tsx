@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAppSelector } from '../store/hooks';
 import { useGetMyCarrierBidsQuery, useGetBrokerPublicInfoQuery } from '../store/services/hauliusApi';
+import { formatPhone } from '../utils/phone';
 import type { CarrierBidWithLoadDto } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
@@ -25,7 +26,6 @@ import {
   Star,
 } from 'lucide-react';
 
-const COMPLETED_STATUSES = ['DELIVERED', 'PAID', 'COMPLETED'];
 
 function BrokerContactInline({ brokerId }: { brokerId: string }) {
   const { data, isLoading } = useGetBrokerPublicInfoQuery(brokerId);
@@ -33,7 +33,7 @@ function BrokerContactInline({ brokerId }: { brokerId: string }) {
   if (!data) return null;
   const name = data.companyName || data.legalName;
   return (
-    <div className="mt-2 p-3 bg-muted rounded-md text-xs space-y-1">
+    <div className="mt-2 p-3 bg-muted text-xs space-y-1 border border-border">
       <p className="font-semibold text-sm text-foreground">Broker Contact</p>
       {name && (
         <div className="flex items-center gap-1 text-muted-foreground">
@@ -45,7 +45,7 @@ function BrokerContactInline({ brokerId }: { brokerId: string }) {
       {data.phoneNumber && (
         <div className="flex items-center gap-1 text-muted-foreground">
           <Phone className="size-3" />
-          <a href={`tel:${data.phoneNumber}`} className="hover:text-amber-600">{data.phoneNumber}</a>
+          <a href={`tel:${data.phoneNumber}`} className="hover:text-amber-600">{formatPhone(data.phoneNumber)}</a>
         </div>
       )}
       {data.email && (
@@ -67,13 +67,13 @@ function getStatusBadge(status: string) {
     case 'PENDING':
       return (
         <Badge variant="secondary" className="flex items-center gap-1">
-          <Clock className="w-3 h-3 text-yellow-600" />
+          <Clock className="w-3 h-3 text-muted-foreground" />
           Pending
         </Badge>
       );
     case 'APPROVED':
       return (
-        <Badge className="flex items-center gap-1 bg-green-600 text-white">
+        <Badge className="flex items-center gap-1 bg-amber-500 text-white">
           <CheckCircle className="w-3 h-3" />
           Approved
         </Badge>
@@ -91,30 +91,34 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
   const { data: brokerInfo } = useGetBrokerPublicInfoQuery(bid.brokerId ?? '', { skip: !bid.brokerId });
   const brokerName = brokerInfo?.companyName || brokerInfo?.legalName || 'the broker';
   const vehicleTitle = [bid.vehicleYear, bid.vehicleMake, bid.vehicleModel].filter(Boolean).join(' ') || `Load #${bid.loadId.slice(0, 8)}`;
-  const isCompleted = COMPLETED_STATUSES.includes(bid.loadStatus ?? '');
   const isApproved = bid.bidStatus === 'APPROVED';
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-2 border-gray-200 dark:border-gray-700 hover:border-amber-400 dark:hover:border-amber-500 transition-all duration-200">
+      <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-lg">{vehicleTitle}</CardTitle>
-            {(bid.pickupCity || bid.dropCity) && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4 flex-shrink-0" />
-                <span>{bid.pickupCity}, {bid.pickupState} → {bid.dropCity}, {bid.dropState}</span>
-              </div>
-            )}
-          </div>
+          <CardTitle className="text-lg">{vehicleTitle}</CardTitle>
           {getStatusBadge(bid.bidStatus)}
         </div>
+        {(bid.pickupCity || bid.dropCity) && (
+          <div className="flex items-center gap-2 mt-2 p-2.5 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200/50 dark:border-amber-800/50">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              <MapPin className="size-3.5 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+              <span className="text-xs font-medium truncate">{bid.pickupCity}, {bid.pickupState}</span>
+            </div>
+            <span className="text-amber-500 font-bold flex-shrink-0">→</span>
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              <MapPin className="size-3.5 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+              <span className="text-xs font-medium truncate">{bid.dropCity}, {bid.dropState}</span>
+            </div>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-2">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wide">Your Bid</p>
             <p className="font-semibold flex items-center gap-1">
-              <DollarSign className="size-3.5 text-green-600" />
+              <DollarSign className="size-3.5 text-amber-600" />
               ${Number(bid.amount).toLocaleString()}
             </p>
           </div>
@@ -160,25 +164,25 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
         </div>
         {isApproved ? (
           <>
-            <div className="flex items-center gap-2 text-sm mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-md">
-              <TrendingUp className="w-4 h-4 text-green-600" />
-              <span className="text-green-700 dark:text-green-400 font-medium">Load assigned to you</span>
+            <div className="flex items-center gap-2 text-sm mt-2 p-3 bg-amber-500/10 dark:bg-amber-500/10 border border-amber-500/40 dark:border-amber-500/40">
+              <TrendingUp className="w-4 h-4 text-amber-600" />
+              <span className="text-amber-600 dark:text-amber-400 font-medium">Load assigned to you</span>
             </div>
             {bid.brokerId && <BrokerContactInline brokerId={bid.brokerId} />}
           </>
         ) : bid.bidStatus === 'PENDING' ? (
-          <div className="flex items-center gap-2 text-sm p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
-            <Clock className="w-4 h-4 text-yellow-600" />
-            <span className="text-yellow-700 dark:text-yellow-400">Waiting for broker approval</span>
+          <div className="flex items-center gap-2 text-sm p-3 bg-muted border border-border">
+            <Clock className="w-4 h-4 text-muted-foreground" />
+            <span className="text-muted-foreground">Waiting for broker approval</span>
           </div>
         ) : null}
         <div className="pt-1 flex items-center gap-2 flex-wrap">
           <Link to={`/load/${bid.loadId}`}>
             <Button variant="outline" size="sm">View Load</Button>
           </Link>
-          {isCompleted && bid.brokerId && (
+          {isApproved && bid.brokerId && (
             ratingSubmitted ? (
-              <span className="flex items-center gap-1.5 text-sm font-medium text-green-600">
+              <span className="flex items-center gap-1.5 text-sm font-medium text-amber-600">
                 <CheckCircle className="size-4" />
                 Rating Submitted
               </span>
@@ -226,7 +230,7 @@ export function CarrierHistory() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background map-background-detailed">
         <Navbar />
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -237,7 +241,7 @@ export function CarrierHistory() {
 
   if (isError) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background map-background-detailed">
         <Navbar />
         <div className="container mx-auto px-4 py-16 text-center">
           <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
@@ -249,7 +253,7 @@ export function CarrierHistory() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
@@ -258,7 +262,7 @@ export function CarrierHistory() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
+          <Card className="border-2 border-gray-200 dark:border-gray-700">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -269,38 +273,38 @@ export function CarrierHistory() {
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-2 border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/20">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Pending</p>
-                  <p className="text-3xl font-bold">{pendingBids.length}</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-400">Pending</p>
+                  <p className="text-3xl font-bold text-amber-900 dark:text-amber-100">{pendingBids.length}</p>
                 </div>
-                <Clock className="w-8 h-8 text-yellow-500" />
+                <Clock className="w-8 h-8 text-amber-600 dark:text-amber-500" />
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-2 border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-950/20">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Approved</p>
-                  <p className="text-3xl font-bold">{approvedBids.length}</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-400">Approved</p>
+                  <p className="text-3xl font-bold text-amber-900 dark:text-amber-100">{approvedBids.length}</p>
                 </div>
-                <Truck className="w-8 h-8 text-blue-500" />
+                <Truck className="w-8 h-8 text-amber-600 dark:text-amber-500" />
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-2 border-orange-200 dark:border-orange-800 bg-orange-50/30 dark:bg-orange-950/20">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Value</p>
-                  <p className="text-3xl font-bold">
+                  <p className="text-sm text-orange-700 dark:text-orange-400">Total Value</p>
+                  <p className="text-3xl font-bold text-orange-900 dark:text-orange-100">
                     ${approvedBids.reduce((s, b) => s + (Number(b.amount) || 0), 0).toLocaleString()}
                   </p>
                 </div>
-                <DollarSign className="w-8 h-8 text-green-500" />
+                <DollarSign className="w-8 h-8 text-orange-600 dark:text-orange-500" />
               </div>
             </CardContent>
           </Card>

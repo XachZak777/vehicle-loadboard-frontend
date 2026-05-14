@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { sanitizeDigits, type FieldErrors } from '../../utils/validation';
 import type { VinDecodeResult } from '../../store/services/hauliusApi';
 
@@ -36,6 +37,8 @@ const VEHICLE_TYPE_LABELS: Record<string, string> = {
 };
 
 export function VehicleInfoSection({ formData, fieldErrors, onChange, onVinLookup, vinLookupLoading = false, vinDetails = null, hideCondition = false, hideTrailerType = false }: Props) {
+  const [vinDetailsExpanded, setVinDetailsExpanded] = useState(true);
+
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -73,19 +76,89 @@ export function VehicleInfoSection({ formData, fieldErrors, onChange, onVinLooku
 
         {/* VIN Lookup Result Panel */}
         {vinDetails?.success && (
-          <div className="rounded-md bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-4 py-3 text-sm space-y-1">
-            <p className="font-semibold text-amber-700 dark:text-amber-400 mb-1.5">
-              Decoded: {[vinDetails.year, vinDetails.make, vinDetails.model].filter(Boolean).join(' ')}
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1 text-xs text-muted-foreground">
-              {vinDetails.bodyClass && <span><span className="font-medium text-foreground">Body:</span> {vinDetails.bodyClass}</span>}
-              {vinDetails.trim      && <span><span className="font-medium text-foreground">Trim:</span> {vinDetails.trim}</span>}
-              {vinDetails.fuelType  && <span><span className="font-medium text-foreground">Fuel:</span> {vinDetails.fuelType}</span>}
-              {vinDetails.engineHp  && <span><span className="font-medium text-foreground">HP:</span> {vinDetails.engineHp}</span>}
-              {vinDetails.cylinders && <span><span className="font-medium text-foreground">Cylinders:</span> {vinDetails.cylinders}</span>}
-              {vinDetails.displacementL && <span><span className="font-medium text-foreground">Displacement:</span> {vinDetails.displacementL}L</span>}
-              {vinDetails.driveType && <span><span className="font-medium text-foreground">Drive:</span> {vinDetails.driveType}</span>}
+          <div className="rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 overflow-hidden text-sm">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-amber-200 dark:border-amber-500/30 flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-amber-700 dark:text-amber-400 text-base">
+                  {[vinDetails.year, vinDetails.make, vinDetails.model].filter(Boolean).join(' ')}
+                </p>
+                {vinDetails.manufacturer && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {vinDetails.manufacturer}
+                    {(vinDetails.plantCity || vinDetails.plantState || vinDetails.plantCountry) && (
+                      <span> · Built in {[vinDetails.plantCity, vinDetails.plantState, vinDetails.plantCountry].filter(Boolean).join(', ')}</span>
+                    )}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 flex-wrap mt-1.5">
+                  {vinDetails.bodyClass && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-200/60 dark:bg-amber-700/30 text-amber-800 dark:text-amber-300 font-medium">{vinDetails.bodyClass}</span>
+                  )}
+                  {vinDetails.trim && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-200/60 dark:bg-amber-700/30 text-amber-800 dark:text-amber-300 font-medium">{vinDetails.trim}</span>
+                  )}
+                  {vinDetails.steeringLocation && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-200/60 dark:bg-amber-700/30 text-amber-800 dark:text-amber-300 font-medium">{vinDetails.steeringLocation}</span>
+                  )}
+                  {vinDetails.basePrice && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-medium">MSRP ${parseFloat(vinDetails.basePrice).toLocaleString()}</span>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setVinDetailsExpanded(v => !v)}
+                className="flex-shrink-0 flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors mt-0.5"
+              >
+                {vinDetailsExpanded ? <><ChevronUp className="size-3.5" />Hide</> : <><ChevronDown className="size-3.5" />Details</>}
+              </button>
             </div>
+
+            {/* Detail grid */}
+            {vinDetailsExpanded && <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-amber-200/40 dark:bg-amber-700/20">
+              {/* Engine */}
+              {(vinDetails.engineHp || vinDetails.cylinders || vinDetails.displacementL || vinDetails.engineConfiguration || vinDetails.engineModel || vinDetails.turbo) && (
+                <div className="bg-amber-50 dark:bg-amber-500/10 px-3 py-2.5">
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-1.5">Engine</p>
+                  <div className="space-y-0.5 text-xs text-muted-foreground">
+                    {vinDetails.engineHp          && <p><span className="font-medium text-foreground">HP:</span> {vinDetails.engineHp}</p>}
+                    {vinDetails.cylinders         && <p><span className="font-medium text-foreground">Cylinders:</span> {vinDetails.cylinders}</p>}
+                    {vinDetails.displacementL     && <p><span className="font-medium text-foreground">Displacement:</span> {vinDetails.displacementL}L</p>}
+                    {vinDetails.engineConfiguration && <p><span className="font-medium text-foreground">Config:</span> {vinDetails.engineConfiguration}</p>}
+                    {vinDetails.engineModel       && <p><span className="font-medium text-foreground">Model:</span> {vinDetails.engineModel}</p>}
+                    {vinDetails.turbo             && <p><span className="font-medium text-foreground">Turbo:</span> {vinDetails.turbo}</p>}
+                    {vinDetails.fuelType          && <p><span className="font-medium text-foreground">Fuel:</span> {vinDetails.fuelType}</p>}
+                  </div>
+                </div>
+              )}
+
+              {/* Drivetrain */}
+              {(vinDetails.driveType || vinDetails.transmissionStyle || vinDetails.transmissionSpeeds) && (
+                <div className="bg-amber-50 dark:bg-amber-500/10 px-3 py-2.5">
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-1.5">Drivetrain</p>
+                  <div className="space-y-0.5 text-xs text-muted-foreground">
+                    {vinDetails.driveType          && <p><span className="font-medium text-foreground">Drive:</span> {vinDetails.driveType}</p>}
+                    {vinDetails.transmissionStyle  && <p><span className="font-medium text-foreground">Transmission:</span> {vinDetails.transmissionStyle}</p>}
+                    {vinDetails.transmissionSpeeds && <p><span className="font-medium text-foreground">Speeds:</span> {vinDetails.transmissionSpeeds}</p>}
+                  </div>
+                </div>
+              )}
+
+              {/* Dimensions */}
+              {(vinDetails.doors || vinDetails.seats || vinDetails.wheelbase || vinDetails.wheels || vinDetails.gvwr) && (
+                <div className="bg-amber-50 dark:bg-amber-500/10 px-3 py-2.5">
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-1.5">Dimensions</p>
+                  <div className="space-y-0.5 text-xs text-muted-foreground">
+                    {vinDetails.doors    && <p><span className="font-medium text-foreground">Doors:</span> {vinDetails.doors}</p>}
+                    {vinDetails.seats    && <p><span className="font-medium text-foreground">Seats:</span> {vinDetails.seats}</p>}
+                    {vinDetails.wheels   && <p><span className="font-medium text-foreground">Wheels:</span> {vinDetails.wheels}</p>}
+                    {vinDetails.wheelbase && <p><span className="font-medium text-foreground">Wheelbase:</span> {vinDetails.wheelbase}"</p>}
+                    {vinDetails.gvwr     && <p><span className="font-medium text-foreground">GVWR:</span> {vinDetails.gvwr}</p>}
+                  </div>
+                </div>
+              )}
+            </div>}
           </div>
         )}
 

@@ -5,7 +5,7 @@ import type { AdminUserDto } from '../../store/services/hauliusApi';
 
 function ApprovalBadge({ approved, declined }: { approved: boolean; declined: boolean }) {
   if (approved)
-    return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Approved</Badge>;
+    return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Approved</Badge>;
   if (declined)
     return <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Rejected</Badge>;
   return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</Badge>;
@@ -13,8 +13,8 @@ function ApprovalBadge({ approved, declined }: { approved: boolean; declined: bo
 
 function RoleBadge({ role }: { role: string }) {
   return role === 'CARRIER'
-    ? <Badge variant="outline" className="text-blue-600 border-blue-300"><Truck className="size-3 mr-1" />Carrier</Badge>
-    : <Badge variant="outline" className="text-purple-600 border-purple-300"><Building2 className="size-3 mr-1" />Broker</Badge>;
+    ? <Badge variant="outline" className="text-muted-foreground border-border"><Truck className="size-3 mr-1" />Carrier</Badge>
+    : <Badge variant="outline" className="text-muted-foreground border-border"><Building2 className="size-3 mr-1" />Broker</Badge>;
 }
 
 interface Props {

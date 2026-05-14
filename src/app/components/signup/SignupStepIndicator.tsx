@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { CheckCircle } from 'lucide-react';
 import {
   StepIndicatorWrapper, StepList, StepItem, StepCircleWrapper,
@@ -19,8 +20,8 @@ export function SignupStepIndicator({ steps, currentIndex }: Props) {
     <StepIndicatorWrapper>
       <StepList>
         {steps.map((step, index) => (
-          <>
-            <StepItem key={step.id}>
+          <Fragment key={step.id}>
+            <StepItem>
               <StepCircleWrapper>
                 <StepCircle active={index <= currentIndex}>
                   {index < currentIndex ? <CheckCircle className="size-5" /> : index + 1}
@@ -29,9 +30,9 @@ export function SignupStepIndicator({ steps, currentIndex }: Props) {
               </StepCircleWrapper>
             </StepItem>
             {index < steps.length - 1 && (
-              <StepConnector key={`connector-${index}`} completed={index < currentIndex} />
+              <StepConnector completed={index < currentIndex} />
             )}
-          </>
+          </Fragment>
         ))}
       </StepList>
     </StepIndicatorWrapper>

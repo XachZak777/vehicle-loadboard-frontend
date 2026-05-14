@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { Button } from '../components/ui/button';
-import { Truck, ArrowLeft, Mail, Phone, MapPin, Clock } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { APP_NAME } from '../constants';
 import { useState } from 'react';
@@ -46,9 +46,6 @@ export function Contact() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-3">
-              <div className="bg-amber-500 p-2 rounded-lg">
-                <Truck className="size-6 text-white" />
-              </div>
               <div>
                 <h1 className="text-lg font-bold">{APP_NAME}</h1>
                 <p className="text-xs text-muted-foreground">Vehicle Transport Network</p>
@@ -282,9 +279,6 @@ export function Contact() {
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="bg-amber-500 p-1.5 rounded-lg">
-                  <Truck className="size-5 text-white" />
-                </div>
                 <span className="text-base font-bold">{APP_NAME}</span>
               </div>
               <p className="text-sm text-muted-foreground">
