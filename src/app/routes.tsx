@@ -25,8 +25,10 @@ const ForgotPassword  = lazy(() => import('./pages/ForgotPassword').then(m => ({
 const ResetPassword   = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
 const SessionExpired  = lazy(() => import('./pages/SessionExpired').then(m => ({ default: m.SessionExpired })));
 const VerifyLogin     = lazy(() => import('./pages/VerifyLogin').then(m => ({ default: m.VerifyLogin })));
-const MyRatings       = lazy(() => import('./pages/MyRatings').then(m => ({ default: m.MyRatings })));
-const CompanyRating   = lazy(() => import('./pages/CompanyRating').then(m => ({ default: m.CompanyRating })));
+const MyRatings          = lazy(() => import('./pages/MyRatings').then(m => ({ default: m.MyRatings })));
+const CompanyRating      = lazy(() => import('./pages/CompanyRating').then(m => ({ default: m.CompanyRating })));
+const CompanyPublicPage  = lazy(() => import('./pages/CompanyPublicPage').then(m => ({ default: m.CompanyPublicPage })));
+const SearchPage         = lazy(() => import('./pages/SearchPage').then(m => ({ default: m.SearchPage })));
 const PrivacyPolicy   = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
 const TermsOfService  = lazy(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
 const CookiePolicy    = lazy(() => import('./pages/CookiePolicy').then(m => ({ default: m.CookiePolicy })));
@@ -243,10 +245,18 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: '/search',
+        element: (
+          <ProtectedRoute>
+            <SearchPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: '/company/:type/:id',
         element: (
           <ProtectedRoute>
-            <CompanyRating />
+            <CompanyPublicPage />
           </ProtectedRoute>
         ),
       },

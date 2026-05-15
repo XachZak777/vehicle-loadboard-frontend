@@ -22,6 +22,13 @@ function fmtTime(t?: string | null) {
   return ` at ${h % 12 || 12}:${String(m).padStart(2, '0')} ${ampm}`;
 }
 
+function mapsSearchUrl(street?: string | null, city?: string | null, state?: string | null, zip?: string | null) {
+  const q = [street, city, state, zip].filter(Boolean).join(', ');
+  if (!q) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q + ', USA')}`;
+}
+
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-5">
@@ -33,17 +40,28 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Row({ label, value, mono = false, highlight = false }: {
-  label: string; value: string; mono?: boolean; highlight?: boolean;
+function Row({ label, value, mono = false, highlight = false, href }: {
+  label: string; value: string; mono?: boolean; highlight?: boolean; href?: string;
 }) {
   return (
     <div className={`flex text-sm ${highlight ? 'bg-amber-50' : ''}`}>
-      <span className="w-44 flex-shrink-0 px-4 py-2.5 text-xs text-gray-500 font-medium bg-gray-50 border-r border-gray-100">
+      <span className="w-28 sm:w-44 flex-shrink-0 px-2 sm:px-4 py-2.5 text-xs text-gray-500 font-medium bg-gray-50 border-r border-gray-100">
         {label}
       </span>
-      <span className={`px-4 py-2.5 font-semibold text-gray-900 ${mono ? 'font-mono text-xs' : ''} ${highlight ? 'text-amber-700 text-base' : ''}`}>
-        {value}
-      </span>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`px-4 py-2.5 font-semibold text-amber-600 hover:underline underline-offset-2 ${mono ? 'font-mono text-xs' : ''}`}
+        >
+          {value}
+        </a>
+      ) : (
+        <span className={`px-4 py-2.5 font-semibold text-gray-900 ${mono ? 'font-mono text-xs' : ''} ${highlight ? 'text-amber-700 text-base' : ''}`}>
+          {value}
+        </span>
+      )}
     </div>
   );
 }
@@ -89,10 +107,11 @@ export function DispatchSheetPage() {
   const vehicle = [bid.vehicleYear, bid.vehicleMake, bid.vehicleModel].filter(Boolean).join(' ');
   const brokerName = broker?.companyName || broker?.legalName || 'Broker';
 
+
   return (
     <div className="min-h-screen bg-white">
       {/* Toolbar — hidden when printing */}
-      <div className="print:hidden sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
+      <div className="print:hidden sticky top-0 z-10 bg-white border-b border-gray-200 px-3 sm:px-6 py-3 flex items-center justify-between shadow-sm gap-2">
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost" size="sm" className="gap-1.5 text-gray-600">
             <Link to="/carrier/assigned">
@@ -117,9 +136,9 @@ export function DispatchSheetPage() {
       </div>
 
       {/* Sheet */}
-      <div className="max-w-4xl mx-auto px-8 py-10 print:px-0 print:py-0 print:max-w-none">
+      <div className="max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-10 print:px-0 print:py-0 print:max-w-none">
         {/* Header */}
-        <div className="flex items-start justify-between mb-8 pb-6 border-b-4 border-amber-400">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8 pb-6 border-b-4 border-amber-400">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">DISPATCH SHEET</h1>
             {load.orderId && (
@@ -129,7 +148,7 @@ export function DispatchSheetPage() {
               Issued: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
           </div>
-          <div className="text-right flex flex-col items-end gap-2">
+          <div className="flex flex-col sm:items-end gap-2">
             <span className="inline-block bg-amber-500 text-white text-sm font-bold px-4 py-1.5 rounded tracking-wide">
               {load.status ?? 'ASSIGNED'}
             </span>
@@ -140,7 +159,7 @@ export function DispatchSheetPage() {
         </div>
 
         {/* Two-column top block */}
-        <div className="grid grid-cols-2 gap-6 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-5">
           {/* Broker / Shipper */}
           <Section title="Broker / Shipper">
             <Row label="Company" value={brokerName} />
@@ -199,10 +218,15 @@ export function DispatchSheetPage() {
         )}
 
         {/* Route — full width two-col */}
-        <div className="grid grid-cols-2 gap-6 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-5">
           <Section title="Pickup">
-            {load.pickupStreet && <Row label="Street" value={load.pickupStreet} />}
-            <Row label="City / State" value={[load.pickupCity, load.pickupState].filter(Boolean).join(', ') || '—'} />
+            {load.pickupStreet && (
+              <Row label="Street" value={load.pickupStreet} href={mapsSearchUrl(load.pickupStreet, load.pickupCity, load.pickupState, load.pickupZip) ?? undefined} />
+            )}
+            {(() => {
+              const cityState = [load.pickupCity, load.pickupState].filter(Boolean).join(', ');
+              return <Row label="City / State" value={cityState || '—'} href={cityState ? mapsSearchUrl(load.pickupStreet, load.pickupCity, load.pickupState, load.pickupZip) ?? undefined : undefined} />;
+            })()}
             {load.pickupZip && <Row label="ZIP" value={load.pickupZip} />}
             {load.pickupCountry && <Row label="Country" value={load.pickupCountry} />}
             {load.pickupLotNumber && <Row label="Lot #" value={load.pickupLotNumber} />}
@@ -216,8 +240,13 @@ export function DispatchSheetPage() {
           </Section>
 
           <Section title="Drop-off">
-            {load.dropStreet && <Row label="Street" value={load.dropStreet} />}
-            <Row label="City / State" value={[load.dropCity, load.dropState].filter(Boolean).join(', ') || '—'} />
+            {load.dropStreet && (
+              <Row label="Street" value={load.dropStreet} href={mapsSearchUrl(load.dropStreet, load.dropCity, load.dropState, load.dropZip) ?? undefined} />
+            )}
+            {(() => {
+              const cityState = [load.dropCity, load.dropState].filter(Boolean).join(', ');
+              return <Row label="City / State" value={cityState || '—'} href={cityState ? mapsSearchUrl(load.dropStreet, load.dropCity, load.dropState, load.dropZip) ?? undefined : undefined} />;
+            })()}
             {load.dropZip && <Row label="ZIP" value={load.dropZip} />}
             {load.dropCountry && <Row label="Country" value={load.dropCountry} />}
             {load.dropLotNumber && <Row label="Lot #" value={load.dropLotNumber} />}
@@ -249,7 +278,7 @@ export function DispatchSheetPage() {
 
         {/* Signatures */}
         <div className="mt-8 pt-6 border-t-2 border-gray-200">
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Carrier Signature</p>
               <div className="h-16 border border-gray-300 rounded-lg" />

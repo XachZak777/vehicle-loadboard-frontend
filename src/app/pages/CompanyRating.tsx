@@ -10,6 +10,7 @@ import {
   useGetCompanyRatingsQuery,
 } from '../store/services/hauliusApi';
 import type { MyRatingsResponse } from '../store/services/hauliusApi';
+import { MapBackground } from '../components/MapBackground';
 
 // Set to true to preview with mock data (no backend needed)
 const USE_MOCK = false;
@@ -54,9 +55,14 @@ const MOCK_INFO = {
 };
 
 const TAG_LABELS: Record<string, string> = {
+  // Broker tags
   communication: 'Proper Communication',
   payment: 'On-Time Payment',
   accuracy: 'Accurate Load Details',
+  // Carrier tags
+  on_time: 'On-Time Pickup & Delivery',
+  safe_delivery: 'Vehicle Delivered Safely',
+  professional: 'Professional Service',
 };
 
 function ratingLabel(score: number, total: number) {
@@ -75,7 +81,7 @@ function fmtDate(d?: string | null) {
 function tagBarColor(pct: number) {
   if (pct >= 80) return 'bg-amber-500';
   if (pct >= 50) return 'bg-amber-400';
-  return 'bg-gray-500';
+  return 'bg-amber-300';
 }
 
 function InfoField({ label, value, icon }: { label: string; value?: string | null; icon: React.ReactNode }) {
@@ -125,7 +131,7 @@ function RatingPageContent({
       {/* Header / Score card */}
       <Card className="border-[3px] border-amber-300 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/20">
         <CardContent className="p-6 sm:p-8">
-          <h1 className="text-2xl font-bold mb-1">{name}</h1>
+          <h1 className="text-3xl font-bold mb-1">{name}</h1>
           <Badge variant="outline" className="mb-5">{type}</Badge>
 
           <div className="text-sm uppercase tracking-wide text-muted-foreground mb-2">Overall Rating Score</div>
@@ -162,8 +168,8 @@ function RatingPageContent({
 
       {/* Performance Breakdown */}
       {tagStats.length > 0 && (
-        <Card className="border-2 border-gray-300 dark:border-gray-600">
-          <CardHeader className="border-b-2 border-gray-200 dark:border-gray-700">
+        <Card className="border-2 border-amber-300 dark:border-amber-700">
+          <CardHeader className="border-b-2 border-amber-200 dark:border-amber-800">
             <CardTitle className="text-gray-900 dark:text-gray-100">Performance Breakdown</CardTitle>
             <CardDescription>Detailed feedback statistics</CardDescription>
           </CardHeader>
@@ -172,18 +178,13 @@ function RatingPageContent({
               {tagStats.map((stat) => {
                 const pct = stat.total > 0 ? Math.round((stat.count / stat.total) * 100) : 0;
                 const barColor = tagBarColor(pct);
-                const cfg = stat.tag === 'communication'
-                  ? { border: 'border-2 border-amber-300 dark:border-amber-700', bg: 'bg-amber-50/20 dark:bg-amber-950/10', badgeCls: 'bg-amber-500 border-2 border-amber-600', valueCls: 'text-amber-600 dark:text-amber-500' }
-                  : stat.tag === 'payment'
-                    ? { border: 'border-2 border-amber-300 dark:border-amber-700', bg: 'bg-amber-50/20 dark:bg-amber-950/10', badgeCls: 'bg-amber-500 border-2 border-amber-600', valueCls: 'text-amber-600 dark:text-amber-500' }
-                    : { border: 'border-2 border-gray-300 dark:border-gray-700', bg: 'bg-gray-50/20 dark:bg-gray-950/10', badgeCls: 'bg-gray-500 border-2 border-gray-600', valueCls: 'text-gray-600 dark:text-gray-400' };
                 return (
-                  <div key={stat.tag} className={`p-5 ${cfg.border} ${cfg.bg}`}>
+                  <div key={stat.tag} className="p-5 border-2 border-amber-300 dark:border-amber-700 bg-amber-50/20 dark:bg-amber-950/10">
                     <div className="flex items-center justify-between mb-3">
                       <div className="font-semibold text-base text-gray-900 dark:text-gray-100">{TAG_LABELS[stat.tag] ?? stat.tag}</div>
-                      <Badge className={cfg.badgeCls}>{pct}%</Badge>
+                      <Badge className="bg-amber-500 border-2 border-amber-600">{pct}%</Badge>
                     </div>
-                    <div className={`text-3xl font-bold ${cfg.valueCls}`}>{stat.count}</div>
+                    <div className="text-3xl font-bold text-amber-600 dark:text-amber-500">{stat.count}</div>
                     <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">out of {stat.total} ratings</div>
                     <div className="mt-3 h-1.5 bg-muted overflow-hidden">
                       <div className={`h-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
@@ -292,6 +293,7 @@ export function CompanyRating() {
 
   return (
     <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <Navbar />
       <div className="container mx-auto px-4 py-6 max-w-3xl">
         <Button variant="ghost" className="mb-4 -ml-2" onClick={() => navigate(-1)}>

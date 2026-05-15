@@ -705,6 +705,10 @@ export const hauliusApi = createApi({
       query: () => '/api/loads/carrier/my-bids',
       providesTags: ['Bid', 'Load'],
     }),
+    getPreferredLineLoads: builder.query<LoadDto[], void>({
+      query: () => '/api/loads/carrier/preferred-loads',
+      providesTags: ['Load'],
+    }),
     placeBid: builder.mutation<BidDto, BidPayload>({
       query: (body) => ({ url: '/api/loads/bid', method: 'POST', body }),
       invalidatesTags: (_result, _error, { loadId }) => [
@@ -738,7 +742,10 @@ export const hauliusApi = createApi({
         url: `/api/loads/${loadId}/auto-assign`,
         method: 'POST',
       }),
-      invalidatesTags: ['Load', 'Bid'],
+      invalidatesTags: (_result, _error, loadId) => [
+        'Load',
+        { type: 'Bid', id: loadId },
+      ],
     }),
     getLoad: builder.query<LoadDto, string>({
       query: (id) => `/api/loads/${id}`,
@@ -845,6 +852,9 @@ export const hauliusApi = createApi({
     }),
     searchCarriers: builder.query<CarrierPublicInfo[], string>({
       query: (q) => `/api/carriers/search?q=${encodeURIComponent(q)}`,
+    }),
+    searchBrokers: builder.query<BrokerPublicInfo[], string>({
+      query: (q) => `/api/brokers/search?q=${encodeURIComponent(q)}`,
     }),
     directAssignCarrier: builder.mutation<LoadDto, { loadId: string; carrierId: string }>({
       query: ({ loadId, carrierId }) => ({
@@ -990,6 +1000,7 @@ export const {
   useDeleteLoadMutation,
   useGetBidsForLoadQuery,
   useGetMyCarrierBidsQuery,
+  useGetPreferredLineLoadsQuery,
   usePlaceBidMutation,
   useUpdateBidMutation,
   useApproveBidMutation,
@@ -1000,7 +1011,10 @@ export const {
   useGetMyBrokerProfileQuery,
   useGetMyCarrierProfileQuery,
   useGetCarrierPublicInfoQuery,
+  useSearchCarriersQuery,
   useLazySearchCarriersQuery,
+  useSearchBrokersQuery,
+  useLazySearchBrokersQuery,
   useDirectAssignCarrierMutation,
   useGetBrokerPublicInfoQuery,
   useUpdateBrokerProfileMutation,

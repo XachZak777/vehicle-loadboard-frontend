@@ -90,7 +90,7 @@ export function FmcsaVerificationStep({
                 <Building2 className="size-4 text-amber-500" />
                 <span className="font-semibold text-sm">Company Information</span>
               </div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
                 <div>
                   <span className="text-muted-foreground">Legal Name</span>
                   <p className="font-medium">{formData.companyName || '—'}</p>
@@ -224,7 +224,7 @@ export function FmcsaVerificationStep({
             {(fmcsaData?.safetyRating || fmcsaData?.mcs150Date) ? (
               <div className="rounded-lg border p-4 space-y-2 bg-muted/40">
                 <p className="font-semibold text-sm">Safety & Compliance</p>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
                   {fmcsaData?.safetyRating && <div><span className="text-muted-foreground">Safety Rating</span><p className="font-medium">{fmcsaData.safetyRating}</p></div>}
                   {fmcsaData?.safetyType && <div><span className="text-muted-foreground">Safety Review Type</span><p className="font-medium">{fmcsaData.safetyType}</p></div>}
                   {fmcsaData?.safetyRatingDate && <div><span className="text-muted-foreground">Rating Date</span><p className="font-medium">{fmcsaData.safetyRatingDate}</p></div>}
@@ -239,7 +239,7 @@ export function FmcsaVerificationStep({
             {fmcsaData?.usInspections && (
               <div className="rounded-lg border p-4 space-y-2 bg-muted/40">
                 <p className="font-semibold text-sm">U.S. Inspections</p>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
                   {(['vehicle', 'driver', 'hazmat', 'iep'] as const).map(key => {
                     const s = fmcsaData.usInspections?.[key];
                     if (!s) return null;
@@ -261,7 +261,7 @@ export function FmcsaVerificationStep({
             {fmcsaData?.usCrashes && (
               <div className="rounded-lg border p-4 space-y-2 bg-muted/40">
                 <p className="font-semibold text-sm">U.S. Crashes</p>
-                <div className="grid grid-cols-4 gap-2 text-sm text-center">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm text-center">
                   {(['fatal', 'injury', 'tow', 'total'] as const).map(key => (
                     <div key={key} className="rounded border p-2">
                       <p className="text-muted-foreground capitalize text-xs">{key}</p>

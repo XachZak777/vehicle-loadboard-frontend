@@ -28,14 +28,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
-type DealerStep = 'company-info' | 'details' | 'documents' | 'phone-verify' | 'password';
+type DealerStep = 'info' | 'documents' | 'create-account';
 
 const STEPS = [
-  { id: 'company-info', label: 'Company Info' },
-  { id: 'details',      label: 'Details'      },
-  { id: 'documents',    label: 'Documents'    },
-  { id: 'phone-verify', label: 'Phone Verify' },
-  { id: 'password',     label: 'Password'     },
+  { id: 'info',           label: 'Information'    },
+  { id: 'documents',      label: 'Documents'      },
+  { id: 'create-account', label: 'Create Account' },
 ] as const;
 
 const US_STATES = [
@@ -57,7 +55,7 @@ export function DealerSignup() {
   const [uploadDealerLicense] = useUploadDealerLicenseMutation();
   const [uploadDealerCorporatePaperwork] = useUploadDealerCorporatePaperworkMutation();
 
-  const [currentStep, setCurrentStep] = useState<DealerStep>('company-info');
+  const [currentStep, setCurrentStep] = useState<DealerStep>('info');
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [dealerLicenseFile, setDealerLicenseFile] = useState<File | null>(null);
@@ -76,7 +74,6 @@ export function DealerSignup() {
     ownerLastName: '',
     businessPhone: '',
     howDidYouHear: '',
-    phoneNumber: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -100,18 +97,10 @@ export function DealerSignup() {
     toast.success(successMsg);
   };
 
-  const handleCompanyInfoSubmit = () => {
+  const handleInfoSubmit = () => {
     const errs = buildErrors([
       [!formData.companyName.trim(), 'companyName', 'Company name is required.'],
       [!!formData.companyName.trim() && !isValidCompanyName(formData.companyName), 'companyName', 'Company name must be 2–100 characters.'],
-    ]);
-    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
-    setFieldErrors({});
-    setCurrentStep('details');
-  };
-
-  const handleDetailsSubmit = () => {
-    const errs = buildErrors([
       [!!formData.yearEstablished.trim() && !isValidYearEstablished(formData.yearEstablished), 'yearEstablished', `Enter a valid 4-digit year (1800–${new Date().getFullYear()}).`],
       [!formData.companyAddress.trim(), 'companyAddress', 'Company address is required.'],
       [!!formData.companyAddress.trim() && !isValidStreetAddress(formData.companyAddress), 'companyAddress', 'Address must be 5–200 characters.'],
@@ -135,16 +124,6 @@ export function DealerSignup() {
     setCurrentStep('documents');
   };
 
-  const handlePhoneSubmit = () => {
-    const errs = buildErrors([
-      [!formData.phoneNumber.trim(), 'phoneNumber', 'Phone number is required.'],
-      [!!formData.phoneNumber.trim() && !isValidPhone(formData.phoneNumber), 'phoneNumber', 'Enter a valid US phone number (e.g. (555) 123-4567).'],
-    ]);
-    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
-    setFieldErrors({});
-    setCurrentStep('password');
-  };
-
   const handleCreateAccount = async () => {
     const errs = buildErrors([
       [!formData.email.trim(), 'email', 'Email address is required.'],
@@ -165,7 +144,7 @@ export function DealerSignup() {
         companyName: formData.companyName,
         ownerFirstName: formData.ownerFirstName,
         ownerLastName: formData.ownerLastName,
-        businessPhone: formData.businessPhone || formData.phoneNumber,
+        businessPhone: formData.businessPhone,
         companyAddress: formData.companyAddress,
         city: formData.city,
         state: formData.state,
@@ -181,7 +160,7 @@ export function DealerSignup() {
         role: 'dealer',
         email: res.email,
         companyName: formData.companyName,
-        phoneNumber: formData.phoneNumber,
+        phoneNumber: formData.businessPhone,
         phoneVerified: false,
         createdAt: new Date().toISOString(),
       };
@@ -214,10 +193,10 @@ export function DealerSignup() {
       <ContentWrapper>
         <SignupStepIndicator steps={STEPS} currentIndex={currentIndex} />
 
-        {currentStep === 'company-info' && (
+        {currentStep === 'info' && (
           <Card>
             <CardHeader>
-              <CardTitle>Company Information</CardTitle>
+              <CardTitle>Dealership Information</CardTitle>
               <CardDescription>Tell us about your dealership</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -227,22 +206,6 @@ export function DealerSignup() {
                   onChange={e => handleChange('companyName', e.target.value)} aria-invalid={!!fieldErrors.companyName} />
                 {fieldErrors.companyName && <p className="text-xs text-destructive mt-1">{fieldErrors.companyName}</p>}
               </div>
-              <div className="flex justify-end pt-2">
-                <Button onClick={handleCompanyInfoSubmit} className="gap-2 bg-amber-500 hover:bg-amber-600 text-white">
-                  Continue <ArrowRight className="size-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {currentStep === 'details' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Information</CardTitle>
-              <CardDescription>Please provide additional details about your dealership</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="yearEstablished">Year Established</Label>
                 <Input id="yearEstablished" placeholder="e.g., 2010" value={formData.yearEstablished}
@@ -325,11 +288,8 @@ export function DealerSignup() {
                 </Select>
                 {fieldErrors.howDidYouHear && <p className="text-xs text-destructive mt-1">{fieldErrors.howDidYouHear}</p>}
               </div>
-              <div className="flex justify-between pt-2">
-                <Button variant="outline" onClick={() => setCurrentStep('company-info')} className="gap-2">
-                  <ArrowLeft className="size-4" /> Back
-                </Button>
-                <Button onClick={handleDetailsSubmit} className="gap-2 bg-amber-500 hover:bg-amber-600 text-white">
+              <div className="flex justify-end pt-2">
+                <Button onClick={handleInfoSubmit} className="gap-2 bg-amber-500 hover:bg-amber-600 text-white">
                   Continue <ArrowRight className="size-4" />
                 </Button>
               </div>
@@ -362,10 +322,10 @@ export function DealerSignup() {
                 error={fieldErrors.corporatePaperworkFile}
               />
               <div className="flex justify-between pt-2">
-                <Button variant="outline" onClick={() => setCurrentStep('details')} className="gap-2">
+                <Button variant="outline" onClick={() => setCurrentStep('info')} className="gap-2">
                   <ArrowLeft className="size-4" /> Back
                 </Button>
-                <Button onClick={() => setCurrentStep('phone-verify')} className="gap-2 bg-amber-500 hover:bg-amber-600 text-white">
+                <Button onClick={() => setCurrentStep('create-account')} className="gap-2 bg-amber-500 hover:bg-amber-600 text-white">
                   Continue <ArrowRight className="size-4" />
                 </Button>
               </div>
@@ -373,35 +333,7 @@ export function DealerSignup() {
           </Card>
         )}
 
-        {currentStep === 'phone-verify' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Phone Verification</CardTitle>
-              <CardDescription>Enter your mobile number to verify your identity</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="phoneNumber">Phone Number *</Label>
-                <PhoneInput id="phoneNumber" value={formData.phoneNumber}
-                  onChange={v => handleChange('phoneNumber', v)} aria-invalid={!!fieldErrors.phoneNumber} />
-                {fieldErrors.phoneNumber && <p className="text-xs text-destructive mt-1">{fieldErrors.phoneNumber}</p>}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                A verification code will be sent to this number after account creation.
-              </p>
-              <div className="flex justify-between pt-2">
-                <Button variant="outline" onClick={() => setCurrentStep('documents')} className="gap-2">
-                  <ArrowLeft className="size-4" /> Back
-                </Button>
-                <Button onClick={handlePhoneSubmit} className="gap-2 bg-amber-500 hover:bg-amber-600 text-white">
-                  Continue <ArrowRight className="size-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {currentStep === 'password' && (
+        {currentStep === 'create-account' && (
           <CreateAccountStep
             role="dealer"
             formData={{
@@ -414,7 +346,7 @@ export function DealerSignup() {
             onChange={handleChange}
             isLoading={isLoading}
             onSubmit={handleCreateAccount}
-            onBack={() => setCurrentStep('phone-verify')}
+            onBack={() => setCurrentStep('documents')}
           />
         )}
       </ContentWrapper>

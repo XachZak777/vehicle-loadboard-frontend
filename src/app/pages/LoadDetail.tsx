@@ -25,6 +25,7 @@ import {
 import type { BidDto } from '../store/services/hauliusApi';
 import { CarrierInfoInline } from '../components/broker/CarrierInfoInline';
 import { formatPhone } from '../utils/phone';
+import { MapBackground } from '../components/MapBackground';
 
 function vehicleConditionBadge(condition?: string) {
   if (!condition) return null;
@@ -114,6 +115,7 @@ export function LoadDetail() {
   if (isLoadingLoad) {
     return (
       <div className="min-h-screen bg-background map-background-detailed flex items-center justify-center">
+        <MapBackground />
         <Loader2 className="size-8 animate-spin text-amber-500" />
       </div>
     );
@@ -122,6 +124,7 @@ export function LoadDetail() {
   if (!load) {
     return (
       <div className="min-h-screen bg-background map-background-detailed flex items-center justify-center">
+        <MapBackground />
         <Card className="max-w-md">
           <CardContent className="p-12 text-center">
             <Truck className="size-12 text-muted-foreground mx-auto mb-4" />
@@ -152,6 +155,7 @@ export function LoadDetail() {
 
   return (
     <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <Navbar />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

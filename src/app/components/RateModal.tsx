@@ -5,16 +5,28 @@ import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { useSubmitRatingMutation } from '../store/services/hauliusApi';
 
-const POSITIVE_TAGS = [
+const BROKER_POSITIVE_TAGS = [
   { id: 'communication', label: 'Proper Communication', sub: 'Clear and timely responses' },
   { id: 'payment', label: 'On-Time Payment', sub: 'Paid promptly as agreed' },
   { id: 'accuracy', label: 'Accurate Load Details', sub: 'Description matched actual load' },
 ];
 
-const NEGATIVE_TAGS = [
+const BROKER_NEGATIVE_TAGS = [
   { id: 'communication', label: 'Poor Communication', sub: 'Slow or unclear responses' },
   { id: 'payment', label: 'Late Payment', sub: 'Payment was delayed' },
   { id: 'accuracy', label: 'Inaccurate Load Details', sub: 'Description did not match load' },
+];
+
+const CARRIER_POSITIVE_TAGS = [
+  { id: 'on_time', label: 'On-Time Pickup & Delivery', sub: 'Arrived and delivered as scheduled' },
+  { id: 'safe_delivery', label: 'Vehicle Delivered Safely', sub: 'No damage, vehicle in expected condition' },
+  { id: 'professional', label: 'Professional Service', sub: 'Responsive, courteous, and reliable' },
+];
+
+const CARRIER_NEGATIVE_TAGS = [
+  { id: 'on_time', label: 'Late Pickup or Delivery', sub: 'Did not meet the agreed schedule' },
+  { id: 'safe_delivery', label: 'Vehicle Damage', sub: 'Vehicle arrived damaged or in poor condition' },
+  { id: 'professional', label: 'Unprofessional Conduct', sub: 'Unresponsive, rude, or unreliable' },
 ];
 
 interface Props {
@@ -34,7 +46,9 @@ export function RateModal({ open, onClose, onSubmitted, targetId, targetType, ta
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [comment, setComment] = useState('');
 
-  const tags = ratingType === 'positive' ? POSITIVE_TAGS : NEGATIVE_TAGS;
+  const positiveTags = targetType === 'carrier' ? CARRIER_POSITIVE_TAGS : BROKER_POSITIVE_TAGS;
+  const negativeTags = targetType === 'carrier' ? CARRIER_NEGATIVE_TAGS : BROKER_NEGATIVE_TAGS;
+  const tags = ratingType === 'positive' ? positiveTags : negativeTags;
 
   const handleTypeSelect = (type: 'positive' | 'negative') => {
     setRatingType(type);
@@ -74,7 +88,7 @@ export function RateModal({ open, onClose, onSubmitted, targetId, targetType, ta
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="max-w-md p-0 overflow-hidden max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-[calc(100vw-24px)] sm:max-w-md p-0 overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-start gap-3 px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
           <div className="flex-shrink-0 size-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">

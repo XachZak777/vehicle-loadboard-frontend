@@ -10,6 +10,7 @@ build/
 
 # Environment variables — never commit secrets
 .env
+.env.production
 .env.local
 .env.*.local
 # Allow the example template to be committed

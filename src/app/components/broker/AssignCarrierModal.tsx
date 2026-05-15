@@ -7,6 +7,7 @@ import {
   Search, MapPin, ArrowRight, Loader2, Truck, ShieldCheck,
   Star, CheckCircle, AlertCircle, Users,
 } from 'lucide-react';
+import { Checkbox } from '../ui/checkbox';
 import { toast } from 'sonner';
 import {
   useLazySearchCarriersQuery,
@@ -107,6 +108,7 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<CarrierPublicInfo | null>(null);
   const [assigning, setAssigning] = useState(false);
+  const [consent, setConsent] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [triggerSearch, { data: results = [], isFetching, isUninitialized }] = useLazySearchCarriersQuery();
@@ -142,6 +144,7 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
   const handleClose = () => {
     setQuery('');
     setSelected(null);
+    setConsent(false);
     onClose();
   };
 
@@ -151,7 +154,7 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o && !assigning) handleClose(); }}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden flex flex-col max-h-[90vh]">
+      <DialogContent className="max-w-[calc(100vw-24px)] sm:max-w-lg p-0 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg">
@@ -277,18 +280,32 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
             <p className="text-xs text-muted-foreground">
               This carrier will be directly assigned to the load. Any pending bids from other carriers will be automatically declined.
             </p>
+
+            <div className="p-3 rounded-lg border border-border bg-muted/30">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="assignConsent"
+                  checked={consent}
+                  onCheckedChange={(v) => setConsent(!!v)}
+                  className="mt-0.5 shrink-0"
+                />
+                <label htmlFor="assignConsent" className="text-xs leading-relaxed cursor-pointer select-none text-muted-foreground">
+                  I acknowledge and agree that once the carrier has accepted my request, I will be entered into a legal contract with the carrier for the transport of my vehicle(s). I further acknowledge and agree that Haulius is not a party to such contract, and has no obligation or liability whatsoever arising out of such contract. I consent to Haulius adding a provision to this effect in my dispatch sheets. I also understand that any changes that I make to the dispatch sheet after the carrier has accepted my request, unless the carrier has approved the change, may not be binding on the carrier.
+                </label>
+              </div>
+            </div>
           </div>
         )}
 
         <DialogFooter className="px-6 py-4 border-t border-border flex-shrink-0 gap-2 sm:gap-2">
           {selected ? (
             <>
-              <Button variant="outline" onClick={() => setSelected(null)} disabled={assigning}>
+              <Button variant="outline" onClick={() => { setSelected(null); setConsent(false); }} disabled={assigning}>
                 ← Back to Search
               </Button>
               <Button
                 onClick={handleConfirmAssign}
-                disabled={assigning}
+                disabled={assigning || !consent}
                 className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
               >
                 {assigning ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle className="size-4" />}

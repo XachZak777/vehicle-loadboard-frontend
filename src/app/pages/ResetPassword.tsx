@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { ArrowLeft, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -9,10 +9,11 @@ import { AuthNavbar } from '../components/AuthNavbar';
 import { useResetPasswordMutation } from '../store/services/hauliusApi';
 import { toast } from 'sonner';
 import { isStrongPassword, passwordRequirementsText } from '../utils/validation';
+import { useLogout } from '../hooks/useLogout';
 
 export function ResetPassword() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const handleLogout = useLogout();
   const token = searchParams.get('token') ?? '';
 
   const [newPassword, setNewPassword] = useState('');
@@ -56,8 +57,8 @@ export function ResetPassword() {
 
     try {
       await resetPassword({ token, newPassword }).unwrap();
-      toast.success('Password reset successfully!');
-      navigate('/login', { state: { passwordReset: true } });
+      toast.success('Password changed. Please sign in again.');
+      await handleLogout();
     } catch (e: any) {
       const msg =
         e?.data?.message ??

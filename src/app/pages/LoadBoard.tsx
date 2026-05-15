@@ -11,8 +11,10 @@ import { Navbar } from '../components/Navbar';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Button } from '../components/ui/button';
-import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../components/ui/sheet';
+import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star, SlidersHorizontal } from 'lucide-react';
 import { formatPhone } from '../utils/phone';
+import { MapBackground } from '../components/MapBackground';
 
 const VEHICLE_TYPES = ['All Types', 'Sedan', 'SUV', 'Truck', 'Van', 'Motorcycle', 'RV', 'Boat', 'ATV'];
 const TRAILER_TYPES = ['All Types', 'Open Trailer', 'Enclosed Trailer'];
@@ -93,6 +95,7 @@ export function LoadBoard() {
   const myCarrierId = myCarrierProfile?.id;
 
   const [filtersOpen, setFiltersOpen] = useState(true);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [pickupLocation, setPickupLocation] = useState('');
   const [pickupRadius, setPickupRadius] = useState('50');
@@ -204,6 +207,7 @@ export function LoadBoard() {
 
   return (
     <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -222,121 +226,74 @@ export function LoadBoard() {
         )}
 
         {!isLoading && !fetchError && (
+          <>
+            {/* Mobile filter sheet — only shown below sm breakpoint */}
+            <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+              <SheetContent side="left" className="w-[300px] overflow-y-auto">
+                <SheetHeader className="mb-4">
+                  <SheetTitle className="text-amber-500">Filters</SheetTitle>
+                </SheetHeader>
+                <FilterPanel
+                  sortBy={sortBy} setSortBy={setSortBy}
+                  searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+                  pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
+                  pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
+                  deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
+                  deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
+                  vehicleType={vehicleType} setVehicleType={setVehicleType}
+                  trailerType={trailerType} setTrailerType={setTrailerType}
+                  condition={condition} setCondition={setCondition}
+                  minPrice={minPrice} setMinPrice={setMinPrice}
+                  minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
+                  clearFilters={clearFilters}
+                />
+              </SheetContent>
+            </Sheet>
+
           <div className="flex gap-6">
-            {/* Filters Sidebar — clips the inner panel as it slides in */}
+            {/* Filters Sidebar — desktop only (hidden on mobile, aside on sm+) */}
             <aside
-              className="flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-out border-r border-r-amber-200 dark:border-r-amber-900"
+              className="hidden sm:block flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-out border-r border-r-amber-200 dark:border-r-amber-900"
               style={{ width: filtersOpen ? 272 : 0 }}
             >
-              {/* Inner panel slides in from the left inside the clipping container */}
               <div
                 className="w-[272px] pr-4 transition-transform duration-300 ease-out"
                 style={{ transform: filtersOpen ? 'translateX(0)' : 'translateX(-100%)' }}
               >
                 <h2 className="text-lg font-bold text-amber-500 mb-4">Filters</h2>
-
-                <div className="space-y-5">
-                  <div className="space-y-1">
-                    <label className="text-sm font-semibold text-foreground">Sort By</label>
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SORT_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-sm font-semibold text-foreground">Search</label>
-                    <Input placeholder="Make, model, city..." value={searchTerm}
-                      onChange={e => setSearchTerm(e.target.value)} className="h-9" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground">Pickup Location</label>
-                    <Input placeholder="City, State, or Zip" value={pickupLocation}
-                      onChange={e => setPickupLocation(e.target.value)} className="h-9" />
-                    <div className="space-y-0.5">
-                      <label className="text-xs text-muted-foreground">Radius (miles)</label>
-                      <Input value={pickupRadius} onChange={e => setPickupRadius(e.target.value)} className="h-9" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-foreground">Delivery Location</label>
-                    <Input placeholder="City, State, or Zip" value={deliveryLocation}
-                      onChange={e => setDeliveryLocation(e.target.value)} className="h-9" />
-                    <div className="space-y-0.5">
-                      <label className="text-xs text-muted-foreground">Radius (miles)</label>
-                      <Input value={deliveryRadius} onChange={e => setDeliveryRadius(e.target.value)} className="h-9" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-sm font-semibold text-foreground">Vehicle Type</label>
-                    <Select value={vehicleType} onValueChange={setVehicleType}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {VEHICLE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-sm font-semibold text-foreground">Trailer Type</label>
-                    <Select value={trailerType} onValueChange={setTrailerType}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TRAILER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-sm font-semibold text-foreground">Condition</label>
-                    <Select value={condition} onValueChange={setCondition}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-sm font-semibold text-foreground">Min Price ($)</label>
-                    <Input type="number" placeholder="0" value={minPrice}
-                      onChange={e => setMinPrice(e.target.value)} className="h-9" />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-sm font-semibold text-foreground">Min Price Per Mile ($)</label>
-                    <Input type="number" placeholder="0.00" step="0.01" value={minPricePerMile}
-                      onChange={e => setMinPricePerMile(e.target.value)} className="h-9" />
-                  </div>
-
-                  <Button variant="outline" onClick={clearFilters}
-                    className="w-full border-amber-500 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10">
-                    Clear All Filters
-                  </Button>
-                </div>
+                <FilterPanel
+                  sortBy={sortBy} setSortBy={setSortBy}
+                  searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+                  pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
+                  pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
+                  deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
+                  deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
+                  vehicleType={vehicleType} setVehicleType={setVehicleType}
+                  trailerType={trailerType} setTrailerType={setTrailerType}
+                  condition={condition} setCondition={setCondition}
+                  minPrice={minPrice} setMinPrice={setMinPrice}
+                  minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
+                  clearFilters={clearFilters}
+                />
               </div>
             </aside>
 
             {/* Load List */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-4">
+                {/* Mobile: opens Sheet */}
+                <button
+                  onClick={() => setMobileFiltersOpen(true)}
+                  title="Filters"
+                  className="sm:hidden p-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground flex-shrink-0"
+                >
+                  <SlidersHorizontal className="size-4" />
+                </button>
+                {/* Desktop: toggles aside */}
                 <button
                   onClick={() => setFiltersOpen(v => !v)}
                   title={filtersOpen ? 'Hide filters' : 'Show filters'}
-                  className="p-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground flex-shrink-0"
+                  className="hidden sm:block p-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground flex-shrink-0"
                 >
                   {filtersOpen ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
                 </button>
@@ -369,8 +326,111 @@ export function LoadBoard() {
               </div>
             </div>
           </div>
+          </>
         )}
       </div>
+    </div>
+  );
+}
+
+type FilterPanelProps = {
+  sortBy: string; setSortBy: (v: string) => void;
+  searchTerm: string; setSearchTerm: (v: string) => void;
+  pickupLocation: string; setPickupLocation: (v: string) => void;
+  pickupRadius: string; setPickupRadius: (v: string) => void;
+  deliveryLocation: string; setDeliveryLocation: (v: string) => void;
+  deliveryRadius: string; setDeliveryRadius: (v: string) => void;
+  vehicleType: string; setVehicleType: (v: string) => void;
+  trailerType: string; setTrailerType: (v: string) => void;
+  condition: string; setCondition: (v: string) => void;
+  minPrice: string; setMinPrice: (v: string) => void;
+  minPricePerMile: string; setMinPricePerMile: (v: string) => void;
+  clearFilters: () => void;
+};
+
+function FilterPanel({
+  sortBy, setSortBy, searchTerm, setSearchTerm,
+  pickupLocation, setPickupLocation, pickupRadius, setPickupRadius,
+  deliveryLocation, setDeliveryLocation, deliveryRadius, setDeliveryRadius,
+  vehicleType, setVehicleType, trailerType, setTrailerType,
+  condition, setCondition, minPrice, setMinPrice,
+  minPricePerMile, setMinPricePerMile, clearFilters,
+}: FilterPanelProps) {
+  return (
+    <div className="space-y-5">
+      <div className="space-y-1">
+        <label className="text-sm font-semibold text-foreground">Sort By</label>
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <label className="text-sm font-semibold text-foreground">Search</label>
+        <Input placeholder="Make, model, city..." value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)} className="h-9" />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-foreground">Pickup Location</label>
+        <Input placeholder="City, State, or Zip" value={pickupLocation}
+          onChange={e => setPickupLocation(e.target.value)} className="h-9" />
+        <div className="space-y-0.5">
+          <label className="text-xs text-muted-foreground">Radius (miles)</label>
+          <Input value={pickupRadius} onChange={e => setPickupRadius(e.target.value)} className="h-9" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-foreground">Delivery Location</label>
+        <Input placeholder="City, State, or Zip" value={deliveryLocation}
+          onChange={e => setDeliveryLocation(e.target.value)} className="h-9" />
+        <div className="space-y-0.5">
+          <label className="text-xs text-muted-foreground">Radius (miles)</label>
+          <Input value={deliveryRadius} onChange={e => setDeliveryRadius(e.target.value)} className="h-9" />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <label className="text-sm font-semibold text-foreground">Vehicle Type</label>
+        <Select value={vehicleType} onValueChange={setVehicleType}>
+          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {VEHICLE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <label className="text-sm font-semibold text-foreground">Trailer Type</label>
+        <Select value={trailerType} onValueChange={setTrailerType}>
+          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {TRAILER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <label className="text-sm font-semibold text-foreground">Condition</label>
+        <Select value={condition} onValueChange={setCondition}>
+          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <label className="text-sm font-semibold text-foreground">Min Price ($)</label>
+        <Input type="number" placeholder="0" value={minPrice}
+          onChange={e => setMinPrice(e.target.value)} className="h-9" />
+      </div>
+      <div className="space-y-1">
+        <label className="text-sm font-semibold text-foreground">Min Price Per Mile ($)</label>
+        <Input type="number" placeholder="0.00" step="0.01" value={minPricePerMile}
+          onChange={e => setMinPricePerMile(e.target.value)} className="h-9" />
+      </div>
+      <Button variant="outline" onClick={clearFilters}
+        className="w-full border-amber-500 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10">
+        Clear All Filters
+      </Button>
     </div>
   );
 }
@@ -495,7 +555,7 @@ const LoadCard = memo(function LoadCard({
   };
 
   return (
-    <div className="border-2 border-gray-200 dark:border-gray-700 bg-card hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 overflow-hidden rounded-none">
+    <div className="border-2 border-gray-200 dark:border-gray-700 bg-card hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 overflow-hidden rounded-xl">
       <div
         className="p-4 cursor-pointer select-none"
         onClick={() => setExpanded(v => !v)}
@@ -552,7 +612,7 @@ const LoadCard = memo(function LoadCard({
           {/* Price block */}
           <div className="flex-shrink-0 text-right">
             {load.price != null && (
-              <div className="text-lg font-bold text-amber-600 leading-tight">
+              <div className="text-lg font-bold text-foreground leading-tight">
                 ${load.price.toLocaleString()}
               </div>
             )}
@@ -610,7 +670,7 @@ const LoadCard = memo(function LoadCard({
               {(load.paymentMethod || load.paymentTiming) && (
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Payment Details</p>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <InfoField label="Method" value={load.paymentMethod ? formatPaymentLabel(load.paymentMethod) : undefined} />
                     <InfoField label="Timing" value={load.paymentTiming ? formatPaymentLabel(load.paymentTiming) : undefined} />
                   </div>
@@ -650,7 +710,7 @@ const LoadCard = memo(function LoadCard({
                       onChange={e => setBidAmount(e.target.value)}
                       className="h-8 text-xs" min="0" step="0.01" />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                       <label className="text-xs text-muted-foreground block mb-1">Pickup Date</label>
                       <Input type="date" value={requestedPickupDate}

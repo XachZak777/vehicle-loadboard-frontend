@@ -167,7 +167,7 @@ export function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <h1 className="text-4xl font-bold">Admin Dashboard</h1>
             <p className="text-muted-foreground mt-1">Review registrations, approve or decline users</p>
           </div>
           <Button variant="outline" size="sm" onClick={refetchAll_}>

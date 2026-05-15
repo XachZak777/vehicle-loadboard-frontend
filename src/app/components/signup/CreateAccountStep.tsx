@@ -3,7 +3,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Loader2, Mail, Eye, EyeOff } from 'lucide-react';
+import { Check, Loader2, Mail, Eye, EyeOff } from 'lucide-react';
 import { InfoBox, HintText } from '../../styles/signup.styles';
 import type { FieldErrors } from '../../utils/validation';
 import { Checkbox } from '../ui/checkbox';
@@ -61,10 +61,6 @@ export function CreateAccountStep({
           {formData.dotNumber && (
             <p className="text-sm text-muted-foreground"><strong>DOT:</strong> {formData.dotNumber}</p>
           )}
-          {role === 'dealer'
-            ? <p className="text-sm text-muted-foreground mt-1">✓ Dealer Verified &nbsp;·&nbsp; ✓ W9 uploaded &nbsp;·&nbsp; ✓ Details entered</p>
-            : <p className="text-sm text-muted-foreground mt-1">✓ {entityLabel} Verified &nbsp;·&nbsp; ✓ Insurance info &nbsp;·&nbsp; ✓ Documents uploaded</p>
-          }
         </InfoBox>
 
         <div>
@@ -142,9 +138,9 @@ export function CreateAccountStep({
         <div className={`border-2 ${termsError ? 'border-destructive bg-destructive/5' : 'border-gray-200 dark:border-gray-700 bg-muted/40'} p-4 space-y-3 transition-colors`}>
           <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Terms &amp; Agreement</p>
           <ul className="text-xs text-muted-foreground space-y-1.5 list-none">
-            <li className="flex items-start gap-2"><span className="text-amber-500 mt-0.5 flex-shrink-0">✓</span>All information I've provided is accurate and complete.</li>
-            <li className="flex items-start gap-2"><span className="text-amber-500 mt-0.5 flex-shrink-0">✓</span>I understand my account is subject to admin review and approval.</li>
-            <li className="flex items-start gap-2"><span className="text-amber-500 mt-0.5 flex-shrink-0">✓</span>I agree to the platform's{' '}
+            <li className="flex items-start gap-2"><Check className="size-3 shrink-0 mt-0.5 text-muted-foreground" />All information I've provided is accurate and complete.</li>
+            <li className="flex items-start gap-2"><Check className="size-3 shrink-0 mt-0.5 text-muted-foreground" />I understand my account is subject to admin review and approval.</li>
+            <li className="flex items-start gap-2"><Check className="size-3 shrink-0 mt-0.5 text-muted-foreground" />I agree to the platform's{' '}
               <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline font-medium">Terms of Service</a>
               {' '}and{' '}
               <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline font-medium">Privacy Policy</a>.

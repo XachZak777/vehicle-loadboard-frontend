@@ -27,6 +27,7 @@ const MOCK_COMPLETED_LOAD: LoadDto = {
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { MapBackground } from '../components/MapBackground';
 import {
   Tabs,
   TabsContent,
@@ -87,14 +88,18 @@ export function BrokerDashboard() {
     }
   };
 
-  const openLoads = loads.filter((l) => l.status === 'OPEN');
-  const assignedLoads = [
+  const ACTIVE_STATUSES = new Set(['ASSIGNED', 'PICKED_UP']);
+  const COMPLETED_STATUSES = new Set(['DELIVERED', 'PAID', 'COMPLETED']);
+
+  const openLoads = loads.filter((l) => !l.status || l.status === 'OPEN');
+  const activeLoads = loads.filter((l) => ACTIVE_STATUSES.has(l.status ?? ''));
+  const completedLoads = [
     ...(USE_MOCK ? [MOCK_COMPLETED_LOAD] : []),
-    ...loads.filter((l) => l.status !== 'OPEN' && l.assignedCarrierId),
+    ...loads.filter((l) => COMPLETED_STATUSES.has(l.status ?? '') && !!l.assignedCarrierId),
   ];
 
   const getStatusBadge = (load: LoadDto) => {
-    if (load.status === 'OPEN') {
+    if (!load.status || load.status === 'OPEN') {
       return <Badge className='bg-amber-500 text-white'>Open</Badge>;
     }
     if (
@@ -117,6 +122,7 @@ export function BrokerDashboard() {
   if (fetching) {
     return (
       <div className='min-h-screen bg-background map-background-detailed'>
+        <MapBackground />
         <Navbar />
         <div className='flex items-center justify-center h-64'>
           <Loader2 className='w-8 h-8 animate-spin text-muted-foreground' />
@@ -140,10 +146,11 @@ export function BrokerDashboard() {
 
   return (
     <div className='min-h-screen bg-background map-background-detailed'>
+      <MapBackground />
       <Navbar />
 
       <div className='container mx-auto px-4 py-8'>
-        <h1 className='text-3xl font-bold mb-2'>Broker Dashboard</h1>
+        <h1 className='text-4xl font-bold mb-2'>Broker Dashboard</h1>
         {user?.email && (
           <p className='text-muted-foreground mb-8'>{user.email}</p>
         )}
@@ -151,18 +158,15 @@ export function BrokerDashboard() {
         <DashboardStats
           loads={loads}
           openLoads={openLoads}
-          assignedLoads={assignedLoads}
+          assignedLoads={activeLoads}
         />
 
         <Tabs defaultValue='pending' className='space-y-4'>
           <TabsList>
             <TabsTrigger value='pending'>Pending Bids</TabsTrigger>
-            <TabsTrigger value='assigned'>
-              Assigned ({assignedLoads.length})
-            </TabsTrigger>
-            <TabsTrigger value='myloads'>
-              All Loads ({loads.length})
-            </TabsTrigger>
+            <TabsTrigger value='active'>Active ({activeLoads.length})</TabsTrigger>
+            <TabsTrigger value='completed'>Completed ({completedLoads.length})</TabsTrigger>
+            <TabsTrigger value='myloads'>All Loads ({loads.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value='pending' className='space-y-4'>
@@ -174,9 +178,18 @@ export function BrokerDashboard() {
             />
           </TabsContent>
 
-          <TabsContent value='assigned' className='space-y-4'>
+          <TabsContent value='active' className='space-y-4'>
             <AssignedLoadsTab
-              assignedLoads={assignedLoads}
+              assignedLoads={activeLoads}
+              getStatusBadge={getStatusBadge}
+              onCancelBooking={handleCancelBooking}
+              actionLoading={actionLoading}
+            />
+          </TabsContent>
+
+          <TabsContent value='completed' className='space-y-4'>
+            <AssignedLoadsTab
+              assignedLoads={completedLoads}
               getStatusBadge={getStatusBadge}
               onCancelBooking={handleCancelBooking}
               actionLoading={actionLoading}

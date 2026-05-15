@@ -5,6 +5,7 @@ import { Badge } from '../components/ui/badge';
 import { useGetMyRatingsQuery } from '../store/services/hauliusApi';
 import type { MyRatingsResponse } from '../store/services/hauliusApi';
 import { useAppSelector } from '../store/hooks';
+import { MapBackground } from '../components/MapBackground';
 
 // Set to true to preview with mock data (no backend needed)
 const USE_MOCK = false;
@@ -81,11 +82,12 @@ export function MyRatings() {
 
   return (
     <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <Navbar />
 
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">My Ratings</h1>
+          <h1 className="text-4xl font-bold">My Ratings</h1>
           <p className="text-muted-foreground mt-1">Your performance and reputation overview</p>
         </div>
 

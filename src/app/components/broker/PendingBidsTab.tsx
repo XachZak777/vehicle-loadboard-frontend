@@ -19,14 +19,12 @@ import {
   ArrowRight,
   ChevronRight,
   Loader2,
-  Wand2,
   Users,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Checkbox } from '../ui/checkbox';
 import { CarrierInfoInline } from './CarrierInfoInline';
 import { LoadWithBidsLoader } from './LoadWithBidsLoader';
 import { AssignCarrierModal } from './AssignCarrierModal';
-import { useAutoAssignCarrierMutation } from '../../store/services/hauliusApi';
 import type { LoadDto, BidDto } from '../../store/services/hauliusApi';
 import type { ReactNode } from 'react';
 
@@ -62,9 +60,8 @@ function formatTime(timeStr: string | undefined) {
 export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, actionLoading }: Props) {
   const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
   const [confirming, setConfirming] = useState(false);
-  const [autoAssignLoad, setAutoAssignLoad] = useState<LoadDto | null>(null);
+  const [approveConsent, setApproveConsent] = useState(false);
   const [assignCarrierLoad, setAssignCarrierLoad] = useState<LoadDto | null>(null);
-  const [autoAssign, { isLoading: isAutoAssigning }] = useAutoAssignCarrierMutation();
 
   const handleConfirmApprove = async () => {
     if (!pendingApproval) return;
@@ -72,19 +69,9 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
     try {
       await onApproveBid(pendingApproval.load, pendingApproval.bid);
       setPendingApproval(null);
+      setApproveConsent(false);
     } finally {
       setConfirming(false);
-    }
-  };
-
-  const handleConfirmAutoAssign = async () => {
-    if (!autoAssignLoad) return;
-    try {
-      await autoAssign(autoAssignLoad.id).unwrap();
-      toast.success('Carrier auto-assigned successfully');
-      setAutoAssignLoad(null);
-    } catch (err: any) {
-      toast.error(err?.data?.message || 'Auto-assignment failed');
     }
   };
 
@@ -139,21 +126,11 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
                           size="sm"
                           variant="outline"
                           onClick={() => setAssignCarrierLoad(load)}
-                          disabled={actionLoading || isAutoAssigning}
+                          disabled={actionLoading}
                           className="gap-1.5 border-amber-400 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 text-xs h-7"
                         >
                           <Users className="w-3.5 h-3.5" />
                           Assign Carrier
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setAutoAssignLoad(load)}
-                          disabled={actionLoading || isAutoAssigning}
-                          className="gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs h-7"
-                        >
-                          <Wand2 className="w-3.5 h-3.5" />
-                          Auto
                         </Button>
                       </div>
                     </div>
@@ -257,74 +234,9 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
         />
       )}
 
-      {/* Auto-assign confirmation dialog */}
-      <Dialog open={!!autoAssignLoad} onOpenChange={(open) => { if (!open && !isAutoAssigning) setAutoAssignLoad(null); }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Wand2 className="w-5 h-5 text-amber-500" />
-              Auto Assign Carrier
-            </DialogTitle>
-          </DialogHeader>
-
-          {autoAssignLoad && (
-            <div className="space-y-4 py-1">
-              <div className="p-3 bg-muted/40 rounded-lg">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Load</p>
-                <p className="font-semibold text-sm">
-                  {autoAssignLoad.vehicleYear} {autoAssignLoad.vehicleMake} {autoAssignLoad.vehicleModel}
-                </p>
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
-                  <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span>{autoAssignLoad.pickupCity}, {autoAssignLoad.pickupState}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                  <span>{autoAssignLoad.dropCity}, {autoAssignLoad.dropState}</span>
-                </div>
-              </div>
-
-              <div className="p-3 bg-amber-50/60 dark:bg-amber-950/20 rounded-lg border border-amber-200/60 dark:border-amber-800/30 space-y-1.5 text-sm">
-                <p className="font-semibold text-amber-800 dark:text-amber-200 text-xs uppercase tracking-wide">Selection criteria</p>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Check className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-                  <span>"Book Now" bids are prioritized first</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Check className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-                  <span>Then the lowest bid amount</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Check className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-                  <span>Then earliest submitted as tiebreaker</span>
-                </div>
-              </div>
-
-              <Separator />
-
-              <p className="text-xs text-muted-foreground">
-                The best matching carrier will be assigned automatically. All other pending bids will be declined.
-              </p>
-            </div>
-          )}
-
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setAutoAssignLoad(null)} disabled={isAutoAssigning}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmAutoAssign}
-              disabled={isAutoAssigning}
-              className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
-            >
-              {isAutoAssigning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-              {isAutoAssigning ? 'Assigning…' : 'Auto Assign'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Approval confirmation dialog */}
-      <Dialog open={!!pendingApproval} onOpenChange={(open) => { if (!open && !confirming) setPendingApproval(null); }}>
-        <DialogContent className="max-w-md">
+      <Dialog open={!!pendingApproval} onOpenChange={(open) => { if (!open && !confirming) { setPendingApproval(null); setApproveConsent(false); } }}>
+        <DialogContent className="max-w-[calc(100vw-24px)] sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg">Confirm Bid Approval</DialogTitle>
           </DialogHeader>
@@ -399,20 +311,34 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
               <p className="text-xs text-muted-foreground">
                 Approving this bid will assign the load to this carrier. Other pending bids will be automatically declined.
               </p>
+
+              <div className="p-3 rounded-lg border border-border bg-muted/30">
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="approveConsent"
+                    checked={approveConsent}
+                    onCheckedChange={(v) => setApproveConsent(!!v)}
+                    className="mt-0.5 shrink-0"
+                  />
+                  <label htmlFor="approveConsent" className="text-xs leading-relaxed cursor-pointer select-none text-muted-foreground">
+                    I acknowledge and agree that once the carrier has accepted my request, I will be entered into a legal contract with the carrier for the transport of my vehicle(s). I further acknowledge and agree that Haulius is not a party to such contract, and has no obligation or liability whatsoever arising out of such contract. I consent to Haulius adding a provision to this effect in my dispatch sheets. I also understand that any changes that I make to the dispatch sheet after the carrier has accepted my request, unless the carrier has approved the change, may not be binding on the carrier.
+                  </label>
+                </div>
+              </div>
             </div>
           )}
 
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
-              onClick={() => setPendingApproval(null)}
+              onClick={() => { setPendingApproval(null); setApproveConsent(false); }}
               disabled={confirming}
             >
               Cancel
             </Button>
             <Button
               onClick={handleConfirmApprove}
-              disabled={confirming}
+              disabled={confirming || !approveConsent}
               className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
             >
               {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}

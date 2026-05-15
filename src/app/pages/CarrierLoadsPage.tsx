@@ -2,18 +2,20 @@ import { useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router';
 import {
   useGetMyCarrierBidsQuery,
+  useGetPreferredLineLoadsQuery,
   useGetBrokerPublicInfoQuery,
   useUpdateBidMutation,
   useUpdateLoadStatusMutation,
   useGetMySubmittedLoadIdsQuery,
 } from '../store/services/hauliusApi';
-import type { CarrierBidWithLoadDto } from '../store/services/hauliusApi';
+import type { CarrierBidWithLoadDto, LoadDto } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { RateModal } from '../components/RateModal';
+import { MapBackground } from '../components/MapBackground';
 import {
   MapPin, DollarSign, Clock, CheckCircle, Loader2, Package,
   ArrowRight, Calendar, Building2, TrendingUp, Truck, FileText, Pencil,
@@ -33,7 +35,7 @@ const PAGE_CONFIGS: Record<string, PageConfig> = {
   '/carrier/assigned': {
     title: 'Assigned Loads',
     description: 'Loads where your bid has been approved',
-    filter: b => b.bidStatus === 'APPROVED',
+    filter: b => b.bidStatus === 'APPROVED' && !COMPLETED_STATUSES.has(b.loadStatus ?? ''),
     emptyMsg: "You don't have any assigned loads at the moment.",
     emptyIcon: <Truck className="size-12 mx-auto mb-4 text-muted-foreground opacity-50" />,
   },
@@ -46,9 +48,9 @@ const PAGE_CONFIGS: Record<string, PageConfig> = {
   },
   '/carrier/offers': {
     title: 'Offers',
-    description: 'All your bids across all loads',
+    description: 'Open loads matching your preferred lanes',
     filter: () => true,
-    emptyMsg: 'No offers submitted yet. Browse the Load Board to get started.',
+    emptyMsg: 'No loads match your preferred lanes right now. Check back later or update your lanes in My Company.',
     emptyIcon: <Package className="size-12 mx-auto mb-4 text-muted-foreground opacity-50" />,
   },
 };
@@ -64,6 +66,7 @@ function BrokerName({ brokerId }: { brokerId: string }) {
 }
 
 const RATEABLE_STATUSES = new Set(['DELIVERED', 'PAID', 'COMPLETED']);
+const COMPLETED_STATUSES = new Set(['DELIVERED', 'PAID', 'COMPLETED']);
 
 const STATUS_NEXT: Record<string, { label: string; next: string; icon: React.ReactNode }> = {
   ASSIGNED:  { label: 'Confirm Pickup',           next: 'PICKED_UP', icon: <PackageOpen className="size-4" /> },
@@ -166,45 +169,63 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
         {hasRoute && (
           isApproved ? (
             /* Amber gradient route for approved — AssignedLoads design */
-            <div className="p-4 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border-2 border-amber-200/50 dark:border-amber-800/50">
-              <div className="flex items-center gap-3">
-                <div className="flex-1">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="size-5 text-amber-600 dark:text-amber-500 mt-1 flex-shrink-0" />
-                    <div>
-                      <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Pickup</div>
-                      <div className="font-semibold text-gray-900 dark:text-gray-100">
-                        {[bid.pickupCity, bid.pickupState].filter(Boolean).join(', ')}
-                      </div>
-                      {bid.pickupDate && (
-                        <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                          <Calendar className="size-3 text-amber-600" />
-                          {fmtDate(bid.pickupDate)}
+            (() => {
+              const pickupQ = [bid.pickupCity, bid.pickupState].filter(Boolean).join(', ');
+              const dropQ = [bid.dropCity, bid.dropState].filter(Boolean).join(', ');
+              const pickupUrl = pickupQ ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pickupQ + ', USA')}` : null;
+              const dropUrl = dropQ ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dropQ + ', USA')}` : null;
+              return (
+                <div className="p-4 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border-2 border-amber-200/50 dark:border-amber-800/50">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-start gap-2">
+                        <MapPin className="size-5 text-amber-600 dark:text-amber-500 mt-1 flex-shrink-0" />
+                        <div>
+                          <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Pickup</div>
+                          {pickupUrl ? (
+                            <a href={pickupUrl} target="_blank" rel="noopener noreferrer"
+                              className="font-semibold text-gray-900 dark:text-gray-100 hover:underline hover:text-amber-600 transition-colors">
+                              {pickupQ}
+                            </a>
+                          ) : (
+                            <div className="font-semibold text-gray-900 dark:text-gray-100">{pickupQ}</div>
+                          )}
+                          {bid.pickupDate && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                              <Calendar className="size-3 text-amber-600" />
+                              {fmtDate(bid.pickupDate)}
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
+                    </div>
+                    <ArrowRight className="size-6 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+                    <div className="flex-1">
+                      <div className="flex items-start gap-2">
+                        <MapPin className="size-5 text-amber-600 dark:text-amber-500 mt-1 flex-shrink-0" />
+                        <div>
+                          <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Delivery</div>
+                          {dropUrl ? (
+                            <a href={dropUrl} target="_blank" rel="noopener noreferrer"
+                              className="font-semibold text-gray-900 dark:text-gray-100 hover:underline hover:text-amber-600 transition-colors">
+                              {dropQ}
+                            </a>
+                          ) : (
+                            <div className="font-semibold text-gray-900 dark:text-gray-100">{dropQ}</div>
+                          )}
+                          {bid.deliveryDate && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                              <Calendar className="size-3 text-amber-600" />
+                              {fmtDate(bid.deliveryDate)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <ArrowRight className="size-6 text-amber-600 dark:text-amber-500 flex-shrink-0" />
-                <div className="flex-1">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="size-5 text-amber-600 dark:text-amber-500 mt-1 flex-shrink-0" />
-                    <div>
-                      <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Delivery</div>
-                      <div className="font-semibold text-gray-900 dark:text-gray-100">
-                        {[bid.dropCity, bid.dropState].filter(Boolean).join(', ')}
-                      </div>
-                      {bid.deliveryDate && (
-                        <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                          <Calendar className="size-3 text-amber-600" />
-                          {fmtDate(bid.deliveryDate)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+              );
+            })()
           ) : (
             /* Gray route for pending/rejected — RequestedLoads design */
             <div className="p-3 bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600">
@@ -343,7 +364,7 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
               <Input type="number" value={editAmount} onChange={e => setEditAmount(e.target.value)}
                 className="h-8 text-xs" min="0" step="0.01" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">Pickup Date</label>
                 <Input type="date" value={editPickupDate} onChange={e => setEditPickupDate(e.target.value)} className="h-8 text-xs" />
@@ -446,20 +467,90 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
   );
 }
 
+function PreferredLoadCard({ load }: { load: LoadDto }) {
+  const ppm = load.price != null && load.distance != null && load.distance > 0
+    ? (load.price / load.distance).toFixed(2) : null;
+  const vehicleTitle = [load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ') || 'Vehicle';
+  const pickupDateStr = load.pickupDate
+    ? new Date(load.pickupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;
+  const deliveryDateStr = load.deliveryDate
+    ? new Date(load.deliveryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;
+
+  return (
+    <Card className="border border-border hover:border-amber-400 dark:hover:border-amber-600 transition-colors">
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-start justify-between gap-2">
+          <p className="font-bold text-lg text-foreground leading-tight">{vehicleTitle}</p>
+          {load.price != null && (
+            <span className="font-bold text-amber-600 dark:text-amber-500 text-lg shrink-0">
+              ${Number(load.price).toLocaleString()}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 text-sm">
+          <MapPin className="size-4 text-muted-foreground shrink-0" />
+          <span className="font-medium text-foreground">
+            {[load.pickupCity, load.pickupState].filter(Boolean).join(', ')}
+          </span>
+          {pickupDateStr && <span className="text-muted-foreground text-xs">· {pickupDateStr}</span>}
+          <ArrowRight className="size-4 text-muted-foreground shrink-0 mx-0.5" />
+          <span className="font-medium text-foreground">
+            {[load.dropCity, load.dropState].filter(Boolean).join(', ')}
+          </span>
+          {deliveryDateStr && <span className="text-muted-foreground text-xs">· {deliveryDateStr}</span>}
+        </div>
+
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          {load.distance != null && (
+            <span className="flex items-center gap-1">
+              <TrendingUp className="size-3.5" />
+              {Number(load.distance).toLocaleString()} mi
+            </span>
+          )}
+          {ppm && (
+            <span className="flex items-center gap-1">
+              <DollarSign className="size-3.5" />
+              {ppm}/mi
+            </span>
+          )}
+          {load.vehicleType && (
+            <span className="flex items-center gap-1">
+              <Truck className="size-3.5" />
+              {load.vehicleType}
+            </span>
+          )}
+        </div>
+
+        <div className="pt-1">
+          <Link to={`/load/${load.id}`}>
+            <Button size="sm" variant="outline">View Load</Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function CarrierLoadsPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const isOffers = location.pathname === '/carrier/offers';
   const config = PAGE_CONFIGS[location.pathname] ?? PAGE_CONFIGS['/carrier/offers'];
-  const { data: bids = [], isLoading } = useGetMyCarrierBidsQuery();
-  const filtered = bids.filter(config.filter);
+
+  const { data: bids = [], isLoading: bidsLoading } = useGetMyCarrierBidsQuery(undefined, { skip: isOffers });
+  const { data: preferredLoads = [], isLoading: loadsLoading } = useGetPreferredLineLoadsQuery(undefined, { skip: !isOffers });
+  const isLoading = isOffers ? loadsLoading : bidsLoading;
+  const filtered = isOffers ? preferredLoads : bids.filter(config.filter);
 
   return (
     <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{config.title}</h1>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">{config.title}</h1>
           <p className="text-muted-foreground mt-1">{config.description}</p>
         </div>
 
@@ -491,7 +582,10 @@ export function CarrierLoadsPage() {
 
         {!isLoading && filtered.length > 0 && (
           <div className="grid gap-4">
-            {filtered.map(bid => <BidCard key={bid.bidId} bid={bid} />)}
+            {isOffers
+              ? (filtered as LoadDto[]).map(load => <PreferredLoadCard key={load.id} load={load} />)
+              : (filtered as CarrierBidWithLoadDto[]).map(bid => <BidCard key={bid.bidId} bid={bid} />)
+            }
           </div>
         )}
       </div>

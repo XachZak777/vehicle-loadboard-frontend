@@ -19,6 +19,7 @@ import { VehicleInfoSection } from '../components/load-form/VehicleInfoSection';
 import { LocationSection } from '../components/load-form/LocationSection';
 import { PricingNotesSection } from '../components/load-form/PricingNotesSection';
 import { ContactInfoSection } from '../components/load-form/ContactInfoSection';
+import { MapBackground } from '../components/MapBackground';
 
 const MAX_VEHICLES = 9;
 
@@ -374,6 +375,7 @@ export function EditLoad() {
 
   return (
     <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
@@ -384,7 +386,7 @@ export function EditLoad() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold">Edit Load</h1>
+              <h1 className="text-3xl font-bold">Edit Load</h1>
               {routeLabel && (
                 <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
                   <MapPin className="size-3.5 text-amber-500" />

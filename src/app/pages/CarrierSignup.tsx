@@ -22,22 +22,18 @@ import {
   isStrongPassword, passwordRequirementsText, buildErrors, type FieldErrors,
 } from '../utils/validation';
 import { SignupStepIndicator } from '../components/signup/SignupStepIndicator';
-import { CompanyInfoStep } from '../components/signup/CompanyInfoStep';
-import { FmcsaVerificationStep } from '../components/signup/FmcsaVerificationStep';
-import { CarrierInsuranceStep } from '../components/signup/CarrierInsuranceStep';
-import { PreferredLinesStep } from '../components/signup/PreferredLinesStep';
+import { McVerifyStep } from '../components/signup/McVerifyStep';
+import { CarrierInfoStep } from '../components/signup/CarrierInfoStep';
 import { DocumentsUploadStep } from '../components/signup/DocumentsUploadStep';
 import { CreateAccountStep } from '../components/signup/CreateAccountStep';
 
-type SignupStep = 'company-info' | 'fmcsa-verification' | 'insurance-info' | 'w9-upload' | 'preferred-lines' | 'create-account';
+type SignupStep = 'mc-verify' | 'info' | 'documents' | 'create-account';
 
 const STEPS = [
-  { id: 'company-info',       label: 'MC / DOT'       },
-  { id: 'fmcsa-verification', label: 'Verify'         },
-  { id: 'insurance-info',     label: 'Insurance'      },
-  { id: 'w9-upload',          label: 'Documents'      },
-  { id: 'preferred-lines',    label: 'Lanes'          },
-  { id: 'create-account',     label: 'Create Account' },
+  { id: 'mc-verify',      label: 'MC / DOT'       },
+  { id: 'info',           label: 'Information'    },
+  { id: 'documents',      label: 'Documents'      },
+  { id: 'create-account', label: 'Create Account' },
 ] as const;
 
 export function CarrierSignup() {
@@ -50,7 +46,7 @@ export function CarrierSignup() {
   const [uploadInsurance] = useUploadCarrierInsuranceMutation();
   const [uploadMcAuthority] = useUploadCarrierMcAuthorityMutation();
 
-  const [currentStep, setCurrentStep] = useState<SignupStep>('company-info');
+  const [currentStep, setCurrentStep] = useState<SignupStep>('mc-verify');
   const [isLoading, setIsLoading] = useState(false);
   const [fmcsaVerified, setFmcsaVerified] = useState(false);
   const [validationId, setValidationId] = useState<string | null>(null);
@@ -75,7 +71,7 @@ export function CarrierSignup() {
     if (fieldErrors[field]) setFieldErrors(prev => { const e = { ...prev }; delete e[field]; return e; });
   };
 
-  const handleCompanyInfoSubmit = () => {
+  const handleCarrierVerification = async () => {
     const errs = buildErrors([
       [!formData.mcNumber.trim(), 'mcNumber', 'MC number is required.'],
       [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
@@ -83,10 +79,6 @@ export function CarrierSignup() {
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
-    setCurrentStep('fmcsa-verification');
-  };
-
-  const handleCarrierVerification = async () => {
     setIsLoading(true);
     try {
       const lookupType = formData.mcNumber.trim() ? 'MC' : 'DOT';
@@ -118,7 +110,8 @@ export function CarrierSignup() {
     }
   };
 
-  const handleInsuranceSubmit = () => {
+  const handleInfoSubmit = () => {
+    const taxId = formData.taxId.trim();
     const errs = buildErrors([
       [!formData.insuranceCompany.trim(), 'insuranceCompany', 'Insurance company name is required.'],
       [!!formData.insuranceCompany.trim() && !isValidCompanyName(formData.insuranceCompany), 'insuranceCompany', 'Insurance company name must be 2–100 characters.'],
@@ -126,10 +119,15 @@ export function CarrierSignup() {
       [!!formData.cargoInsurance.trim() && !isValidInsuranceAmount(formData.cargoInsurance), 'cargoInsurance', 'Enter a valid amount between $1 and $999,999,999.'],
       [!formData.liabilityInsurance.trim(), 'liabilityInsurance', 'Liability insurance amount is required.'],
       [!!formData.liabilityInsurance.trim() && !isValidInsuranceAmount(formData.liabilityInsurance), 'liabilityInsurance', 'Enter a valid amount between $1 and $999,999,999.'],
+      [!formData.taxId.trim(), 'taxId', `${formData.taxIdType} is required.`],
+      [!!taxId && formData.taxIdType === 'EIN' && !isValidEIN(taxId), 'taxId', 'EIN must be in the format XX-XXXXXXX (9 digits).'],
+      [!!taxId && formData.taxIdType === 'SSN' && !isValidSSN(taxId), 'taxId', 'SSN must be in the format XXX-XX-XXXX (9 digits).'],
+      [preferredLines.length === 0, 'preferredLines', 'At least one preferred lane is required.'],
+      [preferredLines.some(l => !l.fromState || !l.toState), 'preferredLines', 'All lanes must have both a from and to state selected.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
-    setCurrentStep('w9-upload');
+    setCurrentStep('documents');
   };
 
   const makeUploadHandler = (setFile: (f: File) => void, successMsg: string) =>
@@ -142,21 +140,13 @@ export function CarrierSignup() {
     };
 
   const handleDocumentsSubmit = () => {
-    const taxId = formData.taxId.trim();
     const errs = buildErrors([
-      [!formData.taxId.trim(), 'taxId', `${formData.taxIdType} is required.`],
-      [!!taxId && formData.taxIdType === 'EIN' && !isValidEIN(taxId), 'taxId', 'EIN must be in the format XX-XXXXXXX (9 digits).'],
-      [!!taxId && formData.taxIdType === 'SSN' && !isValidSSN(taxId), 'taxId', 'SSN must be in the format XXX-XX-XXXX (9 digits).'],
       [!w9File, 'w9File', 'W9 document is required.'],
       [!insuranceFile, 'insuranceFile', 'Insurance certificate is required.'],
       [!mcAuthorityFile, 'mcAuthorityFile', 'MC Authority document is required.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
-    setCurrentStep('preferred-lines');
-  };
-
-  const handlePreferredLinesSubmit = () => {
     setCurrentStep('create-account');
   };
 
@@ -189,7 +179,6 @@ export function CarrierSignup() {
       };
       dispatch(setCredentials({ user: userProfile, token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved }));
 
-      const linesJson = preferredLines.length > 0 ? JSON.stringify(preferredLines) : undefined;
       try {
         await updateProfile({
           companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
@@ -198,7 +187,7 @@ export function CarrierSignup() {
           liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : undefined,
           taxIdType: formData.taxIdType, taxId: formData.taxId, mailingAddress: formData.mailingAddress,
           city: formData.city, state: formData.state, zipCode: formData.zipCode,
-          preferredLines: linesJson,
+          preferredLines: preferredLines.length > 0 ? JSON.stringify(preferredLines) : undefined,
         }).unwrap();
       } catch { toast.warning('Profile data will be saved once your email is verified.'); }
 
@@ -230,43 +219,42 @@ export function CarrierSignup() {
       <ContentWrapper>
         <SignupStepIndicator steps={STEPS} currentIndex={currentIndex} />
 
-        {currentStep === 'company-info' && (
-          <CompanyInfoStep
-            formData={{ mcNumber: formData.mcNumber, dotNumber: formData.dotNumber }}
-            fieldErrors={fieldErrors}
-            onChange={handleInputChange}
-            onSubmit={handleCompanyInfoSubmit}
-          />
-        )}
-
-        {currentStep === 'fmcsa-verification' && (
-          <FmcsaVerificationStep
+        {currentStep === 'mc-verify' && (
+          <McVerifyStep
             role="carrier"
             formData={formData}
             fmcsaVerified={fmcsaVerified}
             fmcsaData={fmcsaData}
             isLoading={isLoading}
+            fieldErrors={fieldErrors}
+            onChange={handleInputChange}
             onVerify={handleCarrierVerification}
-            onContinue={() => setCurrentStep('insurance-info')}
-            onBack={() => { setFmcsaVerified(false); setCurrentStep('company-info'); }}
+            onContinue={() => setCurrentStep('info')}
+            onBack={() => { setFmcsaVerified(false); setFmcsaData(null); setValidationId(null); setFieldErrors({}); }}
           />
         )}
 
-        {currentStep === 'insurance-info' && (
-          <CarrierInsuranceStep
-            formData={{ insuranceCompany: formData.insuranceCompany, cargoInsurance: formData.cargoInsurance, liabilityInsurance: formData.liabilityInsurance }}
+        {currentStep === 'info' && (
+          <CarrierInfoStep
+            formData={{
+              insuranceCompany: formData.insuranceCompany,
+              cargoInsurance: formData.cargoInsurance,
+              liabilityInsurance: formData.liabilityInsurance,
+              taxIdType: formData.taxIdType,
+              taxId: formData.taxId,
+            }}
+            preferredLines={preferredLines}
             fieldErrors={fieldErrors}
             onChange={handleInputChange}
-            onSubmit={handleInsuranceSubmit}
-            onBack={() => setCurrentStep('fmcsa-verification')}
+            onPreferredLinesChange={setPreferredLines}
+            onSubmit={handleInfoSubmit}
+            onBack={() => setCurrentStep('mc-verify')}
           />
         )}
 
-        {currentStep === 'w9-upload' && (
+        {currentStep === 'documents' && (
           <DocumentsUploadStep
-            formData={{ taxIdType: formData.taxIdType, taxId: formData.taxId }}
             fieldErrors={fieldErrors}
-            onChange={handleInputChange}
             w9File={w9File}
             insuranceFile={insuranceFile}
             mcAuthorityFile={mcAuthorityFile}
@@ -274,16 +262,7 @@ export function CarrierSignup() {
             onInsuranceUpload={makeUploadHandler(setInsuranceFile, 'Insurance certificate uploaded successfully')}
             onMcAuthorityUpload={makeUploadHandler(setMcAuthorityFile, 'MC Authority document uploaded successfully')}
             onSubmit={handleDocumentsSubmit}
-            onBack={() => setCurrentStep('insurance-info')}
-          />
-        )}
-
-        {currentStep === 'preferred-lines' && (
-          <PreferredLinesStep
-            lines={preferredLines}
-            onChange={setPreferredLines}
-            onSubmit={handlePreferredLinesSubmit}
-            onBack={() => setCurrentStep('w9-upload')}
+            onBack={() => setCurrentStep('info')}
           />
         )}
 
@@ -295,7 +274,7 @@ export function CarrierSignup() {
             onChange={handleInputChange}
             isLoading={isLoading}
             onSubmit={handleCreateAccount}
-            onBack={() => setCurrentStep('preferred-lines')}
+            onBack={() => setCurrentStep('documents')}
           />
         )}
       </ContentWrapper>

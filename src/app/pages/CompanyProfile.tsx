@@ -177,7 +177,7 @@ function PreferredLinesEditor({
             <div className="flex gap-2 pt-1">
               <Button
                 size="sm"
-                className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
+                className="gap-1.5"
                 onClick={handleSave}
                 disabled={isSaving}
               >
@@ -217,16 +217,17 @@ export function CompanyProfile() {
   const city           = user.city          || profile?.city;
   const state          = user.state         || profile?.state;
   const zipCode        = user.zipCode       || profile?.zipCode;
-  const insuranceCo    = user.insuranceCompany || (profile as typeof carrierProfile)?.insuranceCompany;
-  const cargoIns       = user.cargoInsurance   ?? (profile as typeof carrierProfile)?.cargoInsurance;
-  const liabilityIns   = user.liabilityInsurance ?? (profile as typeof carrierProfile)?.liabilityInsurance;
-  const taxIdType      = user.taxIdType     || profile?.taxIdType;
-  const taxId          = user.taxId         || profile?.taxId;
+  const insuranceCo    = (profile as typeof carrierProfile)?.insuranceCompany || user.insuranceCompany;
+  const cargoIns       = (profile as typeof carrierProfile)?.cargoInsurance ?? user.cargoInsurance;
+  const liabilityIns   = (profile as typeof carrierProfile)?.liabilityInsurance ?? user.liabilityInsurance;
+  const taxIdType      = profile?.taxIdType  || user.taxIdType;
+  const taxId          = profile?.taxId      || user.taxId;
   const w9Document     = user.w9Document;
 
   const dbaName         = (profile as typeof carrierProfile)?.dbaName;
   const operatingStatus = profile?.operatingStatus;
   const safetyRating    = (profile as typeof carrierProfile)?.safetyRating;
+  const verified        = (profile as typeof carrierProfile)?.verified;
   const phyCity         = (profile as typeof carrierProfile)?.phyCity;
   const phyState        = (profile as typeof carrierProfile)?.phyState;
   const totalDrivers    = (profile as typeof carrierProfile)?.totalDrivers;
@@ -277,7 +278,7 @@ export function CompanyProfile() {
               <Building2 className="h-6 w-6 text-muted-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground leading-tight">
+              <h1 className="text-3xl font-bold text-foreground leading-tight">
                 {companyName || 'Company Profile'}
               </h1>
               <p className="text-sm text-muted-foreground capitalize mt-0.5">
@@ -328,6 +329,16 @@ export function CompanyProfile() {
                   {safetyRating}
                 </InfoRow>
               )}
+              {isCarrier && verified !== undefined && (
+                <InfoRow icon={Shield} label="Verification">
+                  <span className="flex items-center gap-1.5">
+                    {verified
+                      ? <CheckCircle className="size-3.5 text-muted-foreground" />
+                      : <AlertCircle className="size-3.5 text-muted-foreground" />}
+                    {verified ? 'Verified' : 'Not Verified'}
+                  </span>
+                </InfoRow>
+              )}
               {isBroker && brokerAuthority !== undefined && (
                 <InfoRow icon={Shield} label="Broker Authority">
                   <span className="flex items-center gap-1.5">
@@ -373,7 +384,7 @@ export function CompanyProfile() {
           {/* Fleet — carriers only */}
           {isCarrier && (totalDrivers != null || totalPowerUnits != null) && (
             <Section title="Fleet Information">
-              <div className="grid grid-cols-2 gap-4 mt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
                 {totalPowerUnits != null && (
                   <div className="rounded-lg border bg-muted/40 px-5 py-4 flex items-center gap-3">
                     <Truck className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -419,7 +430,7 @@ export function CompanyProfile() {
                 )}
               </div>
               {(cargoIns != null || liabilityIns != null) && (
-                <div className="mt-4 grid grid-cols-2 gap-4">
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {cargoIns != null && (
                     <div className="rounded-lg border bg-muted/40 px-5 py-4">
                       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">

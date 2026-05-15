@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
-import { useCreateLoadMutation, useLazyVinLookupQuery, type VinDecodeResult } from '../store/services/hauliusApi';
+import { useNavigate, useLocation, Link } from 'react-router';
+import { useCreateLoadMutation, useLazyVinLookupQuery, type VinDecodeResult, type LoadDto } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { ArrowLeft, CheckCircle, Plus, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Plus, X, Copy } from 'lucide-react';
+import { Checkbox } from '../components/ui/checkbox';
 import { toast } from 'sonner';
 import {
   isValidVehicleYear, isValidPrice, isValidZip, isValidCity,
@@ -17,6 +18,7 @@ import { VehicleInfoSection } from '../components/load-form/VehicleInfoSection';
 import { LocationSection } from '../components/load-form/LocationSection';
 import { PricingNotesSection } from '../components/load-form/PricingNotesSection';
 import { ContactInfoSection } from '../components/load-form/ContactInfoSection';
+import { MapBackground } from '../components/MapBackground';
 
 const MAX_VEHICLES = 9;
 
@@ -39,28 +41,94 @@ const emptyVehicle = (): VehicleFormData => ({
 
 export function PostLoad() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const cloneFrom = location.state?.cloneFrom as LoadDto | undefined;
+
   const [createLoad] = useCreateLoadMutation();
   const [triggerVinLookup, { isFetching: vinLookupLoading }] = useLazyVinLookupQuery();
 
-  const [vehicles, setVehicles] = useState<VehicleFormData[]>([emptyVehicle()]);
+  const [vehicles, setVehicles] = useState<VehicleFormData[]>(() => {
+    if (!cloneFrom) return [emptyVehicle()];
+    const primary: VehicleFormData = {
+      vin: '',
+      vehicleType: cloneFrom.vehicleType || '',
+      condition: cloneFrom.vehicleCondition || '',
+      make: cloneFrom.vehicleMake || '',
+      model: cloneFrom.vehicleModel || '',
+      year: cloneFrom.vehicleYear ? String(cloneFrom.vehicleYear) : '',
+      additionalInfo: '',
+      weight: cloneFrom.weight ? String(cloneFrom.weight) : '',
+      trailerType: '',
+    };
+    const additional = (cloneFrom.additionalVehicles ?? []).map(av => ({
+      vin: '',
+      vehicleType: av.vehicleType || '',
+      condition: av.vehicleCondition || '',
+      make: av.vehicleMake || '',
+      model: av.vehicleModel || '',
+      year: av.vehicleYear ? String(av.vehicleYear) : '',
+      additionalInfo: av.vehicleAdditionalInfo || '',
+      weight: av.weight ? String(av.weight) : '',
+      trailerType: '',
+    }));
+    return [primary, ...additional];
+  });
   const [vinDetailsMap, setVinDetailsMap] = useState<Record<number, VinDecodeResult | null>>({});
   const [vinLookupIndex, setVinLookupIndex] = useState<number | null>(null);
-  const [vehicleErrors, setVehicleErrors] = useState<FieldErrors[]>([{}]);
-  const [sharedTrailerType, setSharedTrailerType] = useState('');
+  const [vehicleErrors, setVehicleErrors] = useState<FieldErrors[]>(() => {
+    const count = cloneFrom ? 1 + (cloneFrom.additionalVehicles?.length ?? 0) : 1;
+    return Array(count).fill({});
+  });
+  const [sharedTrailerType, setSharedTrailerType] = useState(() => cloneFrom?.trailerType || '');
   const [trailerTypeError, setTrailerTypeError] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sharedErrors, setSharedErrors] = useState<FieldErrors>({});
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [consentError, setConsentError] = useState(false);
 
-  const [formData, setFormData] = useState({
-    pickupStreet: '', pickupCity: '', pickupState: '', pickupZip: '',
-    pickupType: 'BUSINESS', pickupDate: '', pickupTime: '',
-    pickupFacilityName: '', pickupLocationContactName: '', pickupLocationContactPhone: '',
-    dropStreet: '', dropCity: '', dropState: '', dropZip: '',
-    dropType: 'RESIDENCE', deliveryDate: '', deliveryTime: '',
-    dropFacilityName: '', dropLocationContactName: '', dropLocationContactPhone: '',
-    price: '', paymentMethod: '', paymentTiming: '', description: '',
-    contactName: '', contactPhone: '', contactEmail: '', orderId: '', additionalNotes: '',
+  const [formData, setFormData] = useState(() => {
+    if (!cloneFrom) return {
+      pickupStreet: '', pickupCity: '', pickupState: '', pickupZip: '',
+      pickupType: 'BUSINESS', pickupDate: '', pickupTime: '',
+      pickupFacilityName: '', pickupLocationContactName: '', pickupLocationContactPhone: '',
+      dropStreet: '', dropCity: '', dropState: '', dropZip: '',
+      dropType: 'RESIDENCE', deliveryDate: '', deliveryTime: '',
+      dropFacilityName: '', dropLocationContactName: '', dropLocationContactPhone: '',
+      price: '', paymentMethod: '', paymentTiming: '', description: '',
+      contactName: '', contactPhone: '', contactEmail: '', orderId: '', additionalNotes: '',
+    };
+    return {
+      pickupStreet: cloneFrom.pickupStreet || '',
+      pickupCity: cloneFrom.pickupCity || '',
+      pickupState: cloneFrom.pickupState || '',
+      pickupZip: cloneFrom.pickupZip || '',
+      pickupType: cloneFrom.pickupType || 'BUSINESS',
+      pickupDate: '',
+      pickupTime: '',
+      pickupFacilityName: cloneFrom.pickupLotNumber || '',
+      pickupLocationContactName: cloneFrom.pickupContactName || '',
+      pickupLocationContactPhone: cloneFrom.pickupContactPhone || '',
+      dropStreet: cloneFrom.dropStreet || '',
+      dropCity: cloneFrom.dropCity || '',
+      dropState: cloneFrom.dropState || '',
+      dropZip: cloneFrom.dropZip || '',
+      dropType: cloneFrom.dropType || 'RESIDENCE',
+      deliveryDate: '',
+      deliveryTime: '',
+      dropFacilityName: cloneFrom.dropLotNumber || '',
+      dropLocationContactName: cloneFrom.dropContactName || '',
+      dropLocationContactPhone: cloneFrom.dropContactPhone || '',
+      price: cloneFrom.price != null ? String(cloneFrom.price) : '',
+      paymentMethod: cloneFrom.paymentMethod || '',
+      paymentTiming: cloneFrom.paymentTiming || '',
+      description: cloneFrom.description || '',
+      contactName: cloneFrom.contactName || '',
+      contactPhone: cloneFrom.contactPhone || '',
+      contactEmail: cloneFrom.contactEmail || '',
+      orderId: '',
+      additionalNotes: '',
+    };
   });
 
   const handleSharedInputChange = (field: string, value: string) => {
@@ -185,7 +253,8 @@ export function PostLoad() {
     setTrailerTypeError(trailerErr);
 
     const hasVehicleErrors = newVehicleErrors.some(e => Object.keys(e).length > 0);
-    if (hasVehicleErrors || Object.keys(errs).length || trailerErr) {
+    if (!consentChecked) setConsentError(true);
+    if (hasVehicleErrors || Object.keys(errs).length || trailerErr || !consentChecked) {
       toast.error('Please fix the highlighted fields before submitting.');
       return;
     }
@@ -263,21 +332,36 @@ export function PostLoad() {
 
   return (
     <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8 flex items-center gap-4">
-            <Link to="/loads">
+            <Link to={cloneFrom ? '/broker/dashboard' : '/loads'}>
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="size-4 mr-1" /> Back
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold">Post a Load</h1>
-              <p className="text-muted-foreground">Add a new vehicle transport request</p>
+              <h1 className="text-4xl font-bold">{cloneFrom ? 'Clone Load' : 'Post a Load'}</h1>
+              <p className="text-muted-foreground">
+                {cloneFrom
+                  ? 'Review and edit the cloned details before posting'
+                  : 'Add a new vehicle transport request'}
+              </p>
             </div>
           </div>
+
+          {cloneFrom && (
+            <div className="mb-6 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-center gap-2.5 text-sm">
+              <Copy className="size-4 text-amber-600 flex-shrink-0" />
+              <span className="text-amber-800 dark:text-amber-300">
+                Cloned from <strong>{[cloneFrom.vehicleYear, cloneFrom.vehicleMake, cloneFrom.vehicleModel].filter(Boolean).join(' ')}</strong>.
+                Dates and Order ID have been cleared — update them before posting.
+              </span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             {/* Vehicles */}
@@ -385,6 +469,26 @@ export function PostLoad() {
               fieldErrors={sharedErrors}
               onChange={handleSharedInputChange}
             />
+            <div className={`mb-4 p-4 rounded-lg border ${consentError ? 'border-destructive bg-destructive/5' : 'border-border bg-muted/30'}`}>
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="postConsent"
+                  checked={consentChecked}
+                  onCheckedChange={(checked) => {
+                    setConsentChecked(!!checked);
+                    if (checked) setConsentError(false);
+                  }}
+                  className="mt-0.5 shrink-0"
+                />
+                <label htmlFor="postConsent" className="text-sm leading-relaxed cursor-pointer select-none text-muted-foreground">
+                  I acknowledge and agree that once the carrier has accepted my request, I will be entered into a legal contract with the carrier for the transport of my vehicle(s). I further acknowledge and agree that Haulius is not a party to such contract, and has no obligation or liability whatsoever arising out of such contract. I consent to Haulius adding a provision to this effect in my dispatch sheets. I also understand that any changes that I make to the dispatch sheet after the carrier has accepted my request, unless the carrier has approved the change, may not be binding on the carrier.
+                </label>
+              </div>
+              {consentError && (
+                <p className="text-xs text-destructive mt-2 ml-7">You must acknowledge this before posting.</p>
+              )}
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 type="submit"

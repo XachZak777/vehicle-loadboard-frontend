@@ -20,20 +20,18 @@ import {
   isStrongPassword, passwordRequirementsText, buildErrors, type FieldErrors,
 } from '../utils/validation';
 import { SignupStepIndicator } from '../components/signup/SignupStepIndicator';
-import { CompanyInfoStep } from '../components/signup/CompanyInfoStep';
-import { FmcsaVerificationStep } from '../components/signup/FmcsaVerificationStep';
-import { InsuranceInfoStep } from '../components/signup/InsuranceInfoStep';
+import { McVerifyStep } from '../components/signup/McVerifyStep';
+import { BrokerInfoStep } from '../components/signup/BrokerInfoStep';
 import { DocumentsUploadStep } from '../components/signup/DocumentsUploadStep';
 import { CreateAccountStep } from '../components/signup/CreateAccountStep';
 
-type SignupStep = 'company-info' | 'fmcsa-verification' | 'insurance-info' | 'w9-upload' | 'create-account';
+type SignupStep = 'mc-verify' | 'info' | 'documents' | 'create-account';
 
 const STEPS = [
-  { id: 'company-info',       label: 'MC / DOT'       },
-  { id: 'fmcsa-verification', label: 'Verify'         },
-  { id: 'insurance-info',     label: 'Bond'           },
-  { id: 'w9-upload',          label: 'Documents'      },
-  { id: 'create-account',     label: 'Create Account' },
+  { id: 'mc-verify',       label: 'MC / DOT'       },
+  { id: 'info',            label: 'Information'    },
+  { id: 'documents',       label: 'Documents'      },
+  { id: 'create-account',  label: 'Create Account' },
 ] as const;
 
 export function BrokerSignup() {
@@ -45,7 +43,7 @@ export function BrokerSignup() {
   const [uploadW9] = useUploadBrokerW9Mutation();
   const [uploadMcAuthority] = useUploadBrokerMcAuthorityMutation();
 
-  const [currentStep, setCurrentStep] = useState<SignupStep>('company-info');
+  const [currentStep, setCurrentStep] = useState<SignupStep>('mc-verify');
   const [isLoading, setIsLoading] = useState(false);
   const [validationId, setValidationId] = useState<string | null>(null);
   const [fmcsaVerified, setFmcsaVerified] = useState(false);
@@ -68,7 +66,7 @@ export function BrokerSignup() {
     if (fieldErrors[field]) setFieldErrors(prev => { const e = { ...prev }; delete e[field]; return e; });
   };
 
-  const handleCompanyInfoSubmit = () => {
+  const handleBrokerVerification = async () => {
     const errs = buildErrors([
       [!formData.mcNumber.trim(), 'mcNumber', 'MC number is required.'],
       [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
@@ -76,10 +74,6 @@ export function BrokerSignup() {
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
-    setCurrentStep('fmcsa-verification');
-  };
-
-  const handleBrokerVerification = async () => {
     setIsLoading(true);
     try {
       const lookupType = formData.mcNumber.trim() ? 'MC' : 'DOT';
@@ -108,7 +102,8 @@ export function BrokerSignup() {
     }
   };
 
-  const handleInsuranceSubmit = () => {
+  const handleInfoSubmit = () => {
+    const taxId = formData.taxId.trim();
     const errs = buildErrors([
       [!formData.bondCompany.trim(), 'bondCompany', 'Bond company is required.'],
       [!formData.bondPolicyNumber.trim(), 'bondPolicyNumber', 'Bond policy number is required.'],
@@ -118,10 +113,13 @@ export function BrokerSignup() {
       [!formData.bondAgentLastName.trim(), 'bondAgentLastName', 'Bond agent last name is required.'],
       [!formData.bondAgentEmail.trim(), 'bondAgentEmail', 'Bond agent email is required.'],
       [!formData.bondAgentPhone.trim(), 'bondAgentPhone', 'Bond agent phone is required.'],
+      [!formData.taxId.trim(), 'taxId', `${formData.taxIdType} is required.`],
+      [!!taxId && formData.taxIdType === 'EIN' && !isValidEIN(taxId), 'taxId', 'EIN must be in the format XX-XXXXXXX (9 digits).'],
+      [!!taxId && formData.taxIdType === 'SSN' && !isValidSSN(taxId), 'taxId', 'SSN must be in the format XXX-XX-XXXX (9 digits).'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
-    setCurrentStep('w9-upload');
+    setCurrentStep('documents');
   };
 
   const makeUploadHandler = (
@@ -136,11 +134,7 @@ export function BrokerSignup() {
   };
 
   const handleDocumentsSubmit = () => {
-    const taxId = formData.taxId.trim();
     const errs = buildErrors([
-      [!formData.taxId.trim(), 'taxId', `${formData.taxIdType} is required.`],
-      [!!taxId && formData.taxIdType === 'EIN' && !isValidEIN(taxId), 'taxId', 'EIN must be in the format XX-XXXXXXX (9 digits).'],
-      [!!taxId && formData.taxIdType === 'SSN' && !isValidSSN(taxId), 'taxId', 'SSN must be in the format XXX-XX-XXXX (9 digits).'],
       [!w9File, 'w9File', 'W9 document is required.'],
       [!mcAuthorityFile, 'mcAuthorityFile', 'MC Authority document is required.'],
     ]);
@@ -204,31 +198,23 @@ export function BrokerSignup() {
       <ContentWrapper>
         <SignupStepIndicator steps={STEPS} currentIndex={currentIndex} />
 
-        {currentStep === 'company-info' && (
-          <CompanyInfoStep
-            formData={{ mcNumber: formData.mcNumber, dotNumber: formData.dotNumber }}
-            fieldErrors={fieldErrors}
-            onChange={handleInputChange}
-            onSubmit={handleCompanyInfoSubmit}
-            entityLabel="broker"
-          />
-        )}
-
-        {currentStep === 'fmcsa-verification' && (
-          <FmcsaVerificationStep
+        {currentStep === 'mc-verify' && (
+          <McVerifyStep
             role="broker"
             formData={{ ...formData, dbaName: '' }}
             fmcsaVerified={fmcsaVerified}
             fmcsaData={fmcsaData}
             isLoading={isLoading}
+            fieldErrors={fieldErrors}
+            onChange={handleInputChange}
             onVerify={handleBrokerVerification}
-            onContinue={() => setCurrentStep('insurance-info')}
-            onBack={() => { setFmcsaVerified(false); setCurrentStep('company-info'); }}
+            onContinue={() => setCurrentStep('info')}
+            onBack={() => { setFmcsaVerified(false); setFmcsaData(null); setValidationId(null); setFieldErrors({}); }}
           />
         )}
 
-        {currentStep === 'insurance-info' && (
-          <InsuranceInfoStep
+        {currentStep === 'info' && (
+          <BrokerInfoStep
             formData={{
               bondCompany: formData.bondCompany,
               bondPolicyNumber: formData.bondPolicyNumber,
@@ -238,25 +224,25 @@ export function BrokerSignup() {
               bondAgentLastName: formData.bondAgentLastName,
               bondAgentEmail: formData.bondAgentEmail,
               bondAgentPhone: formData.bondAgentPhone,
+              taxIdType: formData.taxIdType,
+              taxId: formData.taxId,
             }}
             fieldErrors={fieldErrors}
             onChange={handleInputChange}
-            onSubmit={handleInsuranceSubmit}
-            onBack={() => setCurrentStep('fmcsa-verification')}
+            onSubmit={handleInfoSubmit}
+            onBack={() => setCurrentStep('mc-verify')}
           />
         )}
 
-        {currentStep === 'w9-upload' && (
+        {currentStep === 'documents' && (
           <DocumentsUploadStep
-            formData={{ taxIdType: formData.taxIdType, taxId: formData.taxId }}
             fieldErrors={fieldErrors}
-            onChange={handleInputChange}
             w9File={w9File}
             mcAuthorityFile={mcAuthorityFile}
             onW9Upload={makeUploadHandler(setW9File, 'W9 document uploaded successfully')}
             onMcAuthorityUpload={makeUploadHandler(setMcAuthorityFile, 'MC Authority document uploaded successfully')}
             onSubmit={handleDocumentsSubmit}
-            onBack={() => setCurrentStep('insurance-info')}
+            onBack={() => setCurrentStep('info')}
           />
         )}
 
@@ -268,7 +254,7 @@ export function BrokerSignup() {
             onChange={handleInputChange}
             isLoading={isLoading}
             onSubmit={handleCreateAccount}
-            onBack={() => setCurrentStep('w9-upload')}
+            onBack={() => setCurrentStep('documents')}
           />
         )}
       </ContentWrapper>

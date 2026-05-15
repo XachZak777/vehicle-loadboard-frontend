@@ -91,7 +91,7 @@ export function DispatchSheet({ bid, open, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto p-0 flex flex-col">
+      <DialogContent className="max-w-[calc(100vw-16px)] sm:max-w-3xl max-h-[92vh] overflow-y-auto p-0 flex flex-col">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2 text-lg">

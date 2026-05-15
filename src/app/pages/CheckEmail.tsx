@@ -58,8 +58,8 @@ export function CheckEmail() {
             </p>
 
             <div className="rounded-lg bg-muted p-4 text-sm text-muted-foreground space-y-1">
-              <p>📬 Can't find the email? Check your <strong>spam / junk</strong> folder.</p>
-              <p>📧 Make sure you signed up with the correct address.</p>
+              <p>Can't find the email? Check your <strong>spam / junk</strong> folder.</p>
+              <p>Make sure you signed up with the correct address.</p>
             </div>
 
             {resent && (

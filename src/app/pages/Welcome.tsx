@@ -56,9 +56,6 @@ export function Welcome() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="bg-amber-500 p-2 rounded-none">
-                <Truck className="size-6 text-white" />
-              </div>
               <div>
                 <h1 className="text-lg font-bold">{APP_NAME}</h1>
                 <p className="text-xs text-muted-foreground hidden sm:block">{APP_TAGLINE}</p>
@@ -216,7 +213,7 @@ export function Welcome() {
 
             {/* Right: Top Loads card */}
             <div className="w-full">
-              <div className="bg-card rounded-none shadow-2xl p-6 border border-border">
+              <div className="bg-card rounded-xl shadow-2xl p-6 border border-border">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold">Top Paying Loads</h3>
                   <Badge className="bg-amber-500 text-white">Live</Badge>
@@ -225,7 +222,7 @@ export function Welcome() {
                   {topLoads.map((load) => (
                     <div
                       key={load.id}
-                      className="flex items-center justify-between p-4 bg-muted/50 rounded-none border border-border hover:border-amber-500 transition-colors"
+                      className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border hover:border-amber-500 transition-colors"
                     >
                       <div className="flex-1 min-w-0 pr-4">
                         <div className="font-semibold text-sm mb-1 truncate">
@@ -282,7 +279,7 @@ export function Welcome() {
             ].map(({ icon: Icon, title, desc }) => (
               <Card key={title} className="border border-border hover:border-amber-500 transition-all hover:shadow-md">
                 <CardHeader className="px-5 pt-5 pb-5 gap-3">
-                  <div className="bg-amber-500 p-2.5 rounded-none w-fit">
+                  <div className="bg-amber-500 p-2.5 rounded-lg w-fit">
                     <Icon className="size-5 text-white" />
                   </div>
                   <CardTitle className="text-base">{title}</CardTitle>
@@ -364,7 +361,7 @@ export function Welcome() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="bg-amber-500 p-1.5 rounded-none">
+                <div className="bg-amber-500 p-1.5 rounded-lg">
                   <Truck className="size-5 text-white" />
                 </div>
                 <span className="text-base font-bold">{APP_NAME}</span>

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { RateModal } from '../components/RateModal';
+import { MapBackground } from '../components/MapBackground';
 import {
   Truck,
   Package,
@@ -225,12 +226,14 @@ export function CarrierHistory() {
     skip: user?.role !== 'carrier',
   });
 
+  const COMPLETED_STATUSES = new Set(['DELIVERED', 'PAID', 'COMPLETED']);
   const pendingBids = bids.filter(b => b.bidStatus === 'PENDING');
-  const approvedBids = bids.filter(b => b.bidStatus === 'APPROVED');
+  const approvedBids = bids.filter(b => b.bidStatus === 'APPROVED' && !COMPLETED_STATUSES.has(b.loadStatus ?? ''));
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background map-background-detailed">
+        <MapBackground />
         <Navbar />
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -242,6 +245,7 @@ export function CarrierHistory() {
   if (isError) {
     return (
       <div className="min-h-screen bg-background map-background-detailed">
+        <MapBackground />
         <Navbar />
         <div className="container mx-auto px-4 py-16 text-center">
           <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
@@ -254,10 +258,11 @@ export function CarrierHistory() {
 
   return (
     <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-2">My Load History</h1>
+        <h1 className="text-4xl font-bold mb-2">My Load History</h1>
         {user?.email && <p className="text-muted-foreground mb-8">{user.email}</p>}
 
         {/* Stats */}

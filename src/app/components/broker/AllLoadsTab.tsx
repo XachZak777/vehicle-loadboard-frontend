@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import {
@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { Calendar, DollarSign, Edit, MoreVertical, Trash2, Users } from 'lucide-react';
+import { Calendar, DollarSign, Edit, MoreVertical, Trash2, Users, Copy } from 'lucide-react';
 import { LoadWithBidsLoader } from './LoadWithBidsLoader';
 import { AssignCarrierModal } from './AssignCarrierModal';
 import type { LoadDto } from '../../store/services/hauliusApi';
@@ -25,6 +25,7 @@ interface Props {
 
 export function AllLoadsTab({ loads, getStatusBadge, onDeleteLoad, actionLoading }: Props) {
   const [assignLoad, setAssignLoad] = useState<LoadDto | null>(null);
+  const navigate = useNavigate();
   if (loads.length === 0) {
     return (
       <Card>
@@ -99,6 +100,11 @@ export function AllLoadsTab({ loads, getStatusBadge, onDeleteLoad, actionLoading
                             Edit
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/post-load', { state: { cloneFrom: load } })}>
+                          <Copy className="h-4 w-4 mr-2 text-amber-500" />
+                          Clone Load
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => onDeleteLoad(load)}
                           className="text-destructive focus:text-destructive"

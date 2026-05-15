@@ -75,8 +75,8 @@ export function ForgotPassword() {
             ) : (
               <div className="space-y-3">
                 <div className="rounded-lg bg-muted p-4 text-sm text-muted-foreground space-y-1">
-                  <p>📬 Check your <strong>spam / junk</strong> folder if you don't see it.</p>
-                  <p>⏱ The link expires in <strong>1 hour</strong>.</p>
+                  <p>Check your <strong>spam / junk</strong> folder if you don't see it.</p>
+                  <p>The link expires in <strong>1 hour</strong>.</p>
                 </div>
                 <Button
                   variant="outline"

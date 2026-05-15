@@ -51,19 +51,39 @@ function AssignedLoadCard({
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Route display */}
-        <div className="p-3 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200/50 dark:border-amber-800/50">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 flex-1 min-w-0">
-              <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
-              <span className="text-sm font-medium truncate">{load.pickupCity}, {load.pickupState}</span>
+        {(() => {
+          const pickupQ = [load.pickupCity, load.pickupState].filter(Boolean).join(', ');
+          const dropQ = [load.dropCity, load.dropState].filter(Boolean).join(', ');
+          const pickupUrl = pickupQ ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pickupQ + ', USA')}` : null;
+          const dropUrl = dropQ ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dropQ + ', USA')}` : null;
+          return (
+            <div className="p-3 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200/50 dark:border-amber-800/50">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                  <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+                  {pickupUrl ? (
+                    <a href={pickupUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline hover:text-amber-600 transition-colors">
+                      {load.pickupCity}, {load.pickupState}
+                    </a>
+                  ) : (
+                    <span className="text-sm font-medium truncate">{load.pickupCity}, {load.pickupState}</span>
+                  )}
+                </div>
+                <ArrowRight className="size-4 text-amber-500 flex-shrink-0" />
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                  <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+                  {dropUrl ? (
+                    <a href={dropUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline hover:text-amber-600 transition-colors">
+                      {load.dropCity}, {load.dropState}
+                    </a>
+                  ) : (
+                    <span className="text-sm font-medium truncate">{load.dropCity}, {load.dropState}</span>
+                  )}
+                </div>
+              </div>
             </div>
-            <ArrowRight className="size-4 text-amber-500 flex-shrink-0" />
-            <div className="flex items-center gap-1.5 flex-1 min-w-0">
-              <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
-              <span className="text-sm font-medium truncate">{load.dropCity}, {load.dropState}</span>
-            </div>
-          </div>
-        </div>
+          );
+        })()}
         {load.price != null && (
           <div className="flex items-center gap-2 text-sm">
             <DollarSign className="w-4 h-4 text-muted-foreground" />
@@ -71,15 +91,17 @@ function AssignedLoadCard({
           </div>
         )}
         <div className="pt-2 flex items-center gap-2 flex-wrap">
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => onCancelBooking(load)}
-            disabled={actionLoading}
-          >
-            <X className="w-4 h-4 mr-1" />
-            Cancel Booking
-          </Button>
+          {(load.status === 'ASSIGNED' || load.status === 'PICKED_UP') && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => onCancelBooking(load)}
+              disabled={actionLoading}
+            >
+              <X className="w-4 h-4 mr-1" />
+              Cancel Booking
+            </Button>
+          )}
           {canRate && (
             alreadyRated ? (
               <span className="flex items-center gap-1.5 text-sm font-medium text-amber-600">

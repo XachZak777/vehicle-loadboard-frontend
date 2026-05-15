@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { useAppSelector } from '../store/hooks';
 import { useGetMyBrokerProfileQuery, useGetMyCarrierProfileQuery } from '../store/services/hauliusApi';
 import { useLogout } from '../hooks/useLogout';
@@ -22,8 +22,17 @@ import {
 export function Navbar() {
   const user = useAppSelector((s) => s.auth.user);
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = () => {
+    const q = searchQuery.trim();
+    if (q.length >= 2) {
+      navigate(`/search?q=${encodeURIComponent(q)}`);
+      setSearchQuery('');
+    }
+  };
 
   const isBrokerRole = user?.role === 'broker';
   const isCarrierRole = user?.role === 'carrier';
@@ -61,18 +70,13 @@ export function Navbar() {
     <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 gap-4">
-          {/* Logo */}
-          <Link to="/loads" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
-            <span className="text-lg font-bold hidden sm:block">{APP_NAME}</span>
-          </Link>
-
           {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-1 flex-shrink-0">
             <Link to="/loads">
               <Button
-                variant={isActive('/loads') ? 'default' : 'ghost'}
+                variant="ghost"
                 size="sm"
-                className={isActive('/loads') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}
+                className={isActive('/loads') ? 'font-semibold text-foreground' : 'text-muted-foreground'}
               >
                 Load Board
               </Button>
@@ -82,9 +86,9 @@ export function Navbar() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    variant={location.pathname.startsWith('/broker') || location.pathname.startsWith('/post-load') ? 'default' : 'ghost'}
+                    variant="ghost"
                     size="sm"
-                    className={`gap-1 ${location.pathname.startsWith('/broker') || location.pathname.startsWith('/post-load') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}
+                    className={`gap-1 ${location.pathname.startsWith('/broker') || location.pathname.startsWith('/post-load') ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     Dashboard
@@ -110,16 +114,16 @@ export function Navbar() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    variant={location.pathname.startsWith('/carrier') ? 'default' : 'ghost'}
+                    variant="ghost"
                     size="sm"
-                    className={`gap-1 ${location.pathname.startsWith('/carrier') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}
+                    className={`gap-1 ${location.pathname.startsWith('/carrier') ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     Dashboard
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-72 p-0">
+                <DropdownMenuContent align="start" className="w-56 sm:w-72 p-0">
                   <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
                     <Link to="/carrier/history" className="flex items-center gap-3 w-full">
                       <History className="h-5 w-5 flex-shrink-0" />
@@ -151,9 +155,9 @@ export function Navbar() {
             {isAdmin && (
               <Link to="/admin/dashboard">
                 <Button
-                  variant={isActive('/admin/dashboard') ? 'default' : 'ghost'}
+                  variant="ghost"
                   size="sm"
-                  className={isActive('/admin/dashboard') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}
+                  className={isActive('/admin/dashboard') ? 'font-semibold text-foreground' : 'text-muted-foreground'}
                 >
                   Dashboard
                 </Button>
@@ -163,15 +167,24 @@ export function Navbar() {
 
           {/* Center Search */}
           <div className="hidden lg:flex flex-1 max-w-sm items-center">
-            <div className="relative w-full">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+            <div className="flex w-full rounded-md border border-border bg-muted/40 overflow-hidden focus-within:ring-1 focus-within:ring-amber-500 focus-within:border-amber-500">
+              <Search className="ml-2.5 self-center size-4 text-muted-foreground flex-shrink-0 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search companies..."
+                placeholder="Search companies... (Enter)"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full h-8 pl-8 pr-3 text-sm rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
+                onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                className="flex-1 h-8 px-2 text-sm bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none"
               />
+              {searchQuery.trim().length >= 2 && (
+                <button
+                  onClick={handleSearch}
+                  className="px-2.5 h-8 text-xs font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors flex-shrink-0"
+                >
+                  Search
+                </button>
+              )}
             </div>
           </div>
 
@@ -205,11 +218,13 @@ export function Navbar() {
                     </Link>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem asChild>
-                  <Link to="/my-rating" className="flex items-center gap-2 cursor-pointer">
-                    <Star className="h-4 w-4" /> My Ratings
-                  </Link>
-                </DropdownMenuItem>
+                {!isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-rating" className="flex items-center gap-2 cursor-pointer">
+                      <Star className="h-4 w-4" /> My Ratings
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                   <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
                     <Settings className="h-4 w-4" /> Settings
@@ -236,8 +251,8 @@ export function Navbar() {
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-border py-4 space-y-2">
             <Link to="/loads" onClick={() => setMobileMenuOpen(false)}>
-              <Button variant={isActive('/loads') ? 'default' : 'ghost'} size="sm"
-                className={`w-full justify-start ${isActive('/loads') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
+              <Button variant="ghost" size="sm"
+                className={`w-full justify-start ${isActive('/loads') ? 'font-semibold text-foreground' : ''}`}>
                 Load Board
               </Button>
             </Link>
@@ -250,8 +265,8 @@ export function Navbar() {
                   </Button>
                 </Link>
                 <Link to="/broker/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant={isActive('/broker/dashboard') ? 'default' : 'ghost'} size="sm"
-                    className={`w-full justify-start gap-2 ${isActive('/broker/dashboard') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
+                  <Button variant="ghost" size="sm"
+                    className={`w-full justify-start gap-2 ${isActive('/broker/dashboard') ? 'font-semibold text-foreground' : ''}`}>
                     <LayoutDashboard className="h-4 w-4" /> Dashboard
                   </Button>
                 </Link>
@@ -266,26 +281,26 @@ export function Navbar() {
             {isCarrier && (
               <>
                 <Link to="/carrier/history" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant={isActive('/carrier/history') ? 'default' : 'ghost'} size="sm"
-                    className={`w-full justify-start gap-2 ${isActive('/carrier/history') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
+                  <Button variant="ghost" size="sm"
+                    className={`w-full justify-start gap-2 ${isActive('/carrier/history') ? 'font-semibold text-foreground' : ''}`}>
                     <History className="h-4 w-4" /> My Loads
                   </Button>
                 </Link>
                 <Link to="/carrier/assigned" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant={isActive('/carrier/assigned') ? 'default' : 'ghost'} size="sm"
-                    className={`w-full justify-start gap-2 ${isActive('/carrier/assigned') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
+                  <Button variant="ghost" size="sm"
+                    className={`w-full justify-start gap-2 ${isActive('/carrier/assigned') ? 'font-semibold text-foreground' : ''}`}>
                     <Truck className="h-4 w-4" /> Assigned Loads
                   </Button>
                 </Link>
                 <Link to="/carrier/requested" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant={isActive('/carrier/requested') ? 'default' : 'ghost'} size="sm"
-                    className={`w-full justify-start gap-2 ${isActive('/carrier/requested') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
+                  <Button variant="ghost" size="sm"
+                    className={`w-full justify-start gap-2 ${isActive('/carrier/requested') ? 'font-semibold text-foreground' : ''}`}>
                     <FileText className="h-4 w-4" /> Requested Loads
                   </Button>
                 </Link>
                 <Link to="/carrier/offers" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant={isActive('/carrier/offers') ? 'default' : 'ghost'} size="sm"
-                    className={`w-full justify-start gap-2 ${isActive('/carrier/offers') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
+                  <Button variant="ghost" size="sm"
+                    className={`w-full justify-start gap-2 ${isActive('/carrier/offers') ? 'font-semibold text-foreground' : ''}`}>
                     <Package className="h-4 w-4" /> Offers
                   </Button>
                 </Link>
@@ -299,8 +314,8 @@ export function Navbar() {
 
             {isAdmin && (
               <Link to="/admin/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant={isActive('/admin/dashboard') ? 'default' : 'ghost'} size="sm"
-                  className={`w-full justify-start ${isActive('/admin/dashboard') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
+                <Button variant="ghost" size="sm"
+                  className={`w-full justify-start ${isActive('/admin/dashboard') ? 'font-semibold text-foreground' : ''}`}>
                   Dashboard
                 </Button>
               </Link>
@@ -308,8 +323,8 @@ export function Navbar() {
 
             {(isBrokerOrDealer || isCarrier) && (
               <Link to="/my-rating" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant={isActive('/my-rating') ? 'default' : 'ghost'} size="sm"
-                  className={`w-full justify-start gap-2 ${isActive('/my-rating') ? 'bg-amber-500 hover:bg-amber-600 text-white' : ''}`}>
+                <Button variant="ghost" size="sm"
+                  className={`w-full justify-start gap-2 ${isActive('/my-rating') ? 'font-semibold text-foreground' : ''}`}>
                   <Star className="h-4 w-4" /> My Ratings
                 </Button>
               </Link>
