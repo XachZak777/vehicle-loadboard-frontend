@@ -11,8 +11,8 @@ import { Navbar } from '../components/Navbar';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Button } from '../components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../components/ui/sheet';
-import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star, SlidersHorizontal } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../components/ui/sheet';
+import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star, SlidersHorizontal, X } from 'lucide-react';
 import { formatPhone } from '../utils/phone';
 import { MapBackground } from '../components/MapBackground';
 
@@ -122,6 +122,18 @@ export function LoadBoard() {
     setSortBy('newest');
   };
 
+  const activeFilterCount = [
+    searchTerm,
+    pickupLocation,
+    deliveryLocation,
+    vehicleType !== 'All Types' ? vehicleType : '',
+    trailerType !== 'All Types' ? trailerType : '',
+    condition !== 'All Conditions' ? condition : '',
+    minPrice,
+    minPricePerMile,
+    sortBy !== 'newest' ? sortBy : '',
+  ].filter(Boolean).length;
+
   const filteredLoads = useMemo(() => {
     const q = searchTerm.toLowerCase();
     let result = loads.filter(load => {
@@ -227,40 +239,62 @@ export function LoadBoard() {
 
         {!isLoading && !fetchError && (
           <>
-            {/* Mobile filter sheet */}
+            {/* ── Mobile filter sheet (slides up from bottom) ── */}
             <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-              <SheetContent side="left" className="w-[300px] overflow-y-auto">
-                <SheetHeader className="mb-4">
-                  <SheetTitle className="text-amber-500">Filters</SheetTitle>
+              <SheetContent side="bottom" className="h-[90dvh] flex flex-col p-0 rounded-t-2xl sm:hidden">
+                <SheetHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
+                  <SheetTitle className="text-base font-semibold">
+                    Filters {activeFilterCount > 0 && (
+                      <span className="ml-1.5 inline-flex items-center justify-center size-5 rounded-full bg-amber-500 text-white text-xs font-bold">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </SheetTitle>
                 </SheetHeader>
-                <FilterPanel
-                  sortBy={sortBy} setSortBy={setSortBy}
-                  searchTerm={searchTerm} setSearchTerm={setSearchTerm}
-                  pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
-                  pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
-                  deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
-                  deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
-                  vehicleType={vehicleType} setVehicleType={setVehicleType}
-                  trailerType={trailerType} setTrailerType={setTrailerType}
-                  condition={condition} setCondition={setCondition}
-                  minPrice={minPrice} setMinPrice={setMinPrice}
-                  minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
-                  clearFilters={clearFilters}
-                />
+
+                <div className="flex-1 overflow-y-auto px-5 py-4">
+                  <FilterPanel
+                    sortBy={sortBy} setSortBy={setSortBy}
+                    searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+                    pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
+                    pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
+                    deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
+                    deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
+                    vehicleType={vehicleType} setVehicleType={setVehicleType}
+                    trailerType={trailerType} setTrailerType={setTrailerType}
+                    condition={condition} setCondition={setCondition}
+                    minPrice={minPrice} setMinPrice={setMinPrice}
+                    minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
+                    clearFilters={clearFilters}
+                  />
+                </div>
+
+                <SheetFooter className="px-5 py-4 border-t border-border shrink-0 grid grid-cols-2 gap-3 sm:justify-start">
+                  <Button variant="outline" onClick={clearFilters}
+                    className="border-amber-500 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10">
+                    Clear All
+                  </Button>
+                  <Button onClick={() => setMobileFiltersOpen(false)}
+                    className="bg-amber-500 hover:bg-amber-600 text-white">
+                    Show {filteredLoads.length} Load{filteredLoads.length !== 1 ? 's' : ''}
+                  </Button>
+                </SheetFooter>
               </SheetContent>
             </Sheet>
 
             <div className="flex gap-6">
-              {/* Filters Sidebar — desktop only */}
+              {/* ── Desktop filter sidebar ── */}
               <aside
-                className="hidden sm:block flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-out border-r border-r-amber-200 dark:border-r-amber-900"
+                className="hidden sm:block flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-out"
                 style={{ width: filtersOpen ? 272 : 0 }}
               >
                 <div
-                  className="w-[272px] pr-4 transition-transform duration-300 ease-out"
+                  className="w-[272px] pr-5 transition-transform duration-300 ease-out"
                   style={{ transform: filtersOpen ? 'translateX(0)' : 'translateX(-100%)' }}
                 >
-                  <h2 className="text-lg font-bold text-amber-500 mb-4">Filters</h2>
+                  <div className="mb-4">
+                    <h2 className="text-base font-bold text-foreground">Filters</h2>
+                  </div>
                   <FilterPanel
                     sortBy={sortBy} setSortBy={setSortBy}
                     searchTerm={searchTerm} setSearchTerm={setSearchTerm}
@@ -278,26 +312,54 @@ export function LoadBoard() {
                 </div>
               </aside>
 
-              {/* Load List */}
+              {/* ── Load list ── */}
               <div className="flex-1 min-w-0">
+                {/* Toolbar */}
                 <div className="flex items-center gap-3 mb-4">
+                  {/* Mobile: floating pill filter button */}
                   <button
                     onClick={() => setMobileFiltersOpen(true)}
-                    title="Filters"
-                    className="sm:hidden p-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground flex-shrink-0"
+                    className="sm:hidden inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-background hover:bg-muted transition-colors text-sm text-foreground shadow-sm"
                   >
-                    <SlidersHorizontal className="size-4" />
+                    <SlidersHorizontal className="size-4 text-amber-500" />
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <span className="inline-flex items-center justify-center size-5 rounded-full bg-amber-500 text-white text-xs font-bold">
+                        {activeFilterCount}
+                      </span>
+                    )}
                   </button>
+
+                  {/* Desktop: sidebar toggle */}
                   <button
                     onClick={() => setFiltersOpen(v => !v)}
                     title={filtersOpen ? 'Hide filters' : 'Show filters'}
-                    className="hidden sm:block p-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground flex-shrink-0"
+                    className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-sm text-muted-foreground"
                   >
-                    {filtersOpen ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
+                    <SlidersHorizontal className="size-4" />
+                    {filtersOpen ? <ChevronLeft className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                    {!filtersOpen && activeFilterCount > 0 && (
+                      <span className="inline-flex items-center justify-center size-5 rounded-full bg-amber-500 text-white text-xs font-bold">
+                        {activeFilterCount}
+                      </span>
+                    )}
                   </button>
+
                   <p className="text-sm text-muted-foreground">
-                    Showing <span className="font-semibold text-amber-600">{filteredLoads.length}</span> available load{filteredLoads.length !== 1 ? 's' : ''}
+                    <span className="font-semibold text-amber-600">{filteredLoads.length}</span>{' '}
+                    available load{filteredLoads.length !== 1 ? 's' : ''}
                   </p>
+
+                  {/* Active filter chips — desktop only */}
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={clearFilters}
+                      className="hidden sm:inline-flex items-center gap-1 ml-auto text-xs text-amber-600 hover:underline"
+                    >
+                      <X className="size-3" />
+                      Clear all filters
+                    </button>
+                  )}
                 </div>
 
                 <div className="space-y-3">
@@ -311,7 +373,7 @@ export function LoadBoard() {
                   ))}
 
                   {filteredLoads.length === 0 && (
-                    <div className="border border-gray-200 dark:border-gray-700 p-12 text-center">
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
                       <h3 className="text-lg font-semibold text-foreground mb-2">No loads found</h3>
                       <p className="text-muted-foreground mb-4">
                         Try adjusting your filters to find available loads.
@@ -343,8 +405,26 @@ type FilterPanelProps = {
   condition: string; setCondition: (v: string) => void;
   minPrice: string; setMinPrice: (v: string) => void;
   minPricePerMile: string; setMinPricePerMile: (v: string) => void;
-  clearFilters: () => void;
+  clearFilters: () => void; // kept on type for backwards compat, not used inside FilterPanel
 };
+
+function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <label className="text-sm text-foreground">{label}</label>
+      {children}
+    </div>
+  );
+}
 
 function FilterPanel({
   sortBy, setSortBy, searchTerm, setSearchTerm,
@@ -352,83 +432,99 @@ function FilterPanel({
   deliveryLocation, setDeliveryLocation, deliveryRadius, setDeliveryRadius,
   vehicleType, setVehicleType, trailerType, setTrailerType,
   condition, setCondition, minPrice, setMinPrice,
-  minPricePerMile, setMinPricePerMile, clearFilters,
-}: FilterPanelProps) {
+  minPricePerMile, setMinPricePerMile,
+}: Omit<FilterPanelProps, 'clearFilters'>) {
   return (
-    <div className="space-y-5">
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Sort By</label>
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {SORT_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Search</label>
-        <Input placeholder="Make, model, city..." value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)} className="h-9" />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-foreground">Pickup Location</label>
-        <Input placeholder="City, State, or Zip" value={pickupLocation}
-          onChange={e => setPickupLocation(e.target.value)} className="h-9" />
-        <div className="space-y-0.5">
-          <label className="text-xs text-muted-foreground">Radius (miles)</label>
-          <Input value={pickupRadius} onChange={e => setPickupRadius(e.target.value)} className="h-9" />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-foreground">Delivery Location</label>
-        <Input placeholder="City, State, or Zip" value={deliveryLocation}
-          onChange={e => setDeliveryLocation(e.target.value)} className="h-9" />
-        <div className="space-y-0.5">
-          <label className="text-xs text-muted-foreground">Radius (miles)</label>
-          <Input value={deliveryRadius} onChange={e => setDeliveryRadius(e.target.value)} className="h-9" />
-        </div>
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Vehicle Type</label>
-        <Select value={vehicleType} onValueChange={setVehicleType}>
-          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {VEHICLE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Trailer Type</label>
-        <Select value={trailerType} onValueChange={setTrailerType}>
-          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {TRAILER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Condition</label>
-        <Select value={condition} onValueChange={setCondition}>
-          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Min Price ($)</label>
-        <Input type="number" placeholder="0" value={minPrice}
-          onChange={e => setMinPrice(e.target.value)} className="h-9" />
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Min Price Per Mile ($)</label>
-        <Input type="number" placeholder="0.00" step="0.01" value={minPricePerMile}
-          onChange={e => setMinPricePerMile(e.target.value)} className="h-9" />
-      </div>
-      <Button variant="outline" onClick={clearFilters}
-        className="w-full border-amber-500 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10">
-        Clear All Filters
-      </Button>
+    <div className="space-y-6">
+
+      {/* Sort & Search */}
+      <FilterSection title="Sort & Search">
+        <FilterField label="Sort By">
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </FilterField>
+        <FilterField label="Keyword">
+          <Input placeholder="Make, model, city…" value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)} className="h-9" />
+        </FilterField>
+      </FilterSection>
+
+      <div className="border-t border-border" />
+
+      {/* Location */}
+      <FilterSection title="Location">
+        <FilterField label="Pickup">
+          <Input placeholder="City, State, or ZIP" value={pickupLocation}
+            onChange={e => setPickupLocation(e.target.value)} className="h-9" />
+        </FilterField>
+        <FilterField label="Pickup Radius (mi)">
+          <div className="flex items-center gap-2">
+            <Input type="number" min="0" value={pickupRadius}
+              onChange={e => setPickupRadius(e.target.value)} className="h-9 w-24" />
+            <span className="text-sm text-muted-foreground">miles</span>
+          </div>
+        </FilterField>
+        <FilterField label="Delivery">
+          <Input placeholder="City, State, or ZIP" value={deliveryLocation}
+            onChange={e => setDeliveryLocation(e.target.value)} className="h-9" />
+        </FilterField>
+        <FilterField label="Delivery Radius (mi)">
+          <div className="flex items-center gap-2">
+            <Input type="number" min="0" value={deliveryRadius}
+              onChange={e => setDeliveryRadius(e.target.value)} className="h-9 w-24" />
+            <span className="text-sm text-muted-foreground">miles</span>
+          </div>
+        </FilterField>
+      </FilterSection>
+
+      <div className="border-t border-border" />
+
+      {/* Vehicle */}
+      <FilterSection title="Vehicle">
+        <FilterField label="Type">
+          <Select value={vehicleType} onValueChange={setVehicleType}>
+            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {VEHICLE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </FilterField>
+        <FilterField label="Trailer">
+          <Select value={trailerType} onValueChange={setTrailerType}>
+            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {TRAILER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </FilterField>
+        <FilterField label="Condition">
+          <Select value={condition} onValueChange={setCondition}>
+            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </FilterField>
+      </FilterSection>
+
+      <div className="border-t border-border" />
+
+      {/* Price */}
+      <FilterSection title="Price">
+        <FilterField label="Min Price ($)">
+          <Input type="number" placeholder="0" min="0" value={minPrice}
+            onChange={e => setMinPrice(e.target.value)} className="h-9" />
+        </FilterField>
+        <FilterField label="Min $/Mile">
+          <Input type="number" placeholder="0.00" step="0.01" min="0" value={minPricePerMile}
+            onChange={e => setMinPricePerMile(e.target.value)} className="h-9" />
+        </FilterField>
+      </FilterSection>
+
     </div>
   );
 }

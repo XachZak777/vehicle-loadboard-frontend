@@ -69,23 +69,7 @@ export function CompanyInfoStep({ role, formData, fieldErrors, onChange, onSubmi
 
         <FormGrid>
           <div>
-            <Label htmlFor="mcNumber">MC Number <span className="text-destructive">*</span></Label>
-            <Input
-              id="mcNumber"
-              value={formData.mcNumber}
-              onChange={e => onChange('mcNumber', sanitizeDigits(e.target.value))}
-              placeholder="123456"
-              maxLength={10}
-              inputMode="numeric"
-              aria-invalid={!!fieldErrors.mcNumber}
-            />
-            {fieldErrors.mcNumber
-              ? <p className="text-xs text-destructive mt-1">{fieldErrors.mcNumber}</p>
-              : <HintText>Your MC authority number (e.g. 123456)</HintText>
-            }
-          </div>
-          <div>
-            <Label htmlFor="dotNumber">DOT Number (Optional)</Label>
+            <Label htmlFor="dotNumber">DOT Number <span className="text-destructive">*</span></Label>
             <Input
               id="dotNumber"
               value={formData.dotNumber}
@@ -95,7 +79,23 @@ export function CompanyInfoStep({ role, formData, fieldErrors, onChange, onSubmi
               inputMode="numeric"
               aria-invalid={!!fieldErrors.dotNumber}
             />
-            {fieldErrors.dotNumber && <p className="text-xs text-destructive mt-1">{fieldErrors.dotNumber}</p>}
+            {fieldErrors.dotNumber
+              ? <p className="text-xs text-destructive mt-1">{fieldErrors.dotNumber}</p>
+              : <HintText>Your USDOT number (e.g. 1234567)</HintText>
+            }
+          </div>
+          <div>
+            <Label htmlFor="mcNumber">MC Number (Optional)</Label>
+            <Input
+              id="mcNumber"
+              value={formData.mcNumber}
+              onChange={e => onChange('mcNumber', sanitizeDigits(e.target.value))}
+              placeholder="123456"
+              maxLength={10}
+              inputMode="numeric"
+              aria-invalid={!!fieldErrors.mcNumber}
+            />
+            {fieldErrors.mcNumber && <p className="text-xs text-destructive mt-1">{fieldErrors.mcNumber}</p>}
           </div>
         </FormGrid>
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { Navbar } from '../components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
@@ -13,8 +13,6 @@ import {
   FileText,
   Shield,
   CheckCircle,
-  Truck,
-  AlertCircle,
   ArrowRight,
   Plus,
   Trash2,
@@ -27,6 +25,8 @@ import {
   useGetMyBrokerProfileQuery,
   useGetMyCarrierProfileQuery,
   useUpdateCarrierProfileMutation,
+  type BrokerProfile,
+  type CarrierProfile,
   type PreferredLine,
 } from '../store/services/hauliusApi';
 import { US_STATES } from '../constants';
@@ -175,12 +175,7 @@ function PreferredLinesEditor({
             )}
 
             <div className="flex gap-2 pt-1">
-              <Button
-                size="sm"
-                className="gap-1.5"
-                onClick={handleSave}
-                disabled={isSaving}
-              >
+              <Button size="sm" className="gap-1.5" onClick={handleSave} disabled={isSaving}>
                 <Save className="size-3.5" />
                 {isSaving ? 'Saving…' : 'Save'}
               </Button>
@@ -201,55 +196,56 @@ export function CompanyProfile() {
   const isBroker = user?.role === 'broker';
   const isCarrier = user?.role === 'carrier';
 
-  const { data: brokerProfile } = useGetMyBrokerProfileQuery(undefined, { skip: !isBroker });
-  const { data: carrierProfile, refetch: refetchCarrier } = useGetMyCarrierProfileQuery(undefined, { skip: !isCarrier });
+  const { data: brokerProfile, refetch: refetchBroker, isLoading: brokerLoading } = useGetMyBrokerProfileQuery(undefined, { skip: !isBroker });
+  const { data: carrierProfile, refetch: refetchCarrier, isLoading: carrierLoading } = useGetMyCarrierProfileQuery(undefined, { skip: !isCarrier });
   const [updateCarrierProfile] = useUpdateCarrierProfileMutation();
+
+  useEffect(() => {
+    if (isBroker) refetchBroker();
+    else if (isCarrier) refetchCarrier();
+  }, [isBroker, isCarrier]);
 
   if (!user) return null;
 
-  const profile = isBroker ? brokerProfile : carrierProfile;
+  const bp = brokerProfile as BrokerProfile | undefined;
+  const cp = carrierProfile as CarrierProfile | undefined;
+  const profile = isBroker ? bp : cp;
 
-  const companyName    = profile?.legalName  || profile?.companyName   || user.companyName;
-  const mcNumber       = user.mcNumber      || profile?.mcNumber;
-  const dotNumber      = user.dotNumber     || profile?.dotNumber;
-  const phoneNumber    = user.phoneNumber   || profile?.phoneNumber;
-  const mailingAddress = user.mailingAddress|| profile?.mailingAddress;
-  const city           = user.city          || profile?.city;
-  const state          = user.state         || profile?.state;
-  const zipCode        = user.zipCode       || profile?.zipCode;
-  const insuranceCo    = (profile as typeof carrierProfile)?.insuranceCompany || user.insuranceCompany;
-  const cargoIns       = (profile as typeof carrierProfile)?.cargoInsurance ?? user.cargoInsurance;
-  const liabilityIns   = (profile as typeof carrierProfile)?.liabilityInsurance ?? user.liabilityInsurance;
-  const taxIdType      = profile?.taxIdType  || user.taxIdType;
-  const taxId          = profile?.taxId      || user.taxId;
-  const w9Document     = user.w9Document;
+  // Shared fields — profile takes priority over cached user object
+  const companyName    = profile?.companyName || profile?.legalName || user.companyName;
+  const mcNumber       = profile?.mcNumber    || user.mcNumber;
+  const dotNumber      = profile?.dotNumber   || user.dotNumber;
+  const phoneNumber    = profile?.phoneNumber || user.phoneNumber;
+  const mailingAddress = profile?.mailingAddress || user.mailingAddress;
+  const city           = profile?.city   || user.city;
+  const state          = profile?.state  || user.state;
+  const zipCode        = profile?.zipCode || user.zipCode;
+  const taxIdType      = profile?.taxIdType ?? user.taxIdType;
+  const taxId          = profile?.taxId   ?? user.taxId;
 
-  const dbaName         = (profile as typeof carrierProfile)?.dbaName;
-  const operatingStatus = profile?.operatingStatus;
-  const safetyRating    = (profile as typeof carrierProfile)?.safetyRating;
-  const verified        = (profile as typeof carrierProfile)?.verified;
-  const phyCity         = (profile as typeof carrierProfile)?.phyCity;
-  const phyState        = (profile as typeof carrierProfile)?.phyState;
-  const totalDrivers    = (profile as typeof carrierProfile)?.totalDrivers;
-  const totalPowerUnits = (profile as typeof carrierProfile)?.totalPowerUnits;
-  const brokerAuthority = (profile as typeof brokerProfile)?.brokerAuthorityActive;
-
-  // Broker bond fields
-  const bondCompany         = (profile as typeof brokerProfile)?.bondCompany;
-  const bondPolicyNumber    = (profile as typeof brokerProfile)?.bondPolicyNumber;
-  const bondCoverage        = (profile as typeof brokerProfile)?.bondCoverage;
-  const bondEffectiveDate   = (profile as typeof brokerProfile)?.bondEffectiveDate;
-  const bondAgentFirstName  = (profile as typeof brokerProfile)?.bondAgentFirstName;
-  const bondAgentLastName   = (profile as typeof brokerProfile)?.bondAgentLastName;
-  const bondAgentEmail      = (profile as typeof brokerProfile)?.bondAgentEmail;
-  const bondAgentPhone      = (profile as typeof brokerProfile)?.bondAgentPhone;
-  const bondAgentName       = [bondAgentFirstName, bondAgentLastName].filter(Boolean).join(' ');
-  const hasBondInfo         = bondCompany || bondPolicyNumber || bondCoverage || bondEffectiveDate || bondAgentName;
-
-  const preferredLinesJson = isCarrier ? carrierProfile?.preferredLines : undefined;
+  // Carrier-only
+  const dbaName       = cp?.dbaName;
+  const insuranceCo   = cp?.insuranceCompany  ?? user.insuranceCompany;
+  const cargoIns      = cp?.cargoInsurance    ?? user.cargoInsurance;
+  const liabilityIns  = cp?.liabilityInsurance ?? user.liabilityInsurance;
   const preferredLines: PreferredLine[] = (() => {
-    try { return preferredLinesJson ? JSON.parse(preferredLinesJson) : []; } catch { return []; }
+    try { return cp?.preferredLines ? JSON.parse(cp.preferredLines) : []; } catch { return []; }
   })();
+
+  // Broker-only bond
+  const bondCompany        = bp?.bondCompany;
+  const bondPolicyNumber   = bp?.bondPolicyNumber;
+  const bondCoverage       = bp?.bondCoverage;
+  const bondEffectiveDate  = bp?.bondEffectiveDate;
+  const bondAgentFirstName = bp?.bondAgentFirstName;
+  const bondAgentLastName  = bp?.bondAgentLastName;
+  const bondAgentEmail     = bp?.bondAgentEmail;
+  const bondAgentPhone     = bp?.bondAgentPhone;
+  const bondAgentName      = [bondAgentFirstName, bondAgentLastName].filter(Boolean).join(' ');
+  const hasBondInfo        = bondCompany || bondPolicyNumber || bondCoverage || bondEffectiveDate || bondAgentName;
+
+  const hasAddress = mailingAddress || city || state || zipCode;
+  const isLoading  = isBroker ? brokerLoading : carrierLoading;
 
   const handleSavePreferredLines = async (lines: PreferredLine[]) => {
     try {
@@ -262,15 +258,16 @@ export function CompanyProfile() {
     }
   };
 
-  const hasAddress    = mailingAddress || city || state || zipCode;
-  const hasPhyAddress = phyCity || phyState;
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto space-y-5">
+
+          {isLoading && (
+            <div className="flex justify-center py-8 text-muted-foreground text-sm">Loading profile…</div>
+          )}
 
           {/* Page header */}
           <div className="flex items-center gap-4 pb-2">
@@ -283,87 +280,35 @@ export function CompanyProfile() {
               </h1>
               <p className="text-sm text-muted-foreground capitalize mt-0.5">
                 {user.role} · Member since{' '}
-                {new Date(user.createdAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                })}
+                {new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
               </p>
             </div>
           </div>
 
-          {/* Identity */}
+          {/* Company Information */}
           <Section title="Company Information">
             <div className="divide-y divide-border">
-              {companyName && (
-                <InfoRow icon={Building2} label="Legal Name">
-                  {companyName}
-                </InfoRow>
-              )}
               {dbaName && (
-                <InfoRow icon={Building2} label="DBA Name">
-                  {dbaName}
-                </InfoRow>
+                <InfoRow icon={Building2} label="DBA Name">{dbaName}</InfoRow>
               )}
+              {dotNumber
+                ? <InfoRow icon={Shield} label="DOT Number"><span className="font-mono">{dotNumber}</span></InfoRow>
+                : <div className="py-3 text-sm text-muted-foreground">No DOT number on file.</div>
+              }
               {mcNumber && (
-                <InfoRow icon={Shield} label="MC Number">
-                  <span className="font-mono">{mcNumber}</span>
-                </InfoRow>
-              )}
-              {dotNumber && (
-                <InfoRow icon={Shield} label="DOT Number">
-                  <span className="font-mono">{dotNumber}</span>
-                </InfoRow>
-              )}
-              {operatingStatus && (
-                <InfoRow icon={Shield} label="Operating Status">
-                  <span className="flex items-center gap-1.5">
-                    {operatingStatus.toUpperCase().includes('ACTIVE') || operatingStatus.toUpperCase().includes('AUTHORIZED')
-                      ? <CheckCircle className="size-3.5 text-muted-foreground" />
-                      : <AlertCircle className="size-3.5 text-muted-foreground" />}
-                    {operatingStatus}
-                  </span>
-                </InfoRow>
-              )}
-              {safetyRating && (
-                <InfoRow icon={Shield} label="Safety Rating">
-                  {safetyRating}
-                </InfoRow>
-              )}
-              {isCarrier && verified !== undefined && (
-                <InfoRow icon={Shield} label="Verification">
-                  <span className="flex items-center gap-1.5">
-                    {verified
-                      ? <CheckCircle className="size-3.5 text-muted-foreground" />
-                      : <AlertCircle className="size-3.5 text-muted-foreground" />}
-                    {verified ? 'Verified' : 'Not Verified'}
-                  </span>
-                </InfoRow>
-              )}
-              {isBroker && brokerAuthority !== undefined && (
-                <InfoRow icon={Shield} label="Broker Authority">
-                  <span className="flex items-center gap-1.5">
-                    {brokerAuthority
-                      ? <CheckCircle className="size-3.5 text-muted-foreground" />
-                      : <AlertCircle className="size-3.5 text-muted-foreground" />}
-                    {brokerAuthority ? 'Active' : 'Inactive'}
-                  </span>
-                </InfoRow>
+                <InfoRow icon={Shield} label="MC Number"><span className="font-mono">{mcNumber}</span></InfoRow>
               )}
             </div>
           </Section>
 
-          {/* Contact */}
+          {/* Contact Information */}
           <Section title="Contact Information">
             <div className="divide-y divide-border">
-              <InfoRow icon={Mail} label="Email">
-                {user.email}
-              </InfoRow>
+              <InfoRow icon={Mail} label="Email">{user.email}</InfoRow>
               {phoneNumber && (
-                <InfoRow icon={Phone} label="Phone">
-                  {formatPhone(phoneNumber)}
-                </InfoRow>
+                <InfoRow icon={Phone} label="Phone">{formatPhone(phoneNumber)}</InfoRow>
               )}
-              {hasAddress && (
+              {hasAddress ? (
                 <InfoRow icon={MapPin} label="Mailing Address">
                   {mailingAddress && <span>{mailingAddress}</span>}
                   {(city || state || zipCode) && (
@@ -372,78 +317,34 @@ export function CompanyProfile() {
                     </span>
                   )}
                 </InfoRow>
-              )}
-              {hasPhyAddress && (
-                <InfoRow icon={MapPin} label="Physical Address (FMCSA)">
-                  {[phyCity, phyState].filter(Boolean).join(', ')}
-                </InfoRow>
+              ) : (
+                <div className="py-3 text-sm text-muted-foreground">No address on file.</div>
               )}
             </div>
           </Section>
 
-          {/* Fleet — carriers only */}
-          {isCarrier && (totalDrivers != null || totalPowerUnits != null) && (
-            <Section title="Fleet Information">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
-                {totalPowerUnits != null && (
-                  <div className="rounded-lg border bg-muted/40 px-5 py-4 flex items-center gap-3">
-                    <Truck className="h-5 w-5 text-muted-foreground shrink-0" />
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
-                        Power Units
-                      </p>
-                      <p className="text-2xl font-bold">{totalPowerUnits.toLocaleString()}</p>
-                    </div>
-                  </div>
-                )}
-                {totalDrivers != null && (
-                  <div className="rounded-lg border bg-muted/40 px-5 py-4 flex items-center gap-3">
-                    <Truck className="h-5 w-5 text-muted-foreground shrink-0" />
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-0.5">
-                        Total Drivers
-                      </p>
-                      <p className="text-2xl font-bold">{totalDrivers.toLocaleString()}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Section>
-          )}
-
-          {/* Preferred Lanes — carriers only */}
+          {/* Carrier: Insurance */}
           {isCarrier && (
-            <PreferredLinesEditor
-              initialLines={preferredLines}
-              onSave={handleSavePreferredLines}
-            />
-          )}
-
-          {/* Insurance */}
-          {(insuranceCo || cargoIns != null || liabilityIns != null) && (
             <Section title="Insurance">
               <div className="divide-y divide-border">
                 {insuranceCo && (
-                  <InfoRow icon={Shield} label="Insurance Company">
-                    {insuranceCo}
-                  </InfoRow>
+                  <InfoRow icon={Shield} label="Insurance Company">{insuranceCo}</InfoRow>
+                )}
+                {!insuranceCo && cargoIns == null && liabilityIns == null && (
+                  <p className="text-sm text-muted-foreground py-2">No insurance information on file.</p>
                 )}
               </div>
               {(cargoIns != null || liabilityIns != null) && (
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {cargoIns != null && (
                     <div className="rounded-lg border bg-muted/40 px-5 py-4">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
-                        Cargo Coverage
-                      </p>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Cargo Coverage</p>
                       <p className="text-xl font-bold">${Number(cargoIns).toLocaleString()}</p>
                     </div>
                   )}
                   {liabilityIns != null && (
                     <div className="rounded-lg border bg-muted/40 px-5 py-4">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
-                        Liability Coverage
-                      </p>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">Liability Coverage</p>
                       <p className="text-xl font-bold">${Number(liabilityIns).toLocaleString()}</p>
                     </div>
                   )}
@@ -452,77 +353,67 @@ export function CompanyProfile() {
             </Section>
           )}
 
-          {/* Bond — brokers only */}
-          {isBroker && hasBondInfo && (
+          {/* Carrier: Preferred Lanes */}
+          {isCarrier && (
+            <PreferredLinesEditor initialLines={preferredLines} onSave={handleSavePreferredLines} />
+          )}
+
+          {/* Broker: Surety Bond */}
+          {isBroker && (
             <Section title="Surety Bond">
               <div className="divide-y divide-border">
-                {bondCompany && (
-                  <InfoRow icon={Shield} label="Bond Company">
-                    {bondCompany}
-                  </InfoRow>
-                )}
-                {bondPolicyNumber && (
-                  <InfoRow icon={FileText} label="Policy Number">
-                    <span className="font-mono">{bondPolicyNumber}</span>
-                  </InfoRow>
-                )}
-                {bondCoverage && (
-                  <InfoRow icon={Shield} label="Coverage Amount">
-                    {bondCoverage}
-                  </InfoRow>
-                )}
-                {bondEffectiveDate && (
-                  <InfoRow icon={FileText} label="Effective Date">
-                    {new Date(bondEffectiveDate).toLocaleDateString('en-US', {
-                      year: 'numeric', month: 'long', day: 'numeric',
-                    })}
-                  </InfoRow>
-                )}
-                {bondAgentName && (
-                  <InfoRow icon={FileText} label="Bond Agent">
-                    {bondAgentName}
-                  </InfoRow>
-                )}
-                {bondAgentEmail && (
-                  <InfoRow icon={Mail} label="Agent Email">
-                    {bondAgentEmail}
-                  </InfoRow>
-                )}
-                {bondAgentPhone && (
-                  <InfoRow icon={Phone} label="Agent Phone">
-                    {formatPhone(bondAgentPhone)}
-                  </InfoRow>
+                {hasBondInfo ? (
+                  <>
+                    {bondCompany && <InfoRow icon={Shield} label="Bond Company">{bondCompany}</InfoRow>}
+                    {bondPolicyNumber && (
+                      <InfoRow icon={FileText} label="Policy Number">
+                        <span className="font-mono">{bondPolicyNumber}</span>
+                      </InfoRow>
+                    )}
+                    {bondCoverage && (
+                      <InfoRow icon={Shield} label="Coverage Amount">
+                        ${Number(bondCoverage).toLocaleString()}
+                      </InfoRow>
+                    )}
+                    {bondEffectiveDate && (
+                      <InfoRow icon={FileText} label="Effective Date">
+                        {new Date(bondEffectiveDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </InfoRow>
+                    )}
+                    {bondAgentName && <InfoRow icon={FileText} label="Bond Agent">{bondAgentName}</InfoRow>}
+                    {bondAgentEmail && <InfoRow icon={Mail} label="Agent Email">{bondAgentEmail}</InfoRow>}
+                    {bondAgentPhone && <InfoRow icon={Phone} label="Agent Phone">{formatPhone(bondAgentPhone)}</InfoRow>}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground py-2">No bond information on file.</p>
                 )}
               </div>
             </Section>
           )}
 
-          {/* Tax */}
-          {(taxIdType || taxId) && (
-            <Section title="Tax Information">
-              <div className="divide-y divide-border">
-                {taxIdType && (
-                  <InfoRow icon={FileText} label="Tax ID Type">
-                    {taxIdType}
-                  </InfoRow>
-                )}
-                {taxId && (
-                  <InfoRow icon={FileText} label="Tax ID">
-                    <span className="font-mono">
-                      {taxId.replace(/./g, (char: string, index: number) =>
-                        index < taxId.length - 4 ? '•' : char
-                      )}
-                    </span>
-                  </InfoRow>
-                )}
-                {w9Document && (
-                  <InfoRow icon={CheckCircle} label="W9 Document">
-                    On file
-                  </InfoRow>
-                )}
-              </div>
-            </Section>
-          )}
+          {/* Tax Information */}
+          <Section title="Tax Information">
+            <div className="divide-y divide-border">
+              {taxIdType && (
+                <InfoRow icon={FileText} label="Tax ID Type">{taxIdType}</InfoRow>
+              )}
+              {taxId && (
+                <InfoRow icon={FileText} label="Tax ID">
+                  <span className="font-mono">
+                    {taxId.replace(/./g, (char: string, index: number) =>
+                      index < taxId.length - 4 ? '•' : char
+                    )}
+                  </span>
+                </InfoRow>
+              )}
+              {!taxIdType && !taxId && (
+                <p className="text-sm text-muted-foreground py-2">No tax information on file.</p>
+              )}
+              {user.w9Document && (
+                <InfoRow icon={CheckCircle} label="W9 Document">On file</InfoRow>
+              )}
+            </div>
+          </Section>
 
         </div>
       </div>

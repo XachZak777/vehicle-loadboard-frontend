@@ -63,9 +63,9 @@ export function BrokerSignup() {
     const errs = buildErrors([
       [!formData.companyName.trim(), 'companyName', 'Company name is required.'],
       [!!formData.companyName.trim() && !isValidCompanyName(formData.companyName), 'companyName', 'Company name must be 2–100 characters.'],
-      [!formData.mcNumber.trim(), 'mcNumber', 'MC number is required.'],
-      [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
+      [!formData.dotNumber.trim(), 'dotNumber', 'DOT number is required.'],
       [!!formData.dotNumber.trim() && !isValidDotNumber(formData.dotNumber), 'dotNumber', 'DOT number must be 1–8 digits with no letters.'],
+      [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});

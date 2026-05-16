@@ -541,6 +541,16 @@ export type AdminUserDto = {
   taxIdType?: string;
   taxId?: string;
   carrierOperation?: string;
+  preferredLines?: string;
+  // Broker-only bond fields
+  bondCompany?: string;
+  bondPolicyNumber?: string;
+  bondCoverage?: string;
+  bondEffectiveDate?: string;
+  bondAgentFirstName?: string;
+  bondAgentLastName?: string;
+  bondAgentEmail?: string;
+  bondAgentPhone?: string;
   documents: AdminDocumentDto[];
 };
 

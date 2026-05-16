@@ -67,9 +67,9 @@ export function CarrierSignup() {
     const errs = buildErrors([
       [!formData.companyName.trim(), 'companyName', 'Company name is required.'],
       [!!formData.companyName.trim() && !isValidCompanyName(formData.companyName), 'companyName', 'Company name must be 2–100 characters.'],
-      [!formData.mcNumber.trim(), 'mcNumber', 'MC number is required.'],
-      [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
+      [!formData.dotNumber.trim(), 'dotNumber', 'DOT number is required.'],
       [!!formData.dotNumber.trim() && !isValidDotNumber(formData.dotNumber), 'dotNumber', 'DOT number must be 1–8 digits with no letters.'],
+      [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
@@ -88,7 +88,7 @@ export function CarrierSignup() {
       [!formData.taxId.trim(), 'taxId', `${formData.taxIdType} is required.`],
       [!!taxId && formData.taxIdType === 'EIN' && !isValidEIN(taxId), 'taxId', 'EIN must be in the format XX-XXXXXXX (9 digits).'],
       [!!taxId && formData.taxIdType === 'SSN' && !isValidSSN(taxId), 'taxId', 'SSN must be in the format XXX-XX-XXXX (9 digits).'],
-      [preferredLines.length === 0, 'preferredLines', 'At least one preferred lane is required.'],
+      [preferredLines.length < 3, 'preferredLines', 'At least 3 preferred lanes are required.'],
       [preferredLines.some(l => !l.fromState || !l.toState), 'preferredLines', 'All lanes must have both a from and to state selected.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }

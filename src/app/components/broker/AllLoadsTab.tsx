@@ -2,14 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
-import { Building2, Calendar, DollarSign, Edit, MoreVertical, Trash2, Users, Copy } from 'lucide-react';
+import { Building2, Calendar, Edit, Trash2, Users, Copy } from 'lucide-react';
 import { LoadWithBidsLoader } from './LoadWithBidsLoader';
 import { AssignCarrierModal } from './AssignCarrierModal';
 import type { LoadDto } from '../../store/services/hauliusApi';
@@ -72,61 +65,54 @@ export function AllLoadsTab({ loads, getStatusBadge, onDeleteLoad, actionLoading
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-y-2">
+                  <div className="flex items-center gap-3 text-sm">
                     {load.createdAt && (
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Calendar className="w-4 h-4" />
                         <span>{new Date(load.createdAt).toLocaleDateString()}</span>
                       </div>
                     )}
                     {load.price != null && (
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold">${load.price.toLocaleString()}</span>
-                      </div>
+                      <span className="font-semibold">${load.price.toLocaleString()}</span>
                     )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-muted-foreground">
                       {loadWithBids.bids.length} {loadWithBids.bids.length === 1 ? 'bid' : 'bids'}
                     </span>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" disabled={actionLoading}>
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {load.status === 'OPEN' && (
-                          <>
-                            <DropdownMenuItem onClick={() => setAssignLoad(load)}>
-                              <Users className={`h-4 w-4 mr-2 ${colors.accentText}`} />
-                              Assign Carrier
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                          </>
-                        )}
-                        <DropdownMenuItem asChild>
-                          <Link to={`/broker/edit-load/${load.id}`} className="flex items-center">
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/post-load', { state: { cloneFrom: load } })}>
-                          <Copy className={`h-4 w-4 mr-2 ${colors.accentText}`} />
-                          Clone Load
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => onDeleteLoad(load)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {load.status === 'OPEN' && (
+                      <Button
+                        variant="ghost" size="sm"
+                        className={`h-8 w-8 p-0 ${colors.accentText}`}
+                        onClick={() => setAssignLoad(load)}
+                        disabled={actionLoading}
+                        title="Assign Carrier"
+                      >
+                        <Users className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="sm" className={`h-8 w-8 p-0 ${colors.accentText}`} asChild>
+                      <Link to={`/broker/edit-load/${load.id}`}><Edit className="h-4 w-4" /></Link>
+                    </Button>
+                    <Button
+                      variant="ghost" size="sm"
+                      className={`h-8 w-8 p-0 ${colors.accentText}`}
+                      onClick={() => navigate('/post-load', { state: { cloneFrom: load } })}
+                      disabled={actionLoading}
+                      title="Clone Load"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost" size="sm"
+                      className={`h-8 w-8 p-0 ${colors.accentText}`}
+                      onClick={() => onDeleteLoad(load)}
+                      disabled={actionLoading}
+                      title="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </CardContent>

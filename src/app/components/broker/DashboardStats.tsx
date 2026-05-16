@@ -19,7 +19,7 @@ export function DashboardStats({ loads, openLoads, assignedLoads }: Props) {
 
   const stats = [
     { label: 'Total Loads', value: loads.length, icon: Package },
-    { label: 'Open', value: openLoads.length, icon: Clock },
+    { label: 'Active', value: openLoads.length, icon: Clock },
     { label: 'In Progress', value: inProgressLoads.length, icon: Truck },
     { label: 'Completed', value: completedLoads.length, icon: CheckCircle },
   ];

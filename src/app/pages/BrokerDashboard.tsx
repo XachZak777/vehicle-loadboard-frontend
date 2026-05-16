@@ -100,7 +100,7 @@ export function BrokerDashboard() {
 
   const getStatusBadge = (load: LoadDto) => {
     if (!load.status || load.status === 'OPEN') {
-      return <Badge className='bg-amber-500 text-white'>Open</Badge>;
+      return <Badge className='bg-amber-500 text-white'>Active</Badge>;
     }
     if (
       load.status === 'DELIVERED' ||
