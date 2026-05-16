@@ -9,11 +9,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { Calendar, DollarSign, Edit, MoreVertical, Trash2, Users, Copy } from 'lucide-react';
+import { Building2, Calendar, DollarSign, Edit, MoreVertical, Trash2, Users, Copy } from 'lucide-react';
 import { LoadWithBidsLoader } from './LoadWithBidsLoader';
 import { AssignCarrierModal } from './AssignCarrierModal';
 import type { LoadDto } from '../../store/services/hauliusApi';
 import type { ReactNode } from 'react';
+import { colors } from '../../styles/colors';
+import { useAppSelector } from '../../store/hooks';
+import { useGetMyBrokerProfileQuery } from '../../store/services/hauliusApi';
 
 interface Props {
   loads: LoadDto[];
@@ -26,6 +29,10 @@ interface Props {
 export function AllLoadsTab({ loads, getStatusBadge, onDeleteLoad, actionLoading }: Props) {
   const [assignLoad, setAssignLoad] = useState<LoadDto | null>(null);
   const navigate = useNavigate();
+  const user = useAppSelector((s) => s.auth.user);
+  const isBroker = user?.role === 'broker';
+  const { data: brokerProfile } = useGetMyBrokerProfileQuery(undefined, { skip: !isBroker });
+  const companyName = brokerProfile?.legalName || brokerProfile?.companyName || user?.companyName;
   if (loads.length === 0) {
     return (
       <Card>
@@ -44,7 +51,7 @@ export function AllLoadsTab({ loads, getStatusBadge, onDeleteLoad, actionLoading
       {loads.map(load => (
         <LoadWithBidsLoader key={load.id} load={load}>
           {(loadWithBids) => (
-            <Card className="border-2 border-gray-200 dark:border-gray-700 hover:border-amber-400 dark:hover:border-amber-500 transition-all duration-200">
+            <Card className={`border-2 ${colors.borderDualMode} ${colors.accentHoverCard} transition-all duration-200`}>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
@@ -54,6 +61,12 @@ export function AllLoadsTab({ loads, getStatusBadge, onDeleteLoad, actionLoading
                     <p className="text-sm text-muted-foreground mt-1">
                       {load.pickupCity}, {load.pickupState} → {load.dropCity}, {load.dropState}
                     </p>
+                    {companyName && (
+                      <div className={`flex items-center gap-1 mt-1.5 text-xs ${colors.accentTextStrong} font-medium`}>
+                        <Building2 className="h-3 w-3" />
+                        <span>{companyName}</span>
+                      </div>
+                    )}
                   </div>
                   {getStatusBadge(load)}
                 </div>
@@ -88,7 +101,7 @@ export function AllLoadsTab({ loads, getStatusBadge, onDeleteLoad, actionLoading
                         {load.status === 'OPEN' && (
                           <>
                             <DropdownMenuItem onClick={() => setAssignLoad(load)}>
-                              <Users className="h-4 w-4 mr-2 text-amber-500" />
+                              <Users className={`h-4 w-4 mr-2 ${colors.accentText}`} />
                               Assign Carrier
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
@@ -101,7 +114,7 @@ export function AllLoadsTab({ loads, getStatusBadge, onDeleteLoad, actionLoading
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => navigate('/post-load', { state: { cloneFrom: load } })}>
-                          <Copy className="h-4 w-4 mr-2 text-amber-500" />
+                          <Copy className={`h-4 w-4 mr-2 ${colors.accentText}`} />
                           Clone Load
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />

@@ -31,6 +31,16 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.625rem;
+  /* Brand orange (= Tailwind orange-500) — used for animations and glow effects */
+  --brand-orange: #f97316;
+  --brand-orange-rgb: 249, 115, 22;
+  /* Map background overlays */
+  --map-overlay-light: rgba(255, 255, 255, 0.85);
+  --map-overlay-dark: rgba(0, 0, 0, 0.65);
+  --map-glow-from: rgba(0, 0, 0, 0.75);
+  --map-glow-to: rgba(0, 0, 0, 0.72);
+  /* Elevation shadow */
+  --shadow-lift: rgba(0, 0, 0, 0.1);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: #030213;

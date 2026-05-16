@@ -7,6 +7,7 @@ import { RateModal } from '../RateModal';
 import { useGetCarrierPublicInfoQuery, useGetMySubmittedLoadIdsQuery } from '../../store/services/hauliusApi';
 import type { LoadDto } from '../../store/services/hauliusApi';
 import type { ReactNode } from 'react';
+import { colors } from '../../styles/colors';
 
 const RATEABLE_STATUSES = new Set(['DELIVERED', 'PAID', 'COMPLETED']);
 
@@ -60,7 +61,7 @@ function AssignedLoadCard({
             <div className="p-3 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200/50 dark:border-amber-800/50">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+                  <MapPin className={`size-4 ${colors.accentTextStrong} dark:${colors.accentText} flex-shrink-0`} />
                   {pickupUrl ? (
                     <a href={pickupUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline hover:text-amber-600 transition-colors">
                       {load.pickupCity}, {load.pickupState}
@@ -69,9 +70,9 @@ function AssignedLoadCard({
                     <span className="text-sm font-medium truncate">{load.pickupCity}, {load.pickupState}</span>
                   )}
                 </div>
-                <ArrowRight className="size-4 text-amber-500 flex-shrink-0" />
+                <ArrowRight className={`size-4 ${colors.accentText} flex-shrink-0`} />
                 <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+                  <MapPin className={`size-4 ${colors.accentTextStrong} dark:${colors.accentText} flex-shrink-0`} />
                   {dropUrl ? (
                     <a href={dropUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline hover:text-amber-600 transition-colors">
                       {load.dropCity}, {load.dropState}
@@ -87,7 +88,7 @@ function AssignedLoadCard({
         {load.price != null && (
           <div className="flex items-center gap-2 text-sm">
             <DollarSign className="w-4 h-4 text-muted-foreground" />
-            <span className="font-bold text-amber-600 dark:text-amber-500">${load.price.toLocaleString()}</span>
+            <span className={`font-bold ${colors.accentTextStrong} dark:${colors.accentText}`}>${load.price.toLocaleString()}</span>
           </div>
         )}
         <div className="pt-2 flex items-center gap-2 flex-wrap">
@@ -104,14 +105,14 @@ function AssignedLoadCard({
           )}
           {canRate && (
             alreadyRated ? (
-              <span className="flex items-center gap-1.5 text-sm font-medium text-amber-600">
+              <span className={`flex items-center gap-1.5 text-sm font-medium ${colors.accentTextStrong}`}>
                 <CheckCircle className="size-4" />
                 Rating Submitted
               </span>
             ) : (
               <Button
                 size="sm"
-                className="bg-amber-500 hover:bg-amber-600 text-white"
+                className={colors.accentBtn}
                 onClick={() => setRatingOpen(true)}
               >
                 <Star className="size-3.5 mr-1.5" />

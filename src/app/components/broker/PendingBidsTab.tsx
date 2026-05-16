@@ -27,6 +27,7 @@ import { LoadWithBidsLoader } from './LoadWithBidsLoader';
 import { AssignCarrierModal } from './AssignCarrierModal';
 import type { LoadDto, BidDto } from '../../store/services/hauliusApi';
 import type { ReactNode } from 'react';
+import { colors } from '../../styles/colors';
 
 interface Props {
   openLoads: LoadDto[];
@@ -102,7 +103,7 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <Truck className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                        <Truck className={`w-4 h-4 ${colors.accentText} flex-shrink-0`} />
                         <CardTitle className="text-base">
                           {load.vehicleYear} {load.vehicleMake} {load.vehicleModel}
                         </CardTitle>
@@ -127,7 +128,7 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
                           variant="outline"
                           onClick={() => setAssignCarrierLoad(load)}
                           disabled={actionLoading}
-                          className="gap-1.5 border-amber-400 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 text-xs h-7"
+                          className={`gap-1.5 ${colors.accentBorderMedium} ${colors.accentTextStrong} hover:${colors.accentBgFaint} dark:hover:${colors.accentBgMuted} text-xs h-7`}
                         >
                           <Users className="w-3.5 h-3.5" />
                           Assign Carrier

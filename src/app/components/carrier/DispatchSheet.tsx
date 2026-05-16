@@ -6,6 +6,7 @@ import { useGetLoadQuery, useGetBrokerPublicInfoQuery } from '../../store/servic
 import type { CarrierBidWithLoadDto } from '../../store/services/hauliusApi';
 import { Printer, FileText, Loader2 } from 'lucide-react';
 import { formatPhone } from '../../utils/phone';
+import { printColors } from '../../../styles/theme';
 
 interface Props {
   bid: CarrierBidWithLoadDto;
@@ -47,33 +48,33 @@ export function DispatchSheet({ bid, open, onClose }: Props) {
           <title>Dispatch Sheet</title>
           <style>
             * { box-sizing: border-box; margin: 0; padding: 0; }
-            body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #111; background: #fff; padding: 32px; }
+            body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: ${printColors.text}; background: ${printColors.background}; padding: 32px; }
             .sheet { max-width: 740px; margin: 0 auto; }
-            .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; padding-bottom: 18px; border-bottom: 3px solid #f59e0b; }
-            .header-left h1 { font-size: 24px; font-weight: 800; color: #111; letter-spacing: -0.5px; }
-            .header-left p { color: #6b7280; font-size: 12px; margin-top: 4px; }
-            .badge { display: inline-block; background: #f59e0b; color: #fff; padding: 5px 16px; border-radius: 4px; font-size: 12px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+            .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; padding-bottom: 18px; border-bottom: 3px solid ${printColors.accent}; }
+            .header-left h1 { font-size: 24px; font-weight: 800; color: ${printColors.text}; letter-spacing: -0.5px; }
+            .header-left p { color: ${printColors.textMuted}; font-size: 12px; margin-top: 4px; }
+            .badge { display: inline-block; background: ${printColors.accent}; color: ${printColors.background}; padding: 5px 16px; border-radius: 4px; font-size: 12px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
             .section { margin-bottom: 20px; }
-            .section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #9ca3af; margin-bottom: 10px; }
-            .section-body { border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; }
-            .row { display: flex; border-bottom: 1px solid #f3f4f6; }
+            .section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: ${printColors.textSubtle}; margin-bottom: 10px; }
+            .section-body { border: 1px solid ${printColors.borderLight}; border-radius: 6px; overflow: hidden; }
+            .row { display: flex; border-bottom: 1px solid ${printColors.rowDivider}; }
             .row:last-child { border-bottom: none; }
             .cell { padding: 8px 14px; flex: 1; }
-            .cell.label { color: #6b7280; font-size: 12px; font-weight: 500; width: 160px; flex: none; background: #fafafa; border-right: 1px solid #f3f4f6; }
-            .cell.value { font-weight: 600; color: #111; }
+            .cell.label { color: ${printColors.textMuted}; font-size: 12px; font-weight: 500; width: 160px; flex: none; background: ${printColors.labelBg}; border-right: 1px solid ${printColors.rowDivider}; }
+            .cell.value { font-weight: 600; color: ${printColors.text}; }
             .cell.mono { font-family: monospace; font-size: 12px; }
-            .cell.highlight { color: #b45309; font-weight: 700; background: #fffbeb; }
+            .cell.highlight { color: ${printColors.highlight}; font-weight: 700; background: ${printColors.highlightBg}; }
             .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-            .sub-vehicle { border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px 14px; margin-bottom: 10px; }
+            .sub-vehicle { border: 1px solid ${printColors.borderLight}; border-radius: 6px; padding: 10px 14px; margin-bottom: 10px; }
             .sub-vehicle:last-child { margin-bottom: 0; }
-            .sub-vehicle-title { font-size: 12px; font-weight: 600; color: #111; margin-bottom: 4px; }
-            .sub-vehicle-detail { font-size: 11px; color: #6b7280; }
-            hr { border: none; border-top: 1px solid #e5e7eb; margin: 22px 0; }
+            .sub-vehicle-title { font-size: 12px; font-weight: 600; color: ${printColors.text}; margin-bottom: 4px; }
+            .sub-vehicle-detail { font-size: 11px; color: ${printColors.textMuted}; }
+            hr { border: none; border-top: 1px solid ${printColors.borderLight}; margin: 22px 0; }
             .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
-            .sig-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; margin-bottom: 8px; }
-            .sig-box { border: 1px solid #d1d5db; border-radius: 4px; height: 52px; }
-            .sig-sub { font-size: 11px; color: #9ca3af; margin-top: 6px; }
-            .footer { margin-top: 32px; padding-top: 14px; border-top: 2px solid #f59e0b; display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af; }
+            .sig-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: ${printColors.textSubtle}; margin-bottom: 8px; }
+            .sig-box { border: 1px solid ${printColors.signatureBorder}; border-radius: 4px; height: 52px; }
+            .sig-sub { font-size: 11px; color: ${printColors.textSubtle}; margin-top: 6px; }
+            .footer { margin-top: 32px; padding-top: 14px; border-top: 2px solid ${printColors.accent}; display: flex; justify-content: space-between; font-size: 11px; color: ${printColors.textSubtle}; }
           </style>
         </head>
         <body>

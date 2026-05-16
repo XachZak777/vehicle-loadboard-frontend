@@ -557,8 +557,8 @@ const LoadCard = memo(function LoadCard({
         className="p-4 cursor-pointer select-none"
         onClick={() => setExpanded(v => !v)}
       >
-        {expanded && load.brokerId && (
-          <div className="mb-3 px-3 py-2 bg-gray-50/80 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50">
+        {load.brokerId && (
+          <div className="mb-3 px-3 py-2 bg-gray-50/80 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-md">
             <BrokerSummaryRow brokerId={load.brokerId} />
           </div>
         )}
@@ -650,8 +650,12 @@ const LoadCard = memo(function LoadCard({
                   {load.brokerId && <BrokerNameField brokerId={load.brokerId} />}
                   <InfoField label="Phone" value={load.contactPhone ? formatPhone(load.contactPhone) : undefined} />
                   <InfoField label="Email" value={load.contactEmail} />
-                  <InfoField label="Order ID" value={load.orderId ? `#${load.orderId}` : undefined} />
                 </div>
+                {load.orderId && (
+                  <div className="mt-3">
+                    <InfoField label="Order ID" value={`#${load.orderId}`} />
+                  </div>
+                )}
               </div>
 
               {(load.paymentMethod || load.paymentTiming) && (

@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'sans-serif' }}>
           <h2 style={{ marginBottom: '0.5rem' }}>Something went wrong.</h2>
-          <p style={{ color: '#666' }}>
+          <p style={{ color: 'var(--muted-foreground)' }}>
             Please refresh the page or contact support if the problem persists.
           </p>
           <button
@@ -34,9 +34,9 @@ export class ErrorBoundary extends Component<Props, State> {
               marginTop: '1rem',
               padding: '0.5rem 1.25rem',
               cursor: 'pointer',
-              border: '1px solid #ccc',
+              border: '1px solid var(--border)',
               borderRadius: '4px',
-              background: '#fff',
+              background: 'var(--background)',
             }}
           >
             Try again

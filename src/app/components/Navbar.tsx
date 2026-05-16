@@ -11,6 +11,7 @@ import {
 import { ThemeToggle } from './ThemeToggle';
 import { APP_NAME } from '../constants';
 import { useInactivityLogout } from '../hooks/useInactivityLogout';
+import { colors } from '../styles/colors';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +71,11 @@ export function Navbar() {
     <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 gap-4">
+          {/* Logo */}
+          <Link to="/loads" className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity">
+            <span className="text-xl font-bold hidden lg:inline text-foreground">{APP_NAME}</span>
+          </Link>
+
           {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-1 flex-shrink-0">
             <Link to="/loads">
@@ -180,7 +186,7 @@ export function Navbar() {
               {searchQuery.trim().length >= 2 && (
                 <button
                   onClick={handleSearch}
-                  className="px-2.5 h-8 text-xs font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors flex-shrink-0"
+                  className={`px-2.5 h-8 text-xs font-medium ${colors.accentTextStrong} hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors flex-shrink-0`}
                 >
                   Search
                 </button>

@@ -1,6 +1,7 @@
 import { Card, CardContent } from '../ui/card';
 import { Package, Clock, Truck, CheckCircle } from 'lucide-react';
 import type { LoadDto } from '../../store/services/hauliusApi';
+import { colors } from '../../styles/colors';
 
 interface Props {
   loads: LoadDto[];
@@ -33,7 +34,7 @@ export function DashboardStats({ loads, openLoads, assignedLoads }: Props) {
                 <p className="text-sm text-muted-foreground">{label}</p>
                 <p className="text-3xl font-bold mt-0.5">{value}</p>
               </div>
-              <Icon className="w-8 h-8 text-amber-500" />
+              <Icon className={`w-8 h-8 ${colors.accentText}`} />
             </div>
           </CardContent>
         </Card>

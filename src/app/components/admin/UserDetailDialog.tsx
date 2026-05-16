@@ -9,6 +9,7 @@ import {
   Building2, ShieldCheck, Mail, MapPin,
 } from 'lucide-react';
 import type { AdminUserDto, AdminDocumentDto } from '../../store/services/hauliusApi';
+import { colors } from '../../styles/colors';
 
 const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL ?? '';
 function toAbsoluteUrl(url: string): string {
@@ -19,10 +20,10 @@ function toAbsoluteUrl(url: string): string {
 
 function ApprovalBadge({ approved, declined }: { approved: boolean; declined: boolean }) {
   if (approved)
-    return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Approved</Badge>;
+    return <Badge className={colors.accentChip}>Approved</Badge>;
   if (declined)
     return <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Rejected</Badge>;
-  return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Pending</Badge>;
+  return <Badge className={colors.accentChip}>Pending</Badge>;
 }
 
 interface Props {
@@ -68,7 +69,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
               : <Badge variant="outline" className="text-muted-foreground flex items-center gap-1"><Mail className="size-3" />Email Unverified</Badge>
             }
             {user.fmcsaVerified && (
-              <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-1">
+              <Badge className={`${colors.accentChip} flex items-center gap-1`}>
                 <ShieldCheck className="size-3" />FMCSA Verified
               </Badge>
             )}
@@ -78,7 +79,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
               </span>
             )}
             {user.declinedAt && user.declined && (
-              <span className="text-xs text-red-500 ml-auto">
+              <span className={`text-xs ${colors.errorText} ml-auto`}>
                 Rejected {new Date(user.declinedAt).toLocaleDateString()}
               </span>
             )}
@@ -87,7 +88,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
           <Card>
             <CardHeader className="py-3 px-4">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Building2 className="size-4 text-amber-500" />Company Profile
+                <Building2 className={`size-4 ${colors.accentText}`} />Company Profile
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4 space-y-0">
@@ -103,7 +104,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
           <Card>
             <CardHeader className="py-3 px-4">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <MapPin className="size-4 text-amber-500" />Address
+                <MapPin className={`size-4 ${colors.accentText}`} />Address
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4 space-y-0">
@@ -120,7 +121,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
           <Card>
             <CardHeader className="py-3 px-4">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <ShieldCheck className="size-4 text-amber-500" />Insurance & Tax
+                <ShieldCheck className={`size-4 ${colors.accentText}`} />Insurance & Tax
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4 space-y-0">
@@ -135,7 +136,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
           <Card>
             <CardHeader className="py-3 px-4">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Mail className="size-4 text-amber-500" />Account Details
+                <Mail className={`size-4 ${colors.accentText}`} />Account Details
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4 space-y-0">
@@ -151,7 +152,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
           <Card>
             <CardHeader className="py-3 px-4">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <FileText className="size-4 text-amber-500" />Uploaded Documents
+                <FileText className={`size-4 ${colors.accentText}`} />Uploaded Documents
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4">
@@ -175,7 +176,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
                           target="_blank"
                           rel="noopener noreferrer"
                           title={`View ${doc.originalName}`}
-                          className="text-amber-500 hover:text-amber-600"
+                          className={`${colors.accentText} hover:text-amber-600`}
                         >
                           <Eye className="size-4" />
                         </a>
@@ -210,7 +211,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
                 size="sm"
                 disabled={isActing}
                 onClick={() => onApprove(user)}
-                className="bg-amber-500 hover:bg-amber-600 text-white"
+                className={colors.accentBtn}
               >
                 {isActing ? <Loader2 className="size-4 mr-1 animate-spin" /> : <CheckCircle className="size-4 mr-1" />}
                 {user.declined ? 'Re-Approve' : 'Approve'}

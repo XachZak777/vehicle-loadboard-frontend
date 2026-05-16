@@ -24,10 +24,10 @@
 /* Orange pulse animation */
 @keyframes orangePulse {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4);
+    box-shadow: 0 0 0 0 rgba(var(--brand-orange-rgb), 0.4);
   }
   50% {
-    box-shadow: 0 0 0 10px rgba(249, 115, 22, 0);
+    box-shadow: 0 0 0 10px rgba(var(--brand-orange-rgb), 0);
   }
 }
 
@@ -80,20 +80,20 @@
 /* Glow effect for buttons */
 @keyframes glowOrange {
   0%, 100% {
-    box-shadow: 0 0 5px rgba(249, 115, 22, 0.5), 0 0 10px rgba(249, 115, 22, 0.3);
+    box-shadow: 0 0 5px rgba(var(--brand-orange-rgb), 0.5), 0 0 10px rgba(var(--brand-orange-rgb), 0.3);
   }
   50% {
-    box-shadow: 0 0 10px rgba(249, 115, 22, 0.8), 0 0 20px rgba(249, 115, 22, 0.5);
+    box-shadow: 0 0 10px rgba(var(--brand-orange-rgb), 0.8), 0 0 20px rgba(var(--brand-orange-rgb), 0.5);
   }
 }
 
 /* Subtle animated glow for map background */
 @keyframes mapGlow {
   0%, 100% {
-    background: rgba(0, 0, 0, 0.75);
+    background: var(--map-glow-from);
   }
   50% {
-    background: rgba(0, 0, 0, 0.72);
+    background: var(--map-glow-to);
   }
 }
 
@@ -129,9 +129,9 @@
 .animate-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(249, 115, 22, 0.1) 0%,
-    rgba(249, 115, 22, 0.3) 50%,
-    rgba(249, 115, 22, 0.1) 100%
+    rgba(var(--brand-orange-rgb), 0.1) 0%,
+    rgba(var(--brand-orange-rgb), 0.3) 50%,
+    rgba(var(--brand-orange-rgb), 0.1) 100%
   );
   background-size: 1000px 100%;
   animation: shimmer 3s linear infinite;
@@ -144,7 +144,7 @@
 
 .hover-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px var(--shadow-lift);
 }
 
 .hover-scale {
@@ -160,7 +160,7 @@
 }
 
 .hover-border-orange:hover {
-  border-color: rgb(249, 115, 22);
+  border-color: var(--brand-orange);
 }
 
 /* Smooth color transitions */

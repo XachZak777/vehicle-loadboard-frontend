@@ -1,14 +1,15 @@
 import { cn } from '../components/ui/utils';
+import {PropsWithChildren} from "react";
 
 // ─── Page Shell ──────────────────────────────────────────────────────────────
 
-export function PageWrapper({ children }: React.PropsWithChildren) {
+export function PageWrapper({ children }: PropsWithChildren) {
   return (
     <div className="min-h-screen bg-background text-foreground">{children}</div>
   );
 }
 
-export function ContentWrapper({ children }: React.PropsWithChildren) {
+export function ContentWrapper({ children }: PropsWithChildren) {
   return (
     <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">{children}</div>
   );
@@ -16,31 +17,31 @@ export function ContentWrapper({ children }: React.PropsWithChildren) {
 
 // ─── Step Indicator ───────────────────────────────────────────────────────────
 
-export function StepIndicatorWrapper({ children }: React.PropsWithChildren) {
+export function StepIndicatorWrapper({ children }: PropsWithChildren) {
   return (
     <div className="mb-6 p-3 sm:p-4 bg-card rounded-xl">{children}</div>
   );
 }
 
-export function StepList({ children }: React.PropsWithChildren) {
+export function StepList({ children }: PropsWithChildren) {
   return (
     <div className="flex items-start justify-center px-1">{children}</div>
   );
 }
 
-export function StepItem({ children }: React.PropsWithChildren) {
+export function StepItem({ children }: PropsWithChildren) {
   return (
     <div className="flex flex-col items-center flex-shrink-0">{children}</div>
   );
 }
 
-export function StepCircleWrapper({ children }: React.PropsWithChildren) {
+export function StepCircleWrapper({ children }: PropsWithChildren) {
   return (
     <div className="flex flex-col items-center gap-1.5">{children}</div>
   );
 }
 
-export function StepCircle({ active, children }: React.PropsWithChildren<{ active: boolean }>) {
+export function StepCircle({ active, children }: PropsWithChildren<{ active: boolean }>) {
   return (
     <div className={cn(
       'w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors',
@@ -51,7 +52,7 @@ export function StepCircle({ active, children }: React.PropsWithChildren<{ activ
   );
 }
 
-export function StepLabel({ active, children }: React.PropsWithChildren<{ active: boolean }>) {
+export function StepLabel({ active, children }: PropsWithChildren<{ active: boolean }>) {
   return (
     <div className={cn(
       'text-[0.7rem] mt-1 text-center whitespace-nowrap transition-colors',
@@ -73,41 +74,41 @@ export function StepConnector({ completed }: { completed: boolean }) {
 
 // ─── Form Sections ────────────────────────────────────────────────────────────
 
-export function FormGrid({ children }: React.PropsWithChildren) {
+export function FormGrid({ children }: PropsWithChildren) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
   );
 }
 
-export function HintText({ children }: React.PropsWithChildren) {
+export function HintText({ children }: PropsWithChildren) {
   return <p className="text-xs text-muted-foreground mt-1">{children}</p>;
 }
 
-export function InfoBox({ children }: React.PropsWithChildren) {
+export function InfoBox({ children }: PropsWithChildren) {
   return (
     <div className="bg-muted border border-border rounded-lg p-4">{children}</div>
   );
 }
 
-export function SuccessBox({ children }: React.PropsWithChildren) {
+export function SuccessBox({ children }: PropsWithChildren) {
   return (
     <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">{children}</div>
   );
 }
 
-export function SuccessBoxHeader({ children }: React.PropsWithChildren) {
+export function SuccessBoxHeader({ children }: PropsWithChildren) {
   return (
     <div className="flex items-center gap-2 text-amber-600 font-semibold mb-2">{children}</div>
   );
 }
 
-export function SuccessBoxText({ children }: React.PropsWithChildren) {
+export function SuccessBoxText({ children }: PropsWithChildren) {
   return <p className="text-sm text-foreground">{children}</p>;
 }
 
 // ─── W9 Upload ────────────────────────────────────────────────────────────────
 
-export function DropZone({ children, className }: React.PropsWithChildren<{ className?: string }>) {
+export function DropZone({ children, className }: PropsWithChildren<{ className?: string }>) {
   return (
     <div className={cn(
       'mt-2 border-2 border-dashed border-border rounded-lg p-6 text-center bg-card transition-colors hover:border-amber-500',

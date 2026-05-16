@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { Button } from './ui/button';
 import { ThemeToggle } from './ThemeToggle';
 import { APP_NAME } from '../constants';
+import { colors } from '../styles/colors';
 
 interface AuthNavbarProps {
   /** Short subtitle shown below the app name (e.g. "Broker Registration") */
@@ -37,7 +38,7 @@ export function AuthNavbar({ subtitle, showLogin, showSignup }: AuthNavbarProps)
             )}
             {showSignup && (
               <Link to="/signup">
-                <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white">
+                <Button size="sm" className={colors.accentBtn}>
                   Sign Up
                 </Button>
               </Link>

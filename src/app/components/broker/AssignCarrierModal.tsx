@@ -15,6 +15,7 @@ import {
 } from '../../store/services/hauliusApi';
 import type { LoadDto, CarrierPublicInfo } from '../../store/services/hauliusApi';
 import { formatPhone } from '../../utils/phone';
+import { colors } from '../../styles/colors';
 
 interface Props {
   load: LoadDto;
@@ -63,25 +64,25 @@ function CarrierResultCard({
           <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
             {location && (
               <span className="flex items-center gap-1">
-                <MapPin className="size-3 text-amber-500" />
+                <MapPin className={`size-3 ${colors.accentText}`} />
                 {location}
               </span>
             )}
             {carrier.totalPowerUnits != null && (
               <span className="flex items-center gap-1">
-                <Truck className="size-3 text-amber-500" />
+                <Truck className={`size-3 ${colors.accentText}`} />
                 {carrier.totalPowerUnits} unit{carrier.totalPowerUnits !== 1 ? 's' : ''}
               </span>
             )}
             {carrier.safetyRating && (
               <span className="flex items-center gap-1">
-                <ShieldCheck className="size-3 text-amber-500" />
+                <ShieldCheck className={`size-3 ${colors.accentText}`} />
                 Safety: {carrier.safetyRating}
               </span>
             )}
             {carrier.ratingScore != null && (
               <span className="flex items-center gap-1">
-                <Star className="size-3 text-amber-500" />
+                <Star className={`size-3 ${colors.accentText}`} />
                 {carrier.ratingScore}% positive
               </span>
             )}
@@ -94,7 +95,7 @@ function CarrierResultCard({
         <Button
           size="sm"
           onClick={() => onSelect(carrier)}
-          className="bg-amber-500 hover:bg-amber-600 text-white shrink-0 gap-1.5"
+          className={`${colors.accentBtn} shrink-0 gap-1.5`}
         >
           <CheckCircle className="size-3.5" />
           Select
@@ -158,7 +159,7 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
         {/* Header */}
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg">
-            <Users className="size-5 text-amber-500" />
+            <Users className={`size-5 ${colors.accentText}`} />
             Assign Carrier
           </DialogTitle>
           <p className="text-sm text-muted-foreground mt-1">
@@ -187,7 +188,7 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
                 <Button
                   onClick={handleSearch}
                   disabled={query.trim().length < 2 || isFetching}
-                  className="bg-amber-500 hover:bg-amber-600 text-white shrink-0 gap-1.5"
+                  className={`${colors.accentBtn} shrink-0 gap-1.5`}
                 >
                   {isFetching ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
                   Search
@@ -306,7 +307,7 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
               <Button
                 onClick={handleConfirmAssign}
                 disabled={assigning || !consent}
-                className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                className={`${colors.accentBtn} gap-2`}
               >
                 {assigning ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle className="size-4" />}
                 {assigning ? 'Assigning…' : 'Confirm Assignment'}

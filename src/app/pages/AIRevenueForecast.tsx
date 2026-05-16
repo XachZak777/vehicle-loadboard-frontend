@@ -10,6 +10,7 @@ import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, LineChart } from 'recharts';
+import { chartColors } from '../../styles/theme';
 
 export function AIRevenueForecast() {
   const navigate = useNavigate();
@@ -164,7 +165,7 @@ export function AIRevenueForecast() {
                       <XAxis dataKey="month" />
                       <YAxis />
                       <Tooltip />
-                      <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} />
+                      <Line type="monotone" dataKey="revenue" stroke={chartColors.blue} strokeWidth={3} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>

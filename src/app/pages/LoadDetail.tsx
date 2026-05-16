@@ -441,7 +441,7 @@ export function LoadDetail() {
                 </div>
               )}
               {load.orderId && (
-                <div>
+                <div className="col-span-2 sm:col-span-3">
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">Order ID</p>
                   <p className="font-mono font-medium">{load.orderId}</p>
                 </div>
