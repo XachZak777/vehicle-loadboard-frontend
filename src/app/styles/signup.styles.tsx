@@ -18,7 +18,7 @@ export function ContentWrapper({ children }: React.PropsWithChildren) {
 
 export function StepIndicatorWrapper({ children }: React.PropsWithChildren) {
   return (
-    <div className="mb-6 p-3 sm:p-4 bg-card border border-border rounded-xl">{children}</div>
+    <div className="mb-6 p-3 sm:p-4 bg-card rounded-xl">{children}</div>
   );
 }
 
