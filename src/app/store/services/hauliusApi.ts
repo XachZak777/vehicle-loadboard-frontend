@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery, type BaseQueryFn, type FetchArgs, type FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
-import type { RootState } from '../../store';
+import type { RootState } from '..';
 import { sessionExpire } from '../slices/authSlice';
 
 export type PreferredLine = { fromState: string; toState: string };

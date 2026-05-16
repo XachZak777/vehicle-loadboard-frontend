@@ -227,7 +227,7 @@ export function LoadBoard() {
 
         {!isLoading && !fetchError && (
           <>
-            {/* Mobile filter sheet — only shown below sm breakpoint */}
+            {/* Mobile filter sheet */}
             <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
               <SheetContent side="left" className="w-[300px] overflow-y-auto">
                 <SheetHeader className="mb-4">
@@ -250,82 +250,80 @@ export function LoadBoard() {
               </SheetContent>
             </Sheet>
 
-          <div className="flex gap-6">
-            {/* Filters Sidebar — desktop only (hidden on mobile, aside on sm+) */}
-            <aside
-              className="hidden sm:block flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-out border-r border-r-amber-200 dark:border-r-amber-900"
-              style={{ width: filtersOpen ? 272 : 0 }}
-            >
-              <div
-                className="w-[272px] pr-4 transition-transform duration-300 ease-out"
-                style={{ transform: filtersOpen ? 'translateX(0)' : 'translateX(-100%)' }}
+            <div className="flex gap-6">
+              {/* Filters Sidebar — desktop only */}
+              <aside
+                className="hidden sm:block flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-out border-r border-r-amber-200 dark:border-r-amber-900"
+                style={{ width: filtersOpen ? 272 : 0 }}
               >
-                <h2 className="text-lg font-bold text-amber-500 mb-4">Filters</h2>
-                <FilterPanel
-                  sortBy={sortBy} setSortBy={setSortBy}
-                  searchTerm={searchTerm} setSearchTerm={setSearchTerm}
-                  pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
-                  pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
-                  deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
-                  deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
-                  vehicleType={vehicleType} setVehicleType={setVehicleType}
-                  trailerType={trailerType} setTrailerType={setTrailerType}
-                  condition={condition} setCondition={setCondition}
-                  minPrice={minPrice} setMinPrice={setMinPrice}
-                  minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
-                  clearFilters={clearFilters}
-                />
-              </div>
-            </aside>
-
-            {/* Load List */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-4">
-                {/* Mobile: opens Sheet */}
-                <button
-                  onClick={() => setMobileFiltersOpen(true)}
-                  title="Filters"
-                  className="sm:hidden p-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground flex-shrink-0"
+                <div
+                  className="w-[272px] pr-4 transition-transform duration-300 ease-out"
+                  style={{ transform: filtersOpen ? 'translateX(0)' : 'translateX(-100%)' }}
                 >
-                  <SlidersHorizontal className="size-4" />
-                </button>
-                {/* Desktop: toggles aside */}
-                <button
-                  onClick={() => setFiltersOpen(v => !v)}
-                  title={filtersOpen ? 'Hide filters' : 'Show filters'}
-                  className="hidden sm:block p-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground flex-shrink-0"
-                >
-                  {filtersOpen ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
-                </button>
-                <p className="text-sm text-muted-foreground">
-                  Showing <span className="font-semibold text-amber-600">{filteredLoads.length}</span> available load{filteredLoads.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {filteredLoads.map(load => (
-                  <LoadCard
-                    key={load.id}
-                    load={load}
-                    myCarrierId={myCarrierId}
-                    existingBid={myCarrierBids.find(b => b.loadId === load.id)}
+                  <h2 className="text-lg font-bold text-amber-500 mb-4">Filters</h2>
+                  <FilterPanel
+                    sortBy={sortBy} setSortBy={setSortBy}
+                    searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+                    pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
+                    pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
+                    deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
+                    deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
+                    vehicleType={vehicleType} setVehicleType={setVehicleType}
+                    trailerType={trailerType} setTrailerType={setTrailerType}
+                    condition={condition} setCondition={setCondition}
+                    minPrice={minPrice} setMinPrice={setMinPrice}
+                    minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
+                    clearFilters={clearFilters}
                   />
-                ))}
+                </div>
+              </aside>
 
-                {filteredLoads.length === 0 && (
-                  <div className="border border-gray-200 dark:border-gray-700 p-12 text-center">
-                    <h3 className="text-lg font-semibold text-foreground mb-2">No loads found</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Try adjusting your filters to find available loads.
-                    </p>
-                    <Button onClick={clearFilters} className="bg-amber-500 hover:bg-amber-600 text-white">
-                      Clear Filters
-                    </Button>
-                  </div>
-                )}
+              {/* Load List */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3 mb-4">
+                  <button
+                    onClick={() => setMobileFiltersOpen(true)}
+                    title="Filters"
+                    className="sm:hidden p-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground flex-shrink-0"
+                  >
+                    <SlidersHorizontal className="size-4" />
+                  </button>
+                  <button
+                    onClick={() => setFiltersOpen(v => !v)}
+                    title={filtersOpen ? 'Hide filters' : 'Show filters'}
+                    className="hidden sm:block p-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground flex-shrink-0"
+                  >
+                    {filtersOpen ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
+                  </button>
+                  <p className="text-sm text-muted-foreground">
+                    Showing <span className="font-semibold text-amber-600">{filteredLoads.length}</span> available load{filteredLoads.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {filteredLoads.map(load => (
+                    <LoadCard
+                      key={load.id}
+                      load={load}
+                      myCarrierId={myCarrierId}
+                      existingBid={myCarrierBids.find(b => b.loadId === load.id)}
+                    />
+                  ))}
+
+                  {filteredLoads.length === 0 && (
+                    <div className="border border-gray-200 dark:border-gray-700 p-12 text-center">
+                      <h3 className="text-lg font-semibold text-foreground mb-2">No loads found</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Try adjusting your filters to find available loads.
+                      </p>
+                      <Button onClick={clearFilters} className="bg-amber-500 hover:bg-amber-600 text-white">
+                        Clear Filters
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
           </>
         )}
       </div>
@@ -490,7 +488,6 @@ const LoadCard = memo(function LoadCard({
 
   const pickupLoc = [load.pickupCity, load.pickupState].filter(Boolean).join(', ');
   const dropLoc = [load.dropCity, load.dropState].filter(Boolean).join(', ');
-  // Zip is only returned by backend when carrier is assigned; filter(Boolean) handles null
   const pickupLocFull = [pickupLoc, load.pickupZip].filter(Boolean).join(' ');
   const dropLocFull = [dropLoc, load.dropZip].filter(Boolean).join(' ');
 
@@ -560,7 +557,6 @@ const LoadCard = memo(function LoadCard({
         className="p-4 cursor-pointer select-none"
         onClick={() => setExpanded(v => !v)}
       >
-        {/* Broker row — only visible when expanded */}
         {expanded && load.brokerId && (
           <div className="mb-3 px-3 py-2 bg-gray-50/80 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50">
             <BrokerSummaryRow brokerId={load.brokerId} />
@@ -569,7 +565,6 @@ const LoadCard = memo(function LoadCard({
 
         <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
-            {/* Vehicle title + badges + condition icons */}
             <div className="flex items-center gap-2 flex-wrap mb-0.5">
               <span className="text-base font-semibold text-foreground">{vehicleTitle}</span>
               {isMulti && (
@@ -580,12 +575,10 @@ const LoadCard = memo(function LoadCard({
               {allConditions.map((c, i) => <ConditionIcon key={i} condition={c} />)}
             </div>
 
-            {/* Vehicle list (multi only) */}
             {isMulti && vehicleListText && (
               <p className="text-xs text-muted-foreground mb-1.5">{vehicleListText}</p>
             )}
 
-            {/* Route */}
             <div className="flex items-start gap-2 mt-1">
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
@@ -609,7 +602,6 @@ const LoadCard = memo(function LoadCard({
             </div>
           </div>
 
-          {/* Price block */}
           <div className="flex-shrink-0 text-right">
             {load.price != null && (
               <div className="text-lg font-bold text-foreground leading-tight">
@@ -623,20 +615,17 @@ const LoadCard = memo(function LoadCard({
             )}
           </div>
 
-          {/* Chevron */}
           <div className="flex-shrink-0 p-1 self-start">
             <ChevronDown className={`size-4 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
           </div>
         </div>
       </div>
 
-      {/* Expanded panel */}
       {expanded && (
         <div
           className="border-t border-border bg-gradient-to-br from-gray-50 via-amber-50/30 to-orange-50/30 dark:from-gray-900/50 dark:via-amber-950/20 dark:to-orange-950/20"
           onClick={e => e.stopPropagation()}
         >
-          {/* Tab bar */}
           <div className="flex border-b border-border">
             {(['general', 'vehicle'] as const).map(tab => (
               <button
@@ -655,7 +644,6 @@ const LoadCard = memo(function LoadCard({
 
           {activeTab === 'general' && (
             <div className="p-5 space-y-6">
-              {/* BROKER CONTACT */}
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Broker Contact</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -666,7 +654,6 @@ const LoadCard = memo(function LoadCard({
                 </div>
               </div>
 
-              {/* PAYMENT DETAILS */}
               {(load.paymentMethod || load.paymentTiming) && (
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Payment Details</p>
@@ -677,7 +664,6 @@ const LoadCard = memo(function LoadCard({
                 </div>
               )}
 
-              {/* ADDITIONAL NOTES */}
               {load.description && (
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Additional Notes</p>
@@ -779,8 +765,7 @@ const LoadCard = memo(function LoadCard({
       )}
     </div>
   );
-}
-)
+})
 
 function VehicleRow({ index, year, make, model, type, condition, vin }: {
   index: number;

@@ -202,9 +202,7 @@ export function PrivacyPolicy() {
               </p>
               <div className="bg-muted p-6 rounded-lg">
                 <p className="font-semibold mb-2">Haulius</p>
-                <p>Email: privacy@haulius.com</p>
-                <p>Phone: 1-800-HAULIUS</p>
-                <p>Address: 123 Transport Way, Logistics City, USA 12345</p>
+                <p>Phone: +1 (213) 829-5184</p>
               </div>
             </section>
           </div>
@@ -214,42 +212,6 @@ export function PrivacyPolicy() {
       {/* Footer */}
       <footer className="bg-muted text-foreground py-12 border-t border-border mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-base font-bold">Haulius</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Professional vehicle transport marketplace connecting carriers and brokers nationwide.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3 text-sm">Company</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-amber-500 transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Press</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3 text-sm">Resources</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Safety Guidelines</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Community</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3 text-sm">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/privacy" className="hover:text-amber-500 transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/terms" className="hover:text-amber-500 transition-colors">Terms of Service</Link></li>
-                <li><Link to="/cookies" className="hover:text-amber-500 transition-colors">Cookie Policy</Link></li>
-              </ul>
-            </div>
-          </div>
           <div className="border-t border-border pt-6 text-center text-sm text-muted-foreground">
             <p>© 2026 Haulius. All rights reserved.</p>
           </div>

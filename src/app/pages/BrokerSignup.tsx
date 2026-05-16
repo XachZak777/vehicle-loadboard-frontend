@@ -4,31 +4,28 @@ import { toast } from 'sonner';
 import { useAppDispatch } from '../store/hooks';
 import { setCredentials } from '../store/slices/authSlice';
 import {
+  useRegisterMutation,
   useUpdateBrokerProfileMutation,
   useUploadBrokerW9Mutation,
   useUploadBrokerMcAuthorityMutation,
-  useValidateBrokerMutation,
-  useSaveBrokerFromValidationMutation,
-  LookupResponse,
 } from '../store/services/hauliusApi';
-import { UserProfile } from '../types/user';
 import { AuthNavbar } from '../components/AuthNavbar';
 import { PageWrapper, ContentWrapper } from '../styles/signup.styles';
 import {
-  isValidMcNumber, isValidDotNumber, isBusinessEmail, businessEmailError,
-  isValidEIN, isValidSSN,
+  isValidMcNumber, isValidDotNumber, isValidCompanyName,
+  isBusinessEmail, businessEmailError, isValidEIN, isValidSSN,
   isStrongPassword, passwordRequirementsText, buildErrors, type FieldErrors,
 } from '../utils/validation';
 import { SignupStepIndicator } from '../components/signup/SignupStepIndicator';
-import { McVerifyStep } from '../components/signup/McVerifyStep';
+import { CompanyInfoStep } from '../components/signup/CompanyInfoStep';
 import { BrokerInfoStep } from '../components/signup/BrokerInfoStep';
 import { DocumentsUploadStep } from '../components/signup/DocumentsUploadStep';
 import { CreateAccountStep } from '../components/signup/CreateAccountStep';
 
-type SignupStep = 'mc-verify' | 'info' | 'documents' | 'create-account';
+type SignupStep = 'company-info' | 'info' | 'documents' | 'create-account';
 
 const STEPS = [
-  { id: 'mc-verify',       label: 'MC / DOT'       },
+  { id: 'company-info',    label: 'Company Info'   },
   { id: 'info',            label: 'Information'    },
   { id: 'documents',       label: 'Documents'      },
   { id: 'create-account',  label: 'Create Account' },
@@ -37,17 +34,13 @@ const STEPS = [
 export function BrokerSignup() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [validateBroker] = useValidateBrokerMutation();
-  const [saveBroker] = useSaveBrokerFromValidationMutation();
+  const [register] = useRegisterMutation();
   const [updateProfile] = useUpdateBrokerProfileMutation();
   const [uploadW9] = useUploadBrokerW9Mutation();
   const [uploadMcAuthority] = useUploadBrokerMcAuthorityMutation();
 
-  const [currentStep, setCurrentStep] = useState<SignupStep>('mc-verify');
+  const [currentStep, setCurrentStep] = useState<SignupStep>('company-info');
   const [isLoading, setIsLoading] = useState(false);
-  const [validationId, setValidationId] = useState<string | null>(null);
-  const [fmcsaVerified, setFmcsaVerified] = useState(false);
-  const [fmcsaData, setFmcsaData] = useState<LookupResponse | null>(null);
   const [w9File, setW9File] = useState<File | null>(null);
   const [mcAuthorityFile, setMcAuthorityFile] = useState<File | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -66,40 +59,17 @@ export function BrokerSignup() {
     if (fieldErrors[field]) setFieldErrors(prev => { const e = { ...prev }; delete e[field]; return e; });
   };
 
-  const handleBrokerVerification = async () => {
+  const handleCompanyInfoSubmit = () => {
     const errs = buildErrors([
+      [!formData.companyName.trim(), 'companyName', 'Company name is required.'],
+      [!!formData.companyName.trim() && !isValidCompanyName(formData.companyName), 'companyName', 'Company name must be 2–100 characters.'],
       [!formData.mcNumber.trim(), 'mcNumber', 'MC number is required.'],
       [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
       [!!formData.dotNumber.trim() && !isValidDotNumber(formData.dotNumber), 'dotNumber', 'DOT number must be 1–8 digits with no letters.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
-    setIsLoading(true);
-    try {
-      const lookupType = formData.mcNumber.trim() ? 'MC' : 'DOT';
-      const lookupValue = lookupType === 'MC' ? formData.mcNumber.trim() : formData.dotNumber.trim();
-      const result = await validateBroker({ lookupValue, lookupType }).unwrap();
-      setValidationId(result.validationId);
-      setFmcsaData(result);
-      setFmcsaVerified(true);
-      setFormData(prev => ({
-        ...prev,
-        companyName: result.legalName || prev.companyName,
-        dotNumber: result.dotNumber || prev.dotNumber,
-        mcNumber: result.mcNumber || prev.mcNumber,
-        phoneNumber: result.phone || prev.phoneNumber,
-        mailingAddress: result.phyStreet || prev.mailingAddress,
-        city: result.phyCity || prev.city,
-        state: result.phyState || prev.state,
-        zipCode: result.phyZip || prev.zipCode,
-      }));
-      toast.success('Broker verification successful!');
-    } catch (error: any) {
-      toast.error(error?.data?.message || 'Verification failed. Please check your MC/DOT number and try again.');
-      setFmcsaVerified(false);
-    } finally {
-      setIsLoading(false);
-    }
+    setCurrentStep('info');
   };
 
   const handleInfoSubmit = () => {
@@ -122,16 +92,14 @@ export function BrokerSignup() {
     setCurrentStep('documents');
   };
 
-  const makeUploadHandler = (
-    setFile: (f: File) => void,
-    successMsg: string,
-  ) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error('File size must be less than 5MB'); return; }
-    setFile(file);
-    toast.success(successMsg);
-  };
+  const makeUploadHandler = (setFile: (f: File) => void, successMsg: string) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { toast.error('File size must be less than 5MB'); return; }
+      setFile(file);
+      toast.success(successMsg);
+    };
 
   const handleDocumentsSubmit = () => {
     const errs = buildErrors([
@@ -156,20 +124,23 @@ export function BrokerSignup() {
     setFieldErrors({});
     setIsLoading(true);
     try {
-      if (!validationId) { toast.error('Broker verification is required before creating your account.'); return; }
-      const res = await saveBroker({ validationId, email: formData.email.trim(), password: formData.password }).unwrap();
-      const userProfile: UserProfile = {
-        id: res.userId, role: 'broker', email: res.email,
-        phoneNumber: formData.phoneNumber, phoneVerified: false,
-        companyName: formData.companyName, mcNumber: formData.mcNumber, dotNumber: formData.dotNumber,
-        w9Document: w9File?.name, taxId: formData.taxId, taxIdType: formData.taxIdType,
-        fmcsaVerified: true, verificationDate: new Date().toISOString(),
-        mailingAddress: formData.mailingAddress, city: formData.city,
-        state: formData.state, zipCode: formData.zipCode, createdAt: new Date().toISOString(),
-      };
-      dispatch(setCredentials({ user: userProfile, token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved }));
+      const res = await register({ email: formData.email.trim(), password: formData.password, role: 'BROKER' }).unwrap();
+      dispatch(setCredentials({
+        user: { id: res.userId, role: 'broker', email: res.email, createdAt: new Date().toISOString() },
+        token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved,
+      }));
 
-      try { await updateProfile({ companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber, phoneNumber: formData.phoneNumber, taxIdType: formData.taxIdType, taxId: formData.taxId, mailingAddress: formData.mailingAddress, city: formData.city, state: formData.state, zipCode: formData.zipCode, bondCompany: formData.bondCompany || undefined, bondPolicyNumber: formData.bondPolicyNumber || undefined, bondCoverage: formData.bondCoverage || undefined, bondEffectiveDate: formData.bondEffectiveDate || undefined, bondAgentFirstName: formData.bondAgentFirstName || undefined, bondAgentLastName: formData.bondAgentLastName || undefined, bondAgentEmail: formData.bondAgentEmail || undefined, bondAgentPhone: formData.bondAgentPhone || undefined }).unwrap(); } catch { toast.warning('Profile data will be saved once your email is verified.'); }
+      try {
+        await updateProfile({
+          companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
+          phoneNumber: formData.phoneNumber, taxIdType: formData.taxIdType, taxId: formData.taxId,
+          mailingAddress: formData.mailingAddress, city: formData.city, state: formData.state, zipCode: formData.zipCode,
+          bondCompany: formData.bondCompany || undefined, bondPolicyNumber: formData.bondPolicyNumber || undefined,
+          bondCoverage: formData.bondCoverage || undefined, bondEffectiveDate: formData.bondEffectiveDate || undefined,
+          bondAgentFirstName: formData.bondAgentFirstName || undefined, bondAgentLastName: formData.bondAgentLastName || undefined,
+          bondAgentEmail: formData.bondAgentEmail || undefined, bondAgentPhone: formData.bondAgentPhone || undefined,
+        }).unwrap();
+      } catch { toast.warning('Profile data will be saved once your email is verified.'); }
 
       for (const [file, upload, msg] of [
         [w9File, uploadW9, 'W9 upload will be available once your email is verified.'],
@@ -198,39 +169,34 @@ export function BrokerSignup() {
       <ContentWrapper>
         <SignupStepIndicator steps={STEPS} currentIndex={currentIndex} />
 
-        {currentStep === 'mc-verify' && (
-          <McVerifyStep
+        {currentStep === 'company-info' && (
+          <CompanyInfoStep
             role="broker"
-            formData={{ ...formData, dbaName: '' }}
-            fmcsaVerified={fmcsaVerified}
-            fmcsaData={fmcsaData}
-            isLoading={isLoading}
+            formData={{
+              companyName: formData.companyName,
+              mcNumber: formData.mcNumber, dotNumber: formData.dotNumber,
+              phoneNumber: formData.phoneNumber, mailingAddress: formData.mailingAddress,
+              city: formData.city, state: formData.state, zipCode: formData.zipCode,
+            }}
             fieldErrors={fieldErrors}
             onChange={handleInputChange}
-            onVerify={handleBrokerVerification}
-            onContinue={() => setCurrentStep('info')}
-            onBack={() => { setFmcsaVerified(false); setFmcsaData(null); setValidationId(null); setFieldErrors({}); }}
+            onSubmit={handleCompanyInfoSubmit}
           />
         )}
 
         {currentStep === 'info' && (
           <BrokerInfoStep
             formData={{
-              bondCompany: formData.bondCompany,
-              bondPolicyNumber: formData.bondPolicyNumber,
-              bondCoverage: formData.bondCoverage,
-              bondEffectiveDate: formData.bondEffectiveDate,
-              bondAgentFirstName: formData.bondAgentFirstName,
-              bondAgentLastName: formData.bondAgentLastName,
-              bondAgentEmail: formData.bondAgentEmail,
-              bondAgentPhone: formData.bondAgentPhone,
-              taxIdType: formData.taxIdType,
-              taxId: formData.taxId,
+              bondCompany: formData.bondCompany, bondPolicyNumber: formData.bondPolicyNumber,
+              bondCoverage: formData.bondCoverage, bondEffectiveDate: formData.bondEffectiveDate,
+              bondAgentFirstName: formData.bondAgentFirstName, bondAgentLastName: formData.bondAgentLastName,
+              bondAgentEmail: formData.bondAgentEmail, bondAgentPhone: formData.bondAgentPhone,
+              taxIdType: formData.taxIdType, taxId: formData.taxId,
             }}
             fieldErrors={fieldErrors}
             onChange={handleInputChange}
             onSubmit={handleInfoSubmit}
-            onBack={() => setCurrentStep('mc-verify')}
+            onBack={() => setCurrentStep('company-info')}
           />
         )}
 
@@ -249,7 +215,10 @@ export function BrokerSignup() {
         {currentStep === 'create-account' && (
           <CreateAccountStep
             role="broker"
-            formData={{ email: formData.email, password: formData.password, confirmPassword: formData.confirmPassword, companyName: formData.companyName, mcNumber: formData.mcNumber, dotNumber: formData.dotNumber }}
+            formData={{
+              email: formData.email, password: formData.password, confirmPassword: formData.confirmPassword,
+              companyName: formData.companyName, mcNumber: formData.mcNumber, dotNumber: formData.dotNumber,
+            }}
             fieldErrors={fieldErrors}
             onChange={handleInputChange}
             isLoading={isLoading}

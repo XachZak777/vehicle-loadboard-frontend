@@ -132,13 +132,6 @@ export function Welcome() {
               >
                 How It Works
               </a>
-              <a
-                href="#pricing"
-                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
-                onClick={(e) => { scrollToSection(e, 'pricing'); setMobileMenuOpen(false); }}
-              >
-                Pricing
-              </a>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm text-muted-foreground">Theme</span>
                 <ThemeToggle />
@@ -206,49 +199,6 @@ export function Welcome() {
                   <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-white text-base px-8 h-12 gap-2 w-full shadow-lg">
                     Browse Load Board
                     <ArrowRight className="size-4" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Right: Top Loads card */}
-            <div className="w-full">
-              <div className="bg-card rounded-xl shadow-2xl p-6 border border-border">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold">Top Paying Loads</h3>
-                  <Badge className="bg-amber-500 text-white">Live</Badge>
-                </div>
-                <div className="space-y-3">
-                  {topLoads.map((load) => (
-                    <div
-                      key={load.id}
-                      className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border hover:border-amber-500 transition-colors"
-                    >
-                      <div className="flex-1 min-w-0 pr-4">
-                        <div className="font-semibold text-sm mb-1 truncate">
-                          {load.year} {load.make} {load.model}
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {load.pickupCity}, {load.pickupState} → {load.deliveryCity}, {load.deliveryState}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          {load.distance.toLocaleString()} mi
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="font-bold text-amber-500 text-lg">
-                          ${load.price.toLocaleString()}
-                        </div>
-                        <div className="text-xs text-amber-600 font-semibold">
-                          ${load.pricePerMile.toFixed(2)}/mi
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Link to={browseTo}>
-                  <Button className="w-full mt-4" variant="outline">
-                    View All Loads
                   </Button>
                 </Link>
               </div>
@@ -382,7 +332,6 @@ export function Welcome() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#features" onClick={(e) => scrollToSection(e, 'features')} className="hover:text-amber-500 transition-colors">Features</a></li>
                 <li><a href="#how-it-works" onClick={(e) => scrollToSection(e, 'how-it-works')} className="hover:text-amber-500 transition-colors">How It Works</a></li>
-                <li><a href="#pricing" onClick={(e) => scrollToSection(e, 'pricing')} className="hover:text-amber-500 transition-colors">Pricing</a></li>
               </ul>
             </div>
             <div>

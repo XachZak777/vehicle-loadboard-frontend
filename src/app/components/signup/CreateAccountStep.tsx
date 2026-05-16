@@ -52,16 +52,14 @@ export function CreateAccountStep({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <InfoBox>
-          <p className="text-sm font-medium mb-1">Registration Summary</p>
-          <p className="text-sm text-muted-foreground"><strong>Company:</strong> {formData.companyName}</p>
-          {formData.mcNumber && (
-            <p className="text-sm text-muted-foreground"><strong>MC:</strong> {formData.mcNumber}</p>
-          )}
-          {formData.dotNumber && (
-            <p className="text-sm text-muted-foreground"><strong>DOT:</strong> {formData.dotNumber}</p>
-          )}
-        </InfoBox>
+        {(formData.companyName || formData.mcNumber || formData.dotNumber) && (
+          <InfoBox>
+            <p className="text-sm font-medium mb-1">Registration Summary</p>
+            {formData.companyName && <p className="text-sm text-muted-foreground"><strong>Company:</strong> {formData.companyName}</p>}
+            {formData.mcNumber && <p className="text-sm text-muted-foreground"><strong>MC:</strong> {formData.mcNumber}</p>}
+            {formData.dotNumber && <p className="text-sm text-muted-foreground"><strong>DOT:</strong> {formData.dotNumber}</p>}
+          </InfoBox>
+        )}
 
         <div>
           <Label htmlFor="email">Email Address *</Label>

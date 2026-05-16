@@ -172,10 +172,6 @@ export function Login() {
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 text-muted-foreground cursor-pointer">
-                  <input type="checkbox" className="rounded" />
-                  Remember me
-                </label>
                 <Link to="/forgot-password" className="text-amber-500 hover:text-amber-400">
                   Forgot password?
                 </Link>

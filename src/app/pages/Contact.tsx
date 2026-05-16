@@ -96,20 +96,8 @@ export function Contact() {
                   {
                     icon: Phone,
                     label: 'Phone',
-                    value: '1-800-HAULIUS',
-                    href: 'tel:18004285487',
-                  },
-                  {
-                    icon: MapPin,
-                    label: 'Address',
-                    value: '123 Transport Way\nLogistics City, USA 12345',
-                    href: null,
-                  },
-                  {
-                    icon: Clock,
-                    label: 'Business Hours',
-                    value: 'Mon–Fri: 8 AM – 6 PM CT\nSat: 9 AM – 2 PM CT',
-                    href: null,
+                    value: '+1 (213) 829-5184',
+                    href: 'tel:+12138295184',
                   },
                 ].map(({ icon: Icon, label, value, href }) => (
                   <div key={label} className="flex gap-3">
@@ -129,36 +117,6 @@ export function Contact() {
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h3 className="font-bold mb-3">Specific Inquiries</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <span className="font-medium text-foreground">Carrier Support: </span>
-                  <a href="mailto:carriers@haulius.com" className="hover:text-amber-500 transition-colors">
-                    carriers@haulius.com
-                  </a>
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Broker Support: </span>
-                  <a href="mailto:brokers@haulius.com" className="hover:text-amber-500 transition-colors">
-                    brokers@haulius.com
-                  </a>
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Privacy: </span>
-                  <a href="mailto:privacy@haulius.com" className="hover:text-amber-500 transition-colors">
-                    privacy@haulius.com
-                  </a>
-                </li>
-                <li>
-                  <span className="font-medium text-foreground">Legal: </span>
-                  <a href="mailto:legal@haulius.com" className="hover:text-amber-500 transition-colors">
-                    legal@haulius.com
-                  </a>
-                </li>
-              </ul>
             </div>
           </div>
 

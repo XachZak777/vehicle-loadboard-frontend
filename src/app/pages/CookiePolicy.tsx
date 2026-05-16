@@ -119,56 +119,8 @@ export function CookiePolicy() {
                 <li><strong>Marketing:</strong> To measure the effectiveness of our campaigns and show relevant advertisements</li>
               </ul>
             </section>
-
             <section>
-              <h2 className="text-2xl font-bold mb-4">5. Specific Cookies Used on Haulius</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full border border-border rounded-lg overflow-hidden">
-                  <thead className="bg-muted">
-                    <tr>
-                      <th className="text-left p-3 border-b border-border">Cookie Name</th>
-                      <th className="text-left p-3 border-b border-border">Purpose</th>
-                      <th className="text-left p-3 border-b border-border">Duration</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-sm">
-                    <tr className="border-b border-border">
-                      <td className="p-3 font-mono">auth_token</td>
-                      <td className="p-3">Maintains your login session</td>
-                      <td className="p-3">30 days</td>
-                    </tr>
-                    <tr className="border-b border-border">
-                      <td className="p-3 font-mono">theme_preference</td>
-                      <td className="p-3">Stores your dark/light mode preference</td>
-                      <td className="p-3">1 year</td>
-                    </tr>
-                    <tr className="border-b border-border">
-                      <td className="p-3 font-mono">user_id</td>
-                      <td className="p-3">Identifies your account for personalization</td>
-                      <td className="p-3">Session</td>
-                    </tr>
-                    <tr className="border-b border-border">
-                      <td className="p-3 font-mono">csrf_token</td>
-                      <td className="p-3">Protects against cross-site request forgery</td>
-                      <td className="p-3">Session</td>
-                    </tr>
-                    <tr className="border-b border-border">
-                      <td className="p-3 font-mono">load_filters</td>
-                      <td className="p-3">Remembers your load search filters</td>
-                      <td className="p-3">7 days</td>
-                    </tr>
-                    <tr>
-                      <td className="p-3 font-mono">_ga, _gid</td>
-                      <td className="p-3">Google Analytics tracking</td>
-                      <td className="p-3">2 years / 24 hours</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold mb-4">6. Local Storage and Similar Technologies</h2>
+              <h2 className="text-2xl font-bold mb-4">5. Local Storage and Similar Technologies</h2>
               <p className="mb-4">
                 In addition to cookies, we may use other technologies to store information locally on your device, including:
               </p>
@@ -180,9 +132,9 @@ export function CookiePolicy() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold mb-4">7. Managing Your Cookie Preferences</h2>
+              <h2 className="text-2xl font-bold mb-4">6. Managing Your Cookie Preferences</h2>
 
-              <h3 className="text-xl font-semibold mb-3 mt-4">7.1 Browser Settings</h3>
+              <h3 className="text-xl font-semibold mb-3 mt-4">6.1 Browser Settings</h3>
               <p className="mb-4">
                 Most web browsers allow you to control cookies through their settings. You can set your browser to refuse all cookies or to alert you when a cookie is being sent. However, if you disable cookies, some features of the Platform may not function properly.
               </p>
@@ -194,7 +146,7 @@ export function CookiePolicy() {
                 <li><strong>Edge:</strong> Settings → Cookies and site permissions → Cookies and site data</li>
               </ul>
 
-              <h3 className="text-xl font-semibold mb-3 mt-4">7.2 Opt-Out of Analytics</h3>
+              <h3 className="text-xl font-semibold mb-3 mt-4">6.2 Opt-Out of Analytics</h3>
               <p className="mb-4">
                 You can opt out of Google Analytics by installing the Google Analytics Opt-out Browser Add-on, available at:
                 <a href="https://tools.google.com/dlpage/gaoptout" className="text-amber-500 hover:underline ml-1" target="_blank" rel="noopener noreferrer">
@@ -202,7 +154,7 @@ export function CookiePolicy() {
                 </a>
               </p>
 
-              <h3 className="text-xl font-semibold mb-3 mt-4">7.3 Advertising Opt-Out</h3>
+              <h3 className="text-xl font-semibold mb-3 mt-4">6.3 Advertising Opt-Out</h3>
               <p className="mb-4">
                 To opt out of interest-based advertising, you can visit:
               </p>
@@ -213,7 +165,7 @@ export function CookiePolicy() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold mb-4">8. Impact of Disabling Cookies</h2>
+              <h2 className="text-2xl font-bold mb-4">7. Impact of Disabling Cookies</h2>
               <p className="mb-4">
                 If you choose to disable cookies, you may experience reduced functionality on the Platform, including:
               </p>
@@ -227,14 +179,14 @@ export function CookiePolicy() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold mb-4">9. Do Not Track Signals</h2>
+              <h2 className="text-2xl font-bold mb-4">8. Do Not Track Signals</h2>
               <p>
                 Some browsers include a "Do Not Track" (DNT) feature that signals to websites that you do not want your online activities tracked. Our Platform currently does not respond to DNT signals, as there is no uniform standard for how to interpret them.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold mb-4">10. Mobile Devices</h2>
+              <h2 className="text-2xl font-bold mb-4">9. Mobile Devices</h2>
               <p className="mb-4">
                 When you access the Platform from a mobile device, we may collect similar information through mobile-specific technologies, including:
               </p>
@@ -249,14 +201,14 @@ export function CookiePolicy() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold mb-4">11. Updates to This Cookie Policy</h2>
+              <h2 className="text-2xl font-bold mb-4">10. Updates to This Cookie Policy</h2>
               <p>
                 We may update this Cookie Policy from time to time to reflect changes in technology, legal requirements, or our data practices. We will notify you of any material changes by posting the updated policy on this page and updating the "Last Updated" date. We encourage you to review this policy periodically.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold mb-4">12. Your Rights and Choices</h2>
+              <h2 className="text-2xl font-bold mb-4">11. Your Rights and Choices</h2>
               <p className="mb-4">
                 Depending on your location, you may have rights regarding cookies and tracking technologies, including:
               </p>
@@ -269,22 +221,20 @@ export function CookiePolicy() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold mb-4">13. More Information</h2>
+              <h2 className="text-2xl font-bold mb-4">12. More Information</h2>
               <p className="mb-4">
                 For more information about how we collect, use, and protect your data, please see our Privacy Policy. If you have questions about this Cookie Policy or would like to exercise your rights, please contact us.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold mb-4">14. Contact Us</h2>
+              <h2 className="text-2xl font-bold mb-4">13. Contact Us</h2>
               <p className="mb-4">
                 If you have questions about our use of cookies or this Cookie Policy, please contact us:
               </p>
               <div className="bg-muted p-6 rounded-lg">
                 <p className="font-semibold mb-2">Haulius</p>
-                <p>Email: privacy@haulius.com</p>
-                <p>Phone: 1-800-HAULIUS</p>
-                <p>Address: 123 Transport Way, Logistics City, USA 12345</p>
+                <p>Phone: +1 (213) 829-5184</p>
               </div>
             </section>
           </div>
@@ -294,42 +244,6 @@ export function CookiePolicy() {
       {/* Footer */}
       <footer className="bg-muted text-foreground py-12 border-t border-border mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-base font-bold">Haulius</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Professional vehicle transport marketplace connecting carriers and brokers nationwide.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3 text-sm">Company</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-amber-500 transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Press</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3 text-sm">Resources</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Safety Guidelines</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-amber-500 transition-colors">Community</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3 text-sm">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/privacy" className="hover:text-amber-500 transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/terms" className="hover:text-amber-500 transition-colors">Terms of Service</Link></li>
-                <li><Link to="/cookies" className="hover:text-amber-500 transition-colors">Cookie Policy</Link></li>
-              </ul>
-            </div>
-          </div>
           <div className="border-t border-border pt-6 text-center text-sm text-muted-foreground">
             <p>© 2026 Haulius. All rights reserved.</p>
           </div>

@@ -24,7 +24,7 @@ export function Signup() {
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {/* Carrier Card */}
             <Card className="border hover:border-amber-500 transition-all hover:shadow-2xl cursor-pointer group">
-              <Link to="/signup/carrier">
+              <Link to="/signup/carrier" className="flex flex-col h-full">
                 <CardHeader className="text-center pt-10">
                   <div className="size-20 bg-amber-100 dark:bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-5 group-hover:bg-amber-600 dark:group-hover:bg-amber-500 transition-colors">
                     <TruckIcon className="size-10 text-amber-600 dark:text-amber-500 group-hover:text-white dark:group-hover:text-slate-900 transition-colors" />
@@ -36,8 +36,8 @@ export function Signup() {
                     I transport vehicles and want to find loads
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="pb-10">
-                  <ul className="space-y-2.5 text-foreground text-sm">
+                <CardContent className="flex flex-col flex-1 pb-10">
+                  <ul className="space-y-2.5 text-foreground text-sm flex-1">
                     <li className="flex items-center gap-2">
                       <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
                       Browse available vehicle transport loads
@@ -64,7 +64,7 @@ export function Signup() {
 
             {/* Broker Card */}
             <Card className="border hover:border-amber-500 transition-all hover:shadow-2xl cursor-pointer group">
-              <Link to="/signup/broker">
+              <Link to="/signup/broker" className="flex flex-col h-full">
                 <CardHeader className="text-center pt-10">
                   <div className="size-20 bg-amber-100 dark:bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-5 group-hover:bg-amber-600 dark:group-hover:bg-amber-500 transition-colors">
                     <Building2 className="size-10 text-amber-600 dark:text-amber-500 group-hover:text-white dark:group-hover:text-slate-900 transition-colors" />
@@ -76,8 +76,8 @@ export function Signup() {
                     I ship vehicles and need to find carriers
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="pb-10">
-                  <ul className="space-y-2.5 text-foreground text-sm">
+                <CardContent className="flex flex-col flex-1 pb-10">
+                  <ul className="space-y-2.5 text-foreground text-sm flex-1">
                     <li className="flex items-center gap-2">
                       <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
                       Post vehicle transport loads
@@ -104,7 +104,7 @@ export function Signup() {
 
             {/* Dealer Card */}
             <Card className="border hover:border-amber-500 transition-all hover:shadow-2xl cursor-pointer group">
-              <Link to="/signup/dealer">
+              <Link to="/signup/dealer" className="flex flex-col h-full">
                 <CardHeader className="text-center pt-10">
                   <div className="size-20 bg-amber-100 dark:bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-5 group-hover:bg-amber-600 dark:group-hover:bg-amber-500 transition-colors">
                     <Store className="size-10 text-amber-600 dark:text-amber-500 group-hover:text-white dark:group-hover:text-slate-900 transition-colors" />
@@ -116,8 +116,8 @@ export function Signup() {
                     I'm a dealership that ships vehicles
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="pb-10">
-                  <ul className="space-y-2.5 text-foreground text-sm">
+                <CardContent className="flex flex-col flex-1 pb-10">
+                  <ul className="space-y-2.5 text-foreground text-sm flex-1">
                     <li className="flex items-center gap-2">
                       <div className="size-1.5 bg-amber-500 rounded-full flex-shrink-0"></div>
                       Post vehicle transport loads

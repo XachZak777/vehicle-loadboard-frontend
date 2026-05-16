@@ -4,53 +4,46 @@ import { toast } from 'sonner';
 import { useAppDispatch } from '../store/hooks';
 import { setCredentials } from '../store/slices/authSlice';
 import {
-  useValidateCarrierMutation,
-  useSaveCarrierFromValidationMutation,
+  useRegisterMutation,
   useUpdateCarrierProfileMutation,
   useUploadCarrierW9Mutation,
   useUploadCarrierInsuranceMutation,
   useUploadCarrierMcAuthorityMutation,
-  LookupResponse,
   PreferredLine,
 } from '../store/services/hauliusApi';
-import { UserProfile } from '../types/user';
 import { AuthNavbar } from '../components/AuthNavbar';
 import { PageWrapper, ContentWrapper } from '../styles/signup.styles';
 import {
-  isValidDotNumber, isValidMcNumber, isValidCompanyName, isValidInsuranceAmount,
-  isValidEIN, isValidSSN, isBusinessEmail, businessEmailError,
+  isValidMcNumber, isValidDotNumber, isValidCompanyName, isValidInsuranceAmount,
+  isBusinessEmail, businessEmailError, isValidEIN, isValidSSN,
   isStrongPassword, passwordRequirementsText, buildErrors, type FieldErrors,
 } from '../utils/validation';
 import { SignupStepIndicator } from '../components/signup/SignupStepIndicator';
-import { McVerifyStep } from '../components/signup/McVerifyStep';
+import { CompanyInfoStep } from '../components/signup/CompanyInfoStep';
 import { CarrierInfoStep } from '../components/signup/CarrierInfoStep';
 import { DocumentsUploadStep } from '../components/signup/DocumentsUploadStep';
 import { CreateAccountStep } from '../components/signup/CreateAccountStep';
 
-type SignupStep = 'mc-verify' | 'info' | 'documents' | 'create-account';
+type SignupStep = 'company-info' | 'info' | 'documents' | 'create-account';
 
 const STEPS = [
-  { id: 'mc-verify',      label: 'MC / DOT'       },
-  { id: 'info',           label: 'Information'    },
-  { id: 'documents',      label: 'Documents'      },
-  { id: 'create-account', label: 'Create Account' },
+  { id: 'company-info',    label: 'Company Info'   },
+  { id: 'info',            label: 'Information'    },
+  { id: 'documents',       label: 'Documents'      },
+  { id: 'create-account',  label: 'Create Account' },
 ] as const;
 
 export function CarrierSignup() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [validateCarrier] = useValidateCarrierMutation();
-  const [saveCarrier] = useSaveCarrierFromValidationMutation();
+  const [register] = useRegisterMutation();
   const [updateProfile] = useUpdateCarrierProfileMutation();
   const [uploadW9] = useUploadCarrierW9Mutation();
   const [uploadInsurance] = useUploadCarrierInsuranceMutation();
   const [uploadMcAuthority] = useUploadCarrierMcAuthorityMutation();
 
-  const [currentStep, setCurrentStep] = useState<SignupStep>('mc-verify');
+  const [currentStep, setCurrentStep] = useState<SignupStep>('company-info');
   const [isLoading, setIsLoading] = useState(false);
-  const [fmcsaVerified, setFmcsaVerified] = useState(false);
-  const [validationId, setValidationId] = useState<string | null>(null);
-  const [fmcsaData, setFmcsaData] = useState<LookupResponse | null>(null);
   const [w9File, setW9File] = useState<File | null>(null);
   const [insuranceFile, setInsuranceFile] = useState<File | null>(null);
   const [mcAuthorityFile, setMcAuthorityFile] = useState<File | null>(null);
@@ -59,11 +52,10 @@ export function CarrierSignup() {
 
   const [formData, setFormData] = useState({
     email: '', password: '', confirmPassword: '',
-    companyName: '', dotNumber: '', mcNumber: '', phoneNumber: '',
+    companyName: '', dbaName: '', dotNumber: '', mcNumber: '', phoneNumber: '',
     insuranceCompany: '', cargoInsurance: '', liabilityInsurance: '',
     taxIdType: 'EIN' as 'SSN' | 'EIN',
     taxId: '', mailingAddress: '', city: '', state: '', zipCode: '',
-    carrierOperation: '', dbaName: '',
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -71,43 +63,17 @@ export function CarrierSignup() {
     if (fieldErrors[field]) setFieldErrors(prev => { const e = { ...prev }; delete e[field]; return e; });
   };
 
-  const handleCarrierVerification = async () => {
+  const handleCompanyInfoSubmit = () => {
     const errs = buildErrors([
+      [!formData.companyName.trim(), 'companyName', 'Company name is required.'],
+      [!!formData.companyName.trim() && !isValidCompanyName(formData.companyName), 'companyName', 'Company name must be 2–100 characters.'],
       [!formData.mcNumber.trim(), 'mcNumber', 'MC number is required.'],
       [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
       [!!formData.dotNumber.trim() && !isValidDotNumber(formData.dotNumber), 'dotNumber', 'DOT number must be 1–8 digits with no letters.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
-    setIsLoading(true);
-    try {
-      const lookupType = formData.mcNumber.trim() ? 'MC' : 'DOT';
-      const lookupValue = lookupType === 'MC' ? formData.mcNumber.trim() : formData.dotNumber.trim();
-      const result = await validateCarrier({ lookupValue, lookupType }).unwrap();
-      setValidationId(result.validationId);
-      setFmcsaData(result);
-      setFmcsaVerified(true);
-      setFormData(prev => ({
-        ...prev,
-        companyName: result.legalName || prev.companyName,
-        dbaName: result.dbaName || '',
-        dotNumber: result.dotNumber || prev.dotNumber,
-        mcNumber: result.mcNumber || prev.mcNumber,
-        phoneNumber: result.phone || prev.phoneNumber,
-        mailingAddress: result.phyStreet || prev.mailingAddress,
-        city: result.phyCity || prev.city,
-        state: result.phyState || prev.state,
-        zipCode: result.phyZip || prev.zipCode,
-        carrierOperation: result.carrierOperation?.join(', ') || '',
-      }));
-      toast.success('Carrier verification successful!');
-    } catch (error: any) {
-      const msg = error?.data?.message || error?.message || 'Verification failed. Please check your DOT/MC number and try again.';
-      toast.error(msg);
-      setFmcsaVerified(false);
-    } finally {
-      setIsLoading(false);
-    }
+    setCurrentStep('info');
   };
 
   const handleInfoSubmit = () => {
@@ -163,21 +129,11 @@ export function CarrierSignup() {
     setFieldErrors({});
     setIsLoading(true);
     try {
-      if (!validationId) { toast.error('Carrier verification is required before creating your account.'); return; }
-      const res = await saveCarrier({ validationId, email: formData.email.trim(), password: formData.password }).unwrap();
-      const userProfile: UserProfile = {
-        id: res.userId, role: 'carrier', email: res.email,
-        phoneNumber: formData.phoneNumber, phoneVerified: false,
-        companyName: formData.companyName, mcNumber: formData.mcNumber, dotNumber: formData.dotNumber,
-        insuranceCompany: formData.insuranceCompany,
-        cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : 0,
-        liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : 0,
-        w9Document: w9File?.name, taxId: formData.taxId, taxIdType: formData.taxIdType,
-        fmcsaVerified: true, verificationDate: new Date().toISOString(),
-        mailingAddress: formData.mailingAddress, city: formData.city,
-        state: formData.state, zipCode: formData.zipCode, createdAt: new Date().toISOString(),
-      };
-      dispatch(setCredentials({ user: userProfile, token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved }));
+      const res = await register({ email: formData.email.trim(), password: formData.password, role: 'CARRIER' }).unwrap();
+      dispatch(setCredentials({
+        user: { id: res.userId, role: 'carrier', email: res.email, createdAt: new Date().toISOString() },
+        token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved,
+      }));
 
       try {
         await updateProfile({
@@ -185,8 +141,9 @@ export function CarrierSignup() {
           phoneNumber: formData.phoneNumber, insuranceCompany: formData.insuranceCompany,
           cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : undefined,
           liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : undefined,
-          taxIdType: formData.taxIdType, taxId: formData.taxId, mailingAddress: formData.mailingAddress,
-          city: formData.city, state: formData.state, zipCode: formData.zipCode,
+          taxIdType: formData.taxIdType, taxId: formData.taxId,
+          mailingAddress: formData.mailingAddress, city: formData.city,
+          state: formData.state, zipCode: formData.zipCode,
           preferredLines: preferredLines.length > 0 ? JSON.stringify(preferredLines) : undefined,
         }).unwrap();
       } catch { toast.warning('Profile data will be saved once your email is verified.'); }
@@ -219,18 +176,18 @@ export function CarrierSignup() {
       <ContentWrapper>
         <SignupStepIndicator steps={STEPS} currentIndex={currentIndex} />
 
-        {currentStep === 'mc-verify' && (
-          <McVerifyStep
+        {currentStep === 'company-info' && (
+          <CompanyInfoStep
             role="carrier"
-            formData={formData}
-            fmcsaVerified={fmcsaVerified}
-            fmcsaData={fmcsaData}
-            isLoading={isLoading}
+            formData={{
+              companyName: formData.companyName, dbaName: formData.dbaName,
+              mcNumber: formData.mcNumber, dotNumber: formData.dotNumber,
+              phoneNumber: formData.phoneNumber, mailingAddress: formData.mailingAddress,
+              city: formData.city, state: formData.state, zipCode: formData.zipCode,
+            }}
             fieldErrors={fieldErrors}
             onChange={handleInputChange}
-            onVerify={handleCarrierVerification}
-            onContinue={() => setCurrentStep('info')}
-            onBack={() => { setFmcsaVerified(false); setFmcsaData(null); setValidationId(null); setFieldErrors({}); }}
+            onSubmit={handleCompanyInfoSubmit}
           />
         )}
 
@@ -248,7 +205,7 @@ export function CarrierSignup() {
             onChange={handleInputChange}
             onPreferredLinesChange={setPreferredLines}
             onSubmit={handleInfoSubmit}
-            onBack={() => setCurrentStep('mc-verify')}
+            onBack={() => setCurrentStep('company-info')}
           />
         )}
 
@@ -269,7 +226,10 @@ export function CarrierSignup() {
         {currentStep === 'create-account' && (
           <CreateAccountStep
             role="carrier"
-            formData={{ email: formData.email, password: formData.password, confirmPassword: formData.confirmPassword, companyName: formData.companyName, mcNumber: formData.mcNumber, dotNumber: formData.dotNumber }}
+            formData={{
+              email: formData.email, password: formData.password, confirmPassword: formData.confirmPassword,
+              companyName: formData.companyName, mcNumber: formData.mcNumber, dotNumber: formData.dotNumber,
+            }}
             fieldErrors={fieldErrors}
             onChange={handleInputChange}
             isLoading={isLoading}
