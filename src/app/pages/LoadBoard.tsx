@@ -587,6 +587,8 @@ const LoadCard = memo(function LoadCard({
   const dropLoc = [load.dropCity, load.dropState].filter(Boolean).join(', ');
   const pickupLocFull = [pickupLoc, load.pickupZip].filter(Boolean).join(' ');
   const dropLocFull = [dropLoc, load.dropZip].filter(Boolean).join(' ');
+  const pickupExact = isBooked ? [load.pickupStreet, pickupLocFull].filter(Boolean).join(', ') : null;
+  const dropExact = isBooked ? [load.dropStreet, dropLocFull].filter(Boolean).join(', ') : null;
 
   const openBidForm = (editMode: boolean) => {
     setIsEditMode(editMode);
@@ -691,7 +693,9 @@ const LoadCard = memo(function LoadCard({
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
                   <MapPin className="size-3.5 text-amber-500 flex-shrink-0" />
-                  {isCarrier && !isBooked && load.pickupCity ? (
+                  {pickupExact ? (
+                    <span className="text-sm text-muted-foreground truncate">{pickupExact}</span>
+                  ) : load.pickupCity ? (
                     <button
                       onClick={e => { e.stopPropagation(); setCityMap({ city: load.pickupCity!, state: load.pickupState!, label: `Pickup — ${pickupLoc}` }); }}
                       className="text-sm text-muted-foreground truncate hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left"
@@ -699,7 +703,7 @@ const LoadCard = memo(function LoadCard({
                       {pickupLocFull || '—'}
                     </button>
                   ) : (
-                    <span className="text-sm text-muted-foreground truncate">{pickupLocFull || '—'}</span>
+                    <span className="text-sm text-muted-foreground truncate">—</span>
                   )}
                 </div>
                 {pickupDateStr && <p className="text-xs text-muted-foreground pl-4">{pickupDateStr}</p>}
@@ -708,7 +712,9 @@ const LoadCard = memo(function LoadCard({
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
                   <MapPin className="size-3.5 text-amber-500 flex-shrink-0" />
-                  {isCarrier && !isBooked && load.dropCity ? (
+                  {dropExact ? (
+                    <span className="text-sm text-muted-foreground truncate">{dropExact}</span>
+                  ) : load.dropCity ? (
                     <button
                       onClick={e => { e.stopPropagation(); setCityMap({ city: load.dropCity!, state: load.dropState!, label: `Delivery — ${dropLoc}` }); }}
                       className="text-sm text-muted-foreground truncate hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left"
@@ -716,7 +722,7 @@ const LoadCard = memo(function LoadCard({
                       {dropLocFull || '—'}
                     </button>
                   ) : (
-                    <span className="text-sm text-muted-foreground truncate">{dropLocFull || '—'}</span>
+                    <span className="text-sm text-muted-foreground truncate">—</span>
                   )}
                 </div>
                 {deliveryDateStr && <p className="text-xs text-muted-foreground pl-4">{deliveryDateStr}</p>}

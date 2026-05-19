@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MapPin, X, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 
@@ -41,7 +42,7 @@ export function CityMapModal({ city, state, label, onClose }: Props) {
     });
   }, [city, state]);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-card rounded-xl shadow-2xl w-full max-w-lg overflow-hidden" onClick={e => e.stopPropagation()}>
         {/* Header */}
@@ -87,6 +88,7 @@ export function CityMapModal({ city, state, label, onClose }: Props) {
           </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
