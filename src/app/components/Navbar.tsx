@@ -4,12 +4,12 @@ import { useAppSelector } from '../store/hooks';
 import { useGetMyBrokerProfileQuery, useGetMyCarrierProfileQuery } from '../store/services/hauliusApi';
 import { useLogout } from '../hooks/useLogout';
 import { Button } from './ui/button';
+import { BrandLogo } from './BrandLogo';
 import {
   LayoutDashboard, Building2, LogOut, Plus, FileText,
   Star, Settings, ChevronDown, Menu, X, Search, History, Truck, Package,
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
-import { APP_NAME } from '../constants';
 import { useInactivityLogout } from '../hooks/useInactivityLogout';
 import { colors } from '../styles/colors';
 import {
@@ -72,8 +72,11 @@ export function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
-          <Link to="/loads" className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity">
-            <span className="text-xl font-bold hidden lg:inline text-foreground">{APP_NAME}</span>
+          <Link to="/loads" className="flex-shrink-0 hover:opacity-80 transition-opacity">
+            <BrandLogo
+              alt="Haulius"
+              className="h-18 w-auto max-w-[44vw] lg:max-w-none object-contain"
+            />
           </Link>
 
           {/* Desktop Nav */}

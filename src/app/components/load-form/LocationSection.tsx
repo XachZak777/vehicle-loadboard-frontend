@@ -6,7 +6,7 @@ import { PhoneInput } from '../ui/PhoneInput';
 import { US_STATES } from '../../constants';
 import { sanitizeDigits, type FieldErrors } from '../../utils/validation';
 
-const LOCATION_TYPES = ['BUSINESS', 'RESIDENCE', 'AUCTION', 'PORT', 'OTHER'] as const;
+const LOCATION_TYPES = ['BUSINESS', 'RESIDENCE', 'AUCTION', 'PORT', 'DEALER', 'OTHER'] as const;
 
 type Prefix = 'pickup' | 'drop';
 
@@ -101,6 +101,7 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
               id={dateField}
               type="date"
               value={formData.date}
+              min={new Date().toISOString().split('T')[0]}
               onChange={(e) => onChange(dateField, e.target.value)}
               aria-invalid={!!fieldErrors[dateField]}
             />

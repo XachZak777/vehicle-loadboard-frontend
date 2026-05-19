@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
+import { BrandLogo } from './BrandLogo';
 import { Button } from './ui/button';
 import { ThemeToggle } from './ThemeToggle';
-import { APP_NAME } from '../constants';
 import { colors } from '../styles/colors';
 
 interface AuthNavbarProps {
@@ -19,13 +19,11 @@ export function AuthNavbar({ subtitle, showLogin, showSignup }: AuthNavbarProps)
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div>
-              <span className="text-lg font-bold">{APP_NAME}</span>
-              {subtitle && (
-                <p className="text-xs text-muted-foreground">{subtitle}</p>
-              )}
-            </div>
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <BrandLogo className="h-8 w-auto" />
+            {subtitle && (
+              <span className="text-xs text-muted-foreground">{subtitle}</span>
+            )}
           </Link>
 
           {/* Right-side actions */}

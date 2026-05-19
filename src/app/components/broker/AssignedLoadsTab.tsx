@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Truck, MapPin, DollarSign, X, Star, CheckCircle, ArrowRight } from 'lucide-react';
+import { Truck, MapPin, DollarSign, X, Star, CheckCircle, ArrowRight, Eye } from 'lucide-react';
 import { CarrierInfoInline } from './CarrierInfoInline';
 import { RateModal } from '../RateModal';
 import { useGetCarrierPublicInfoQuery, useGetMySubmittedLoadIdsQuery } from '../../store/services/hauliusApi';
@@ -87,11 +88,16 @@ function AssignedLoadCard({
         })()}
         {load.price != null && (
           <div className="flex items-center gap-2 text-sm">
-            <DollarSign className="w-4 h-4 text-muted-foreground" />
             <span className={`font-bold ${colors.accentTextStrong} dark:${colors.accentText}`}>${load.price.toLocaleString()}</span>
           </div>
         )}
         <div className="pt-2 flex items-center gap-2 flex-wrap">
+          <Link to={`/load/${load.id}`}>
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <Eye className="size-3.5" />
+              View Load
+            </Button>
+          </Link>
           {(load.status === 'ASSIGNED' || load.status === 'PICKED_UP') && (
             <Button
               variant="destructive"

@@ -12,6 +12,7 @@ export type AuthResponse = {
   email: string;
   role: string;
   adminApproved: boolean;
+  companyName?: string;
 };
 
 export type LoginPendingResponse = {
@@ -371,8 +372,10 @@ export type CarrierBidWithLoadDto = {
   vehicleYear?: number;
   pickupCity?: string;
   pickupState?: string;
+  pickupZip?: string;
   dropCity?: string;
   dropState?: string;
+  dropZip?: string;
   price?: number;
   loadCreatedAt?: string;
   pickupDate?: string;
@@ -408,6 +411,20 @@ export type BrokerProfile = {
   bondAgentLastName?: string;
   bondAgentEmail?: string;
   bondAgentPhone?: string;
+};
+
+export type DealerProfile = {
+  companyName?: string;
+  ownerFirstName?: string;
+  ownerLastName?: string;
+  businessPhone?: string;
+  companyAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  yearEstablished?: string;
+  dealerLicenseNumber?: string;
+  auctionAccessNumber?: string;
 };
 
 export type CarrierProfile = {
@@ -512,6 +529,45 @@ export type AdminDocumentDto = {
   uploadedAt: string;
 };
 
+export type AdminCarrierProfilePayload = {
+  companyName?: string;
+  dbaName?: string;
+  dotNumber?: string;
+  mcNumber?: string;
+  phoneNumber?: string;
+  insuranceCompany?: string;
+  cargoInsurance?: number;
+  liabilityInsurance?: number;
+  taxIdType?: string;
+  taxId?: string;
+  mailingAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  preferredLines?: string;
+};
+
+export type AdminBrokerProfilePayload = {
+  companyName?: string;
+  dotNumber?: string;
+  mcNumber?: string;
+  phoneNumber?: string;
+  taxIdType?: string;
+  taxId?: string;
+  mailingAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  bondCompany?: string;
+  bondPolicyNumber?: string;
+  bondCoverage?: string;
+  bondEffectiveDate?: string;
+  bondAgentFirstName?: string;
+  bondAgentLastName?: string;
+  bondAgentEmail?: string;
+  bondAgentPhone?: string;
+};
+
 export type AdminUserDto = {
   userId: string;
   email: string;
@@ -551,6 +607,13 @@ export type AdminUserDto = {
   bondAgentLastName?: string;
   bondAgentEmail?: string;
   bondAgentPhone?: string;
+  // Dealer-only fields
+  ownerFirstName?: string;
+  ownerLastName?: string;
+  yearEstablished?: string;
+  dealerLicenseNumber?: string;
+  auctionAccessNumber?: string;
+  howDidYouHear?: string;
   documents: AdminDocumentDto[];
 };
 
@@ -579,7 +642,7 @@ const baseQueryWith401Intercept: BaseQueryFn<string | FetchArgs, unknown, FetchB
 export const hauliusApi = createApi({
   reducerPath: 'hauliusApi',
   baseQuery: baseQueryWith401Intercept,
-  tagTypes: ['Load', 'Bid', 'Profile', 'Rating'],
+  tagTypes: ['Load', 'Bid', 'Profile', 'Rating', 'Document'],
   endpoints: (builder) => ({
     // ── Auth ──────────────────────────────────────────────────────────────
     register: builder.mutation<
@@ -843,6 +906,41 @@ export const hauliusApi = createApi({
       query: (id) => ({ url: `/api/admin/brokers/${id}`, method: 'DELETE' }),
       invalidatesTags: ['Profile'],
     }),
+    adminUpdateCarrierProfile: builder.mutation<{ message: string }, { id: string; body: AdminCarrierProfilePayload }>({
+      query: ({ id, body }) => ({ url: `/api/admin/carriers/${id}/profile`, method: 'PATCH', body }),
+      invalidatesTags: ['Profile'],
+    }),
+    adminUpdateBrokerProfile: builder.mutation<{ message: string }, { id: string; body: AdminBrokerProfilePayload }>({
+      query: ({ id, body }) => ({ url: `/api/admin/brokers/${id}/profile`, method: 'PATCH', body }),
+      invalidatesTags: ['Profile'],
+    }),
+    adminUploadCarrierDocument: builder.mutation<DocumentUploadResponse, { carrierId: string; type: 'w9' | 'insurance' | 'mc-authority'; file: FormData }>({
+      query: ({ carrierId, type, file }) => ({
+        url: `/api/admin/carriers/${carrierId}/documents/${type}`,
+        method: 'POST',
+        body: file,
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
+    adminUploadBrokerDocument: builder.mutation<DocumentUploadResponse, { brokerId: string; type: 'w9' | 'mc-authority'; file: FormData }>({
+      query: ({ brokerId, type, file }) => ({
+        url: `/api/admin/brokers/${brokerId}/documents/${type}`,
+        method: 'POST',
+        body: file,
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
+    adminUploadDealerDocument: builder.mutation<DocumentUploadResponse, { dealerId: string; type: 'dealer-license' | 'corporate-paperwork'; file: FormData }>({
+      query: ({ dealerId, type, file }) => ({
+        url: `/api/admin/dealers/${dealerId}/documents/${type}`,
+        method: 'POST',
+        body: file,
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
 
     // ── Profiles ──────────────────────────────────────────────────────────
     getMe: builder.query<MeResponse, void>({
@@ -855,6 +953,10 @@ export const hauliusApi = createApi({
     }),
     getMyCarrierProfile: builder.query<CarrierProfile, void>({
       query: () => '/api/carriers/me',
+      providesTags: ['Profile'],
+    }),
+    getMyDealerProfile: builder.query<DealerProfile, void>({
+      query: () => '/api/dealers/me',
       providesTags: ['Profile'],
     }),
     getCarrierPublicInfo: builder.query<CarrierPublicInfo, string>({
@@ -902,7 +1004,7 @@ export const hauliusApi = createApi({
         // Do NOT set Content-Type — browser sets multipart boundary automatically
         formData: true,
       }),
-      invalidatesTags: ['Profile'],
+      invalidatesTags: ['Profile', 'Document'],
     }),
     uploadDealerLicense: builder.mutation<DocumentUploadResponse, FormData>({
       query: (body) => ({
@@ -930,7 +1032,7 @@ export const hauliusApi = createApi({
           body,
           formData: true,
         }),
-        invalidatesTags: ['Profile'],
+        invalidatesTags: ['Profile', 'Document'],
       },
     ),
     uploadCarrierW9: builder.mutation<DocumentUploadResponse, FormData>({
@@ -940,7 +1042,7 @@ export const hauliusApi = createApi({
         body,
         formData: true,
       }),
-      invalidatesTags: ['Profile'],
+      invalidatesTags: ['Profile', 'Document'],
     }),
     uploadCarrierInsurance: builder.mutation<DocumentUploadResponse, FormData>({
       query: (body) => ({
@@ -949,7 +1051,7 @@ export const hauliusApi = createApi({
         body,
         formData: true,
       }),
-      invalidatesTags: ['Profile'],
+      invalidatesTags: ['Profile', 'Document'],
     }),
     uploadCarrierMcAuthority: builder.mutation<
       DocumentUploadResponse,
@@ -961,7 +1063,31 @@ export const hauliusApi = createApi({
         body,
         formData: true,
       }),
-      invalidatesTags: ['Profile'],
+      invalidatesTags: ['Profile', 'Document'],
+    }),
+
+    // ── Document management ───────────────────────────────────────────────
+    getMyBrokerDocuments: builder.query<AdminDocumentDto[], void>({
+      query: () => '/api/brokers/documents',
+      providesTags: ['Document'],
+    }),
+    getMyCarrierDocuments: builder.query<AdminDocumentDto[], void>({
+      query: () => '/api/carriers/documents',
+      providesTags: ['Document'],
+    }),
+    deleteBrokerDocument: builder.mutation<void, string>({
+      query: (documentId) => ({
+        url: `/api/brokers/documents/${documentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Document'],
+    }),
+    deleteCarrierDocument: builder.mutation<void, string>({
+      query: (documentId) => ({
+        url: `/api/carriers/documents/${documentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Document'],
     }),
 
     // ── Ratings ───────────────────────────────────────────────────────────
@@ -1001,6 +1127,7 @@ export const {
   useRequestLoginCodeMutation,
   useVerifyLoginCodeMutation,
   useGetMeQuery,
+  useLazyGetMeQuery,
   useLazyVinLookupQuery,
   useGetLoadsQuery,
   useGetMyBrokerLoadsQuery,
@@ -1020,6 +1147,7 @@ export const {
   useUpdateLoadStatusMutation,
   useGetMyBrokerProfileQuery,
   useGetMyCarrierProfileQuery,
+  useGetMyDealerProfileQuery,
   useGetCarrierPublicInfoQuery,
   useSearchCarriersQuery,
   useLazySearchCarriersQuery,
@@ -1051,8 +1179,17 @@ export const {
   useDeclineBrokerMutation,
   useRevokeBrokerMutation,
   useDeleteAdminBrokerMutation,
+  useAdminUpdateCarrierProfileMutation,
+  useAdminUpdateBrokerProfileMutation,
+  useAdminUploadCarrierDocumentMutation,
+  useAdminUploadBrokerDocumentMutation,
+  useAdminUploadDealerDocumentMutation,
   useGetMyRatingsQuery,
   useGetCompanyRatingsQuery,
   useSubmitRatingMutation,
   useGetMySubmittedLoadIdsQuery,
+  useGetMyBrokerDocumentsQuery,
+  useGetMyCarrierDocumentsQuery,
+  useDeleteBrokerDocumentMutation,
+  useDeleteCarrierDocumentMutation,
 } = hauliusApi;

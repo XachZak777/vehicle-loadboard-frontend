@@ -2,12 +2,13 @@ import { Link, useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { MapPin, DollarSign, Shield, Clock, Users, CheckCircle, ArrowRight, Menu, X, Truck } from 'lucide-react';
+import { MapPin, DollarSign, Shield, Clock, Users, CheckCircle, ArrowRight, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { BrandLogo } from '../components/BrandLogo';
 import { mockLoads } from '../data/mockLoads';
-import { APP_NAME, APP_TAGLINE } from '../constants';
+import { APP_NAME } from '../constants';
 
 export function Welcome() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -55,11 +56,8 @@ export function Welcome() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div>
-                <h1 className="text-lg font-bold">{APP_NAME}</h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">{APP_TAGLINE}</p>
-              </div>
+            <div className="flex items-center gap-2">
+              <BrandLogo className="h-8 w-auto" />
             </div>
 
             {/* Desktop Navigation */}
@@ -311,10 +309,7 @@ export function Welcome() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="bg-amber-500 p-1.5 rounded-lg">
-                  <Truck className="size-5 text-white" />
-                </div>
-                <span className="text-base font-bold">{APP_NAME}</span>
+                <BrandLogo className="h-7 w-auto" />
               </div>
               <p className="text-sm text-muted-foreground">
                 Professional vehicle transport marketplace connecting carriers and brokers nationwide.

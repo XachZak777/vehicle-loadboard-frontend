@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../co
 import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star, SlidersHorizontal, X } from 'lucide-react';
 import { formatPhone } from '../utils/phone';
 import { MapBackground } from '../components/MapBackground';
+import { CityMapModal } from '../components/CityMapModal';
 
 const VEHICLE_TYPES = ['All Types', 'Sedan', 'SUV', 'Truck', 'Van', 'Motorcycle', 'RV', 'Boat', 'ATV'];
 const TRAILER_TYPES = ['All Types', 'Open Trailer', 'Enclosed Trailer'];
@@ -181,7 +182,12 @@ export function LoadBoard() {
 
       if (condition !== 'All Conditions') {
         const cond = condition === 'Running' ? 'running' : 'non-running';
-        if ((load.vehicleCondition ?? '').toLowerCase() !== cond) return false;
+        const allVehicleConditions = [
+          load.vehicleCondition,
+          ...(load.additionalVehicles ?? []).map(v => v.vehicleCondition),
+        ];
+        const anyMatch = allVehicleConditions.some(c => (c ?? '').toLowerCase() === cond);
+        if (!anyMatch) return false;
       }
 
       if (minPrice && load.price != null) {
@@ -536,13 +542,16 @@ const LoadCard = memo(function LoadCard({
   myCarrierId?: string;
   existingBid?: CarrierBidWithLoadDto;
 }) {
+  const navigate = useNavigate();
   const user = useAppSelector(s => s.auth.user);
   const isCarrier = user?.role === 'carrier';
   const [placeBid, { isLoading: isBidding }] = usePlaceBidMutation();
   const [updateBid, { isLoading: isUpdating }] = useUpdateBidMutation();
 
   const isAssigned = !!myCarrierId && load.assignedCarrierId === myCarrierId;
+  const isBooked = !!load.status && load.status !== 'OPEN';
   const hasPendingBid = existingBid?.bidStatus === 'PENDING';
+  const [cityMap, setCityMap] = useState<{ city: string; state: string; label: string } | null>(null);
 
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'vehicle'>('general');
@@ -648,7 +657,7 @@ const LoadCard = memo(function LoadCard({
   };
 
   return (
-    <div className="border-2 border-gray-200 dark:border-gray-700 bg-card hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 overflow-hidden rounded-xl">
+    <div className="border-2 border-gray-200 dark:border-gray-700 bg-card hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 overflow-hidden rounded-none">
       <div
         className="p-4 cursor-pointer select-none"
         onClick={() => setExpanded(v => !v)}
@@ -668,6 +677,17 @@ const LoadCard = memo(function LoadCard({
                   {vehicleCount} Vehicles
                 </span>
               )}
+              {load.trailerType && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                  {load.trailerType === 'enclosed' ? 'Enclosed Trailer' : load.trailerType === 'open' ? 'Open Trailer' : load.trailerType.charAt(0).toUpperCase() + load.trailerType.slice(1)}
+                </span>
+              )}
+              {hasPendingBid && (
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+                  <CheckCircle className="size-3" />
+                  Requested
+                </span>
+              )}
               {allConditions.map((c, i) => <ConditionIcon key={i} condition={c} />)}
             </div>
 
@@ -679,9 +699,16 @@ const LoadCard = memo(function LoadCard({
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
                   <MapPin className="size-3.5 text-amber-500 flex-shrink-0" />
-                  <span className="text-sm text-muted-foreground truncate">
-                    {(expanded ? pickupLocFull : pickupLoc) || '—'}
-                  </span>
+                  {isCarrier && !isBooked && load.pickupCity ? (
+                    <button
+                      onClick={e => { e.stopPropagation(); setCityMap({ city: load.pickupCity!, state: load.pickupState!, label: `Pickup — ${pickupLoc}` }); }}
+                      className="text-sm text-muted-foreground truncate hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left"
+                    >
+                      {pickupLocFull || '—'}
+                    </button>
+                  ) : (
+                    <span className="text-sm text-muted-foreground truncate">{pickupLocFull || '—'}</span>
+                  )}
                 </div>
                 {pickupDateStr && <p className="text-xs text-muted-foreground pl-4">{pickupDateStr}</p>}
               </div>
@@ -689,13 +716,28 @@ const LoadCard = memo(function LoadCard({
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
                   <MapPin className="size-3.5 text-amber-500 flex-shrink-0" />
-                  <span className="text-sm text-muted-foreground truncate">
-                    {(expanded ? dropLocFull : dropLoc) || '—'}
-                  </span>
+                  {isCarrier && !isBooked && load.dropCity ? (
+                    <button
+                      onClick={e => { e.stopPropagation(); setCityMap({ city: load.dropCity!, state: load.dropState!, label: `Delivery — ${dropLoc}` }); }}
+                      className="text-sm text-muted-foreground truncate hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left"
+                    >
+                      {dropLocFull || '—'}
+                    </button>
+                  ) : (
+                    <span className="text-sm text-muted-foreground truncate">{dropLocFull || '—'}</span>
+                  )}
                 </div>
                 {deliveryDateStr && <p className="text-xs text-muted-foreground pl-4">{deliveryDateStr}</p>}
               </div>
             </div>
+            {cityMap && (
+              <CityMapModal
+                city={cityMap.city}
+                state={cityMap.state}
+                label={cityMap.label}
+                onClose={() => setCityMap(null)}
+              />
+            )}
           </div>
 
           <div className="flex-shrink-0 text-right">
@@ -740,6 +782,18 @@ const LoadCard = memo(function LoadCard({
 
           {activeTab === 'general' && (
             <div className="p-5 space-y-6">
+              {isAssigned && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Pickup & Delivery Address</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <InfoField label="Pickup"
+                      value={[load.pickupStreet, load.pickupCity, load.pickupState, load.pickupZip].filter(Boolean).join(', ') || '—'} />
+                    <InfoField label="Delivery"
+                      value={[load.dropStreet, load.dropCity, load.dropState, load.dropZip].filter(Boolean).join(', ') || '—'} />
+                  </div>
+                </div>
+              )}
+
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Broker Contact</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -778,11 +832,20 @@ const LoadCard = memo(function LoadCard({
                 </Button>
               )}
 
-              {isCarrier && !showBidForm && hasPendingBid && (
-                <Button size="sm" variant="outline" onClick={() => openBidForm(true)}
-                  className="border-amber-500 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 text-xs">
-                  Edit My Bid
-                </Button>
+              {isCarrier && hasPendingBid && (
+                <div className="flex items-center justify-between gap-3 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="size-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                    <span className="text-xs text-green-700 dark:text-green-400 font-medium">
+                      You've already requested this load
+                    </span>
+                  </div>
+                  <Button size="sm" variant="outline"
+                    onClick={() => navigate('/carrier/requested')}
+                    className="text-xs border-green-500 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/20 flex-shrink-0 whitespace-nowrap">
+                    My Bids →
+                  </Button>
+                </div>
               )}
 
               {isCarrier && showBidForm && (
@@ -881,7 +944,7 @@ function VehicleRow({ index, year, make, model, type, condition, vin }: {
   const condLabel = condition ? (isRunning ? 'Running' : 'Non-Running') : null;
   const condColor = isRunning
     ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-    : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
 
   return (
     <div className="flex items-start gap-3">

@@ -63,7 +63,7 @@ function fmtDate(d?: string | null) {
 function tagBarColor(pct: number) {
   if (pct >= 80) return 'bg-amber-500';
   if (pct >= 50) return 'bg-amber-400';
-  return 'bg-gray-500';
+  return 'bg-amber-300';
 }
 
 export function MyRatings() {
@@ -142,11 +142,7 @@ export function MyRatings() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {tagStats.map((stat) => {
                   const pct = stat.total > 0 ? Math.round((stat.count / stat.total) * 100) : 0;
-                  const cfg = stat.tag === 'communication'
-                    ? { border: 'border-2 border-amber-300 dark:border-amber-700', bg: 'bg-amber-50/20 dark:bg-amber-950/10', badgeCls: 'bg-amber-500 border-2 border-amber-600', valueCls: 'text-amber-600 dark:text-amber-500' }
-                    : stat.tag === 'payment'
-                      ? { border: 'border-2 border-amber-300 dark:border-amber-700', bg: 'bg-amber-50/20 dark:bg-amber-950/10', badgeCls: 'bg-amber-500 border-2 border-amber-600', valueCls: 'text-amber-600 dark:text-amber-500' }
-                      : { border: 'border-2 border-gray-300 dark:border-gray-700', bg: 'bg-gray-50/20 dark:bg-gray-950/10', badgeCls: 'bg-gray-500 border-2 border-gray-600', valueCls: 'text-gray-600 dark:text-gray-400' };
+                  const cfg = { border: 'border-2 border-amber-300 dark:border-amber-700', bg: 'bg-amber-50/20 dark:bg-amber-950/10', badgeCls: 'bg-amber-500 border-2 border-amber-600', valueCls: 'text-amber-600 dark:text-amber-500' };
                   const barColor = tagBarColor(pct);
                   return (
                     <div key={stat.tag} className={`p-5 ${cfg.border} ${cfg.bg}`}>

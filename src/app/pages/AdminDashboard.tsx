@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { UserDetailDialog } from '../components/admin/UserDetailDialog';
 import { DeleteConfirmDialog } from '../components/admin/DeleteConfirmDialog';
 import { UserRow } from '../components/admin/UserRow';
+import { MapBackground } from '../components/MapBackground';
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -161,7 +162,8 @@ export function AdminDashboard() {
     );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-8">

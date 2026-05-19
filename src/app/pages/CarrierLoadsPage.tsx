@@ -15,6 +15,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { RateModal } from '../components/RateModal';
+import { CityMapModal } from '../components/CityMapModal';
 import { MapBackground } from '../components/MapBackground';
 import {
   MapPin, DollarSign, Clock, CheckCircle, Loader2, Package,
@@ -45,6 +46,13 @@ const PAGE_CONFIGS: Record<string, PageConfig> = {
     filter: b => b.bidStatus === 'PENDING',
     emptyMsg: "You haven't requested any loads yet.",
     emptyIcon: <FileText className="size-12 mx-auto mb-4 text-muted-foreground opacity-50" />,
+  },
+  '/carrier/completed': {
+    title: 'Completed Loads',
+    description: 'Delivered loads and payment history',
+    filter: b => b.bidStatus === 'APPROVED' && COMPLETED_STATUSES.has(b.loadStatus ?? ''),
+    emptyMsg: "You don't have any completed loads yet.",
+    emptyIcon: <CheckCircle className="size-12 mx-auto mb-4 text-muted-foreground opacity-50" />,
   },
   '/carrier/offers': {
     title: 'Offers',
@@ -79,6 +87,7 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
   const [updateLoadStatus, { isLoading: isStatusUpdating }] = useUpdateLoadStatusMutation();
   const [showEdit, setShowEdit] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
+  const [cityMap, setCityMap] = useState<{ city: string; state: string; label: string } | null>(null);
   const [ratingSubmittedLocal, setRatingSubmittedLocal] = useState(false);
   const [editAmount, setEditAmount] = useState('');
   const [editPickupDate, setEditPickupDate] = useState('');
@@ -170,8 +179,8 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
           isApproved ? (
             /* Amber gradient route for approved — AssignedLoads design */
             (() => {
-              const pickupQ = [bid.pickupCity, bid.pickupState].filter(Boolean).join(', ');
-              const dropQ = [bid.dropCity, bid.dropState].filter(Boolean).join(', ');
+              const pickupQ = [bid.pickupCity, bid.pickupState, bid.pickupZip].filter(Boolean).join(', ');
+              const dropQ = [bid.dropCity, bid.dropState, bid.dropZip].filter(Boolean).join(', ');
               const pickupUrl = pickupQ ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pickupQ + ', USA')}` : null;
               const dropUrl = dropQ ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dropQ + ', USA')}` : null;
               return (
@@ -227,14 +236,21 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
               );
             })()
           ) : (
-            /* Gray route for pending/rejected — RequestedLoads design */
+            /* Gray route for pending/rejected — clickable city map */
             <div className="p-3 bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600">
               <div className="flex items-center gap-2">
                 <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                    {[bid.pickupCity, bid.pickupState].filter(Boolean).join(', ')}
-                  </span>
+                  {bid.pickupCity ? (
+                    <button
+                      onClick={() => setCityMap({ city: bid.pickupCity!, state: bid.pickupState ?? '', label: `Pickup — ${[bid.pickupCity, bid.pickupState].filter(Boolean).join(', ')}` })}
+                      className="font-semibold text-gray-900 dark:text-gray-100 truncate hover:underline decoration-gray-400 underline-offset-2 text-left"
+                    >
+                      {[bid.pickupCity, bid.pickupState, bid.pickupZip].filter(Boolean).join(', ')}
+                    </button>
+                  ) : (
+                    <span className="font-semibold text-gray-900 dark:text-gray-100 truncate">—</span>
+                  )}
                   {bid.pickupDate && (
                     <span className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
                       <Calendar className="size-3 text-amber-600" />
@@ -244,9 +260,16 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
                 </div>
                 <ArrowRight className="size-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mx-1" />
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                    {[bid.dropCity, bid.dropState].filter(Boolean).join(', ')}
-                  </span>
+                  {bid.dropCity ? (
+                    <button
+                      onClick={() => setCityMap({ city: bid.dropCity!, state: bid.dropState ?? '', label: `Delivery — ${[bid.dropCity, bid.dropState].filter(Boolean).join(', ')}` })}
+                      className="font-semibold text-gray-900 dark:text-gray-100 truncate hover:underline decoration-gray-400 underline-offset-2 text-left"
+                    >
+                      {[bid.dropCity, bid.dropState, bid.dropZip].filter(Boolean).join(', ')}
+                    </button>
+                  ) : (
+                    <span className="font-semibold text-gray-900 dark:text-gray-100 truncate">—</span>
+                  )}
                   {bid.deliveryDate && (
                     <span className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
                       <Calendar className="size-3 text-amber-600" />
@@ -264,7 +287,6 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {bid.price != null && (
             <div className="flex items-center gap-2">
-              <DollarSign className="size-4 text-gray-500 dark:text-gray-400" />
               <span className="text-sm text-gray-600 dark:text-gray-400">Load Price:</span>
               <span className="font-bold text-lg text-amber-600 dark:text-amber-500">
                 ${Number(bid.price).toLocaleString()}
@@ -272,7 +294,6 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
             </div>
           )}
           <div className="flex items-center gap-2">
-            <DollarSign className="size-4 text-gray-500 dark:text-gray-400" />
             <span className="text-sm text-gray-600 dark:text-gray-400">Your Bid:</span>
             <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
               ${Number(bid.amount).toLocaleString()}
@@ -463,6 +484,14 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
           />
         )}
       </CardContent>
+      {cityMap && (
+        <CityMapModal
+          city={cityMap.city}
+          state={cityMap.state}
+          label={cityMap.label}
+          onClose={() => setCityMap(null)}
+        />
+      )}
     </Card>
   );
 }
@@ -491,12 +520,12 @@ function PreferredLoadCard({ load }: { load: LoadDto }) {
         <div className="flex items-center gap-2 text-sm">
           <MapPin className="size-4 text-muted-foreground shrink-0" />
           <span className="font-medium text-foreground">
-            {[load.pickupCity, load.pickupState].filter(Boolean).join(', ')}
+            {[load.pickupCity, load.pickupState, load.pickupZip].filter(Boolean).join(', ')}
           </span>
           {pickupDateStr && <span className="text-muted-foreground text-xs">· {pickupDateStr}</span>}
           <ArrowRight className="size-4 text-muted-foreground shrink-0 mx-0.5" />
           <span className="font-medium text-foreground">
-            {[load.dropCity, load.dropState].filter(Boolean).join(', ')}
+            {[load.dropCity, load.dropState, load.dropZip].filter(Boolean).join(', ')}
           </span>
           {deliveryDateStr && <span className="text-muted-foreground text-xs">· {deliveryDateStr}</span>}
         </div>

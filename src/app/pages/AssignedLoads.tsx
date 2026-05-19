@@ -10,18 +10,14 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import {
-  Truck,
   MapPin,
   Calendar,
-  DollarSign,
   Building2,
   User,
   Package,
   ArrowRight,
-  CheckCircle,
   Clock
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 export function AssignedLoads() {
   const { user } = useAuth();
@@ -204,7 +200,17 @@ export function AssignedLoads() {
                             <MapPin className="size-5 text-amber-600 dark:text-amber-500 mt-1 flex-shrink-0" />
                             <div>
                               <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Pickup</div>
-                              <div className="font-semibold text-gray-900 dark:text-gray-100">{load.pickupCity}, {load.pickupState}</div>
+                              {load.pickupCity ? (
+                                <a
+                                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${load.pickupCity}, ${load.pickupState}, USA`)}`}
+                                  target="_blank" rel="noopener noreferrer"
+                                  className="font-semibold text-gray-900 dark:text-gray-100 hover:underline hover:text-amber-600 transition-colors"
+                                >
+                                  {load.pickupCity}, {load.pickupState}
+                                </a>
+                              ) : (
+                                <div className="font-semibold text-gray-900 dark:text-gray-100">—</div>
+                              )}
                               <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
                                 <Calendar className="size-3 text-amber-600 dark:text-amber-500" />
                                 {new Date(load.pickupDate).toLocaleDateString()}
@@ -222,7 +228,17 @@ export function AssignedLoads() {
                             <MapPin className="size-5 text-amber-600 dark:text-amber-500 mt-1 flex-shrink-0" />
                             <div>
                               <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Delivery</div>
-                              <div className="font-semibold text-gray-900 dark:text-gray-100">{load.deliveryCity}, {load.deliveryState}</div>
+                              {load.deliveryCity ? (
+                                <a
+                                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${load.deliveryCity}, ${load.deliveryState}, USA`)}`}
+                                  target="_blank" rel="noopener noreferrer"
+                                  className="font-semibold text-gray-900 dark:text-gray-100 hover:underline hover:text-amber-600 transition-colors"
+                                >
+                                  {load.deliveryCity}, {load.deliveryState}
+                                </a>
+                              ) : (
+                                <div className="font-semibold text-gray-900 dark:text-gray-100">—</div>
+                              )}
                               <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
                                 <Calendar className="size-3 text-amber-600 dark:text-amber-500" />
                                 {new Date(load.deliveryDate).toLocaleDateString()}
@@ -236,7 +252,6 @@ export function AssignedLoads() {
                     {/* Details Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="size-4 text-gray-500 dark:text-gray-400" />
                         <span className="text-sm text-gray-600 dark:text-gray-400">Price:</span>
                         <span className="font-bold text-lg text-amber-600 dark:text-amber-500">${load.price.toLocaleString()}</span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">({load.distance} mi • ${perMileRate}/mi)</span>

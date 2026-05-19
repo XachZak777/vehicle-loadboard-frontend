@@ -85,7 +85,11 @@ export function CompanyInfoStep({ role, formData, fieldErrors, onChange, onSubmi
             }
           </div>
           <div>
-            <Label htmlFor="mcNumber">MC Number (Optional)</Label>
+            <Label htmlFor="mcNumber">
+              {role === 'broker'
+                ? <>MC Number <span className="text-destructive">*</span></>
+                : 'MC Number (Optional)'}
+            </Label>
             <Input
               id="mcNumber"
               value={formData.mcNumber}
@@ -100,51 +104,58 @@ export function CompanyInfoStep({ role, formData, fieldErrors, onChange, onSubmi
         </FormGrid>
 
         <div>
-          <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
+          <Label htmlFor="phoneNumber">Phone Number <span className="text-destructive">*</span></Label>
           <PhoneInput
             id="phoneNumber"
             value={formData.phoneNumber}
             onChange={v => onChange('phoneNumber', v)}
+            aria-invalid={!!fieldErrors.phoneNumber}
           />
+          {fieldErrors.phoneNumber && <p className="text-xs text-destructive mt-1">{fieldErrors.phoneNumber}</p>}
         </div>
 
         <div className="border-t border-border pt-4 space-y-4">
-          <p className="text-sm font-medium text-muted-foreground">Address (Optional)</p>
+          <p className="text-sm font-medium">Mailing Address</p>
           <div>
-            <Label htmlFor="mailingAddress">Street Address</Label>
+            <Label htmlFor="mailingAddress">Street Address <span className="text-destructive">*</span></Label>
             <Input
               id="mailingAddress"
               placeholder="123 Main St"
               value={formData.mailingAddress}
               onChange={e => onChange('mailingAddress', e.target.value.trimStart())}
               maxLength={200}
+              aria-invalid={!!fieldErrors.mailingAddress}
             />
+            {fieldErrors.mailingAddress && <p className="text-xs text-destructive mt-1">{fieldErrors.mailingAddress}</p>}
           </div>
           <FormGrid>
             <div>
-              <Label htmlFor="city">City</Label>
+              <Label htmlFor="city">City <span className="text-destructive">*</span></Label>
               <Input
                 id="city"
                 placeholder="Chicago"
                 value={formData.city}
                 onChange={e => onChange('city', e.target.value.trimStart())}
                 maxLength={100}
+                aria-invalid={!!fieldErrors.city}
               />
+              {fieldErrors.city && <p className="text-xs text-destructive mt-1">{fieldErrors.city}</p>}
             </div>
             <div>
-              <Label htmlFor="state">State</Label>
+              <Label htmlFor="state">State <span className="text-destructive">*</span></Label>
               <Select value={formData.state} onValueChange={v => onChange('state', v)}>
-                <SelectTrigger id="state">
+                <SelectTrigger id="state" aria-invalid={!!fieldErrors.state}>
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
                 <SelectContent>
                   {US_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {fieldErrors.state && <p className="text-xs text-destructive mt-1">{fieldErrors.state}</p>}
             </div>
           </FormGrid>
           <div>
-            <Label htmlFor="zipCode">ZIP Code</Label>
+            <Label htmlFor="zipCode">ZIP Code <span className="text-destructive">*</span></Label>
             <Input
               id="zipCode"
               placeholder="60601"
@@ -152,7 +163,9 @@ export function CompanyInfoStep({ role, formData, fieldErrors, onChange, onSubmi
               onChange={e => onChange('zipCode', sanitizeDigits(e.target.value))}
               maxLength={10}
               inputMode="numeric"
+              aria-invalid={!!fieldErrors.zipCode}
             />
+            {fieldErrors.zipCode && <p className="text-xs text-destructive mt-1">{fieldErrors.zipCode}</p>}
           </div>
         </div>
 

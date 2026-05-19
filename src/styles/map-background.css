@@ -3,39 +3,45 @@
 .map-background-detailed {
   position: relative;
   min-height: 100vh;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(249, 115, 22, 0.03) 50px, rgba(249, 115, 22, 0.03) 51px),
+    repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(249, 115, 22, 0.03) 50px, rgba(249, 115, 22, 0.03) 51px),
+    radial-gradient(circle at 20% 30%, rgba(249, 115, 22, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(251, 146, 60, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(217, 119, 6, 0.03) 0%, transparent 70%);
+  background-size: 50px 50px, 50px 50px, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed;
 }
 
-/* Light mode — white overlay to fade the background */
-html:not(.dark) .map-background-detailed::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: var(--map-overlay-light);
-  backdrop-filter: grayscale(60%) brightness(1.2);
+/* Light mode */
+.map-background-detailed.light,
+html:not(.dark) .map-background-detailed {
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(249, 115, 22, 0.04) 50px, rgba(249, 115, 22, 0.04) 51px),
+    repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(249, 115, 22, 0.04) 50px, rgba(249, 115, 22, 0.04) 51px),
+    repeating-linear-gradient(45deg, transparent, transparent 100px, rgba(209, 213, 219, 0.3) 100px, rgba(209, 213, 219, 0.3) 102px),
+    radial-gradient(circle at 25% 25%, rgba(249, 115, 22, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 75% 75%, rgba(251, 146, 60, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.5) 100%);
+  background-size: 50px 50px, 50px 50px, 141px 141px, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed;
 }
 
-/* Dark mode — dark overlay with slight orange tint */
-html.dark .map-background-detailed::before,
-.dark .map-background-detailed::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: var(--map-overlay-dark);
-  backdrop-filter: brightness(0.9) contrast(1.1);
-  animation: mapGlow 10s ease-in-out infinite;
+/* Dark mode */
+.dark .map-background-detailed,
+html.dark .map-background-detailed {
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(251, 146, 60, 0.06) 50px, rgba(251, 146, 60, 0.06) 51px),
+    repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(251, 146, 60, 0.06) 50px, rgba(251, 146, 60, 0.06) 51px),
+    repeating-linear-gradient(45deg, transparent, transparent 100px, rgba(75, 85, 99, 0.3) 100px, rgba(75, 85, 99, 0.3) 102px),
+    radial-gradient(circle at 25% 25%, rgba(251, 146, 60, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 75% 75%, rgba(249, 115, 22, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(17, 24, 39, 0.8) 0%, rgba(17, 24, 39, 0.5) 100%);
+  background-size: 50px 50px, 50px 50px, 141px 141px, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed;
 }
 
-/* Ensure content is above background overlay */
+/* Ensure content is above background */
 .map-background-detailed > * {
   position: relative;
   z-index: 1;

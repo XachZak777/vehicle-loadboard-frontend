@@ -46,12 +46,15 @@ export function VerifyLogin() {
 
       const rawRole = res.role?.toLowerCase() ?? '';
       const role: import('../types/user').UserRole =
-        rawRole === 'broker' ? 'broker' : rawRole === 'admin' ? 'admin' : 'carrier';
+        rawRole === 'broker' ? 'broker' :
+        rawRole === 'admin'  ? 'admin'  :
+        rawRole === 'dealer' ? 'dealer' : 'carrier';
 
       const user: UserProfile = {
         id: res.userId,
         role,
         email: res.email,
+        companyName: res.companyName,
         phoneVerified: true,
         fmcsaVerified: true,
         createdAt: new Date().toISOString(),
@@ -69,7 +72,8 @@ export function VerifyLogin() {
       toast.success('Welcome back!', { description: `Logged in as ${res.email}` });
 
       if (role === 'admin') navigate('/admin/dashboard', { replace: true });
-      else if (role === 'broker') navigate('/broker/dashboard', { replace: true });
+      else if (!res.adminApproved) navigate('/pending-approval', { replace: true });
+      else if (role === 'broker' || role === 'dealer') navigate('/broker/dashboard', { replace: true });
       else navigate('/loads', { replace: true });
     } catch (err: any) {
       toast.error(err?.data?.message || 'Invalid or expired code. Please try again.');

@@ -16,7 +16,6 @@ import {
   Package,
   CheckCircle,
   Clock,
-  DollarSign,
   MapPin,
   Calendar,
   AlertCircle,
@@ -119,7 +118,6 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wide">Your Bid</p>
             <p className="font-semibold flex items-center gap-1">
-              <DollarSign className="size-3.5 text-amber-600" />
               ${Number(bid.amount).toLocaleString()}
             </p>
           </div>
@@ -229,6 +227,7 @@ export function CarrierHistory() {
   const COMPLETED_STATUSES = new Set(['DELIVERED', 'PAID', 'COMPLETED']);
   const pendingBids = bids.filter(b => b.bidStatus === 'PENDING');
   const approvedBids = bids.filter(b => b.bidStatus === 'APPROVED' && !COMPLETED_STATUSES.has(b.loadStatus ?? ''));
+  const completedBids = bids.filter(b => b.bidStatus === 'APPROVED' && COMPLETED_STATUSES.has(b.loadStatus ?? ''));
 
   if (isLoading) {
     return (
@@ -300,16 +299,14 @@ export function CarrierHistory() {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-2 border-orange-200 dark:border-orange-800 bg-orange-50/30 dark:bg-orange-950/20">
+          <Card className="border-2 border-green-200 dark:border-green-800 bg-green-50/30 dark:bg-green-950/20">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-orange-700 dark:text-orange-400">Total Value</p>
-                  <p className="text-3xl font-bold text-orange-900 dark:text-orange-100">
-                    ${approvedBids.reduce((s, b) => s + (Number(b.amount) || 0), 0).toLocaleString()}
-                  </p>
+                  <p className="text-sm text-green-700 dark:text-green-400">Completed</p>
+                  <p className="text-3xl font-bold text-green-900 dark:text-green-100">{completedBids.length}</p>
                 </div>
-                <DollarSign className="w-8 h-8 text-orange-600 dark:text-orange-500" />
+                <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-500" />
               </div>
             </CardContent>
           </Card>

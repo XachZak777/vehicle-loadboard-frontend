@@ -15,6 +15,7 @@ import {
   isValidMcNumber, isValidDotNumber, isValidCompanyName,
   isBusinessEmail, businessEmailError, isValidEIN, isValidSSN,
   isStrongPassword, passwordRequirementsText, buildErrors, type FieldErrors,
+  isValidPhone, isValidStreetAddress, isValidCity, isValidZip,
 } from '../utils/validation';
 import { SignupStepIndicator } from '../components/signup/SignupStepIndicator';
 import { CompanyInfoStep } from '../components/signup/CompanyInfoStep';
@@ -65,7 +66,17 @@ export function BrokerSignup() {
       [!!formData.companyName.trim() && !isValidCompanyName(formData.companyName), 'companyName', 'Company name must be 2–100 characters.'],
       [!formData.dotNumber.trim(), 'dotNumber', 'DOT number is required.'],
       [!!formData.dotNumber.trim() && !isValidDotNumber(formData.dotNumber), 'dotNumber', 'DOT number must be 1–8 digits with no letters.'],
+      [!formData.mcNumber.trim(), 'mcNumber', 'MC number is required.'],
       [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
+      [!formData.phoneNumber.trim(), 'phoneNumber', 'Phone number is required.'],
+      [!!formData.phoneNumber.trim() && !isValidPhone(formData.phoneNumber), 'phoneNumber', 'Enter a valid US phone number.'],
+      [!formData.mailingAddress.trim(), 'mailingAddress', 'Street address is required.'],
+      [!!formData.mailingAddress.trim() && !isValidStreetAddress(formData.mailingAddress), 'mailingAddress', 'Address must be 5–200 characters.'],
+      [!formData.city.trim(), 'city', 'City is required.'],
+      [!!formData.city.trim() && !isValidCity(formData.city), 'city', 'Enter a valid city name.'],
+      [!formData.state, 'state', 'State is required.'],
+      [!formData.zipCode.trim(), 'zipCode', 'ZIP code is required.'],
+      [!!formData.zipCode.trim() && !isValidZip(formData.zipCode), 'zipCode', 'ZIP code must be 5 digits.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});

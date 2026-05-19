@@ -101,6 +101,7 @@ export function DealerSignup() {
     const errs = buildErrors([
       [!formData.companyName.trim(), 'companyName', 'Company name is required.'],
       [!!formData.companyName.trim() && !isValidCompanyName(formData.companyName), 'companyName', 'Company name must be 2–100 characters.'],
+      [!formData.yearEstablished.trim(), 'yearEstablished', 'Year established is required.'],
       [!!formData.yearEstablished.trim() && !isValidYearEstablished(formData.yearEstablished), 'yearEstablished', `Enter a valid 4-digit year (1800–${new Date().getFullYear()}).`],
       [!formData.companyAddress.trim(), 'companyAddress', 'Company address is required.'],
       [!!formData.companyAddress.trim() && !isValidStreetAddress(formData.companyAddress), 'companyAddress', 'Address must be 5–200 characters.'],
@@ -122,6 +123,10 @@ export function DealerSignup() {
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
     setCurrentStep('documents');
+  };
+
+  const handleDocumentsSubmit = () => {
+    setCurrentStep('create-account');
   };
 
   const handleCreateAccount = async () => {
@@ -207,7 +212,7 @@ export function DealerSignup() {
                 {fieldErrors.companyName && <p className="text-xs text-destructive mt-1">{fieldErrors.companyName}</p>}
               </div>
               <div>
-                <Label htmlFor="yearEstablished">Year Established</Label>
+                <Label htmlFor="yearEstablished">Year Established <span className="text-destructive">*</span></Label>
                 <Input id="yearEstablished" placeholder="e.g., 2010" value={formData.yearEstablished}
                   onChange={e => handleChange('yearEstablished', e.target.value)} aria-invalid={!!fieldErrors.yearEstablished} />
                 {fieldErrors.yearEstablished && <p className="text-xs text-destructive mt-1">{fieldErrors.yearEstablished}</p>}
@@ -247,13 +252,15 @@ export function DealerSignup() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="auctionAccessNumber">Auction Access # (5M)</Label>
-                  <Input id="auctionAccessNumber" placeholder="Optional" value={formData.auctionAccessNumber}
-                    onChange={e => handleChange('auctionAccessNumber', e.target.value)} />
+                  <Input id="auctionAccessNumber" placeholder="e.g., ABC123" value={formData.auctionAccessNumber}
+                    onChange={e => handleChange('auctionAccessNumber', e.target.value)} aria-invalid={!!fieldErrors.auctionAccessNumber} />
+                  {fieldErrors.auctionAccessNumber && <p className="text-xs text-destructive mt-1">{fieldErrors.auctionAccessNumber}</p>}
                 </div>
                 <div>
                   <Label htmlFor="dealerLicenseNumber">Dealer License #</Label>
-                  <Input id="dealerLicenseNumber" placeholder="Optional" value={formData.dealerLicenseNumber}
-                    onChange={e => handleChange('dealerLicenseNumber', e.target.value)} />
+                  <Input id="dealerLicenseNumber" placeholder="e.g., DL456789" value={formData.dealerLicenseNumber}
+                    onChange={e => handleChange('dealerLicenseNumber', e.target.value)} aria-invalid={!!fieldErrors.dealerLicenseNumber} />
+                  {fieldErrors.dealerLicenseNumber && <p className="text-xs text-destructive mt-1">{fieldErrors.dealerLicenseNumber}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -301,12 +308,9 @@ export function DealerSignup() {
           <Card>
             <CardHeader>
               <CardTitle>Documents</CardTitle>
-              <CardDescription>Upload your dealership documents (both optional)</CardDescription>
+              <CardDescription>Upload your dealership documents (optional — can be provided later)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                All documents are optional — you can upload them now or after your account is created.
-              </p>
               <DocumentUploadField
                 label="Dealer's License"
                 fieldId="dealerLicense"
@@ -325,7 +329,7 @@ export function DealerSignup() {
                 <Button variant="outline" onClick={() => setCurrentStep('info')} className="gap-2">
                   <ArrowLeft className="size-4" /> Back
                 </Button>
-                <Button onClick={() => setCurrentStep('create-account')} className="gap-2 bg-amber-500 hover:bg-amber-600 text-white">
+                <Button onClick={handleDocumentsSubmit} className="gap-2 bg-amber-500 hover:bg-amber-600 text-white">
                   Continue <ArrowRight className="size-4" />
                 </Button>
               </div>

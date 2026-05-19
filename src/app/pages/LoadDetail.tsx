@@ -4,28 +4,26 @@ import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
 import {
-  ArrowLeft, MapPin, DollarSign, Truck, FileText, CheckCircle,
+  ArrowLeft, MapPin, Truck, FileText,
   Loader2, Phone, Mail, Building2, ShieldCheck, Star, CalendarDays,
-  CreditCard, User, Package,
+  User, Package, BadgeCheck, CheckCircle, PackageOpen, PackageCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppSelector } from '../store/hooks';
 import {
-  useGetLoadsQuery,
-  useGetBidsForLoadQuery,
-  usePlaceBidMutation,
-  useApproveBidMutation,
-  useCancelBookingMutation,
+  useGetLoadQuery,
   useGetBrokerPublicInfoQuery,
   useGetMyCarrierProfileQuery,
+  useGetCarrierPublicInfoQuery,
+  useUpdateLoadStatusMutation,
+  useGetMySubmittedLoadIdsQuery,
 } from '../store/services/hauliusApi';
-import type { BidDto } from '../store/services/hauliusApi';
-import { CarrierInfoInline } from '../components/broker/CarrierInfoInline';
 import { formatPhone } from '../utils/phone';
 import { MapBackground } from '../components/MapBackground';
+import { CityMapModal } from '../components/CityMapModal';
+import { DispatchSheet } from '../components/DispatchSheet';
+import { RateModal } from '../components/RateModal';
 
 function vehicleConditionBadge(condition?: string) {
   if (!condition) return null;
@@ -34,9 +32,22 @@ function vehicleConditionBadge(condition?: string) {
     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
       isRunning
         ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
     }`}>
       {isRunning ? 'Running' : 'Non-Running'}
+    </span>
+  );
+}
+
+function trailerTypeBadge(trailerType?: string) {
+  if (!trailerType) return null;
+  const label = trailerType === 'enclosed' ? 'Enclosed Trailer'
+    : trailerType === 'open' ? 'Open Trailer'
+    : trailerType.charAt(0).toUpperCase() + trailerType.slice(1);
+  const colorClass = 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+  return (
+    <span className={`text-xs px-2 py-0.5 rounded-full ${colorClass}`}>
+      {label}
     </span>
   );
 }
@@ -46,23 +57,15 @@ export function LoadDetail() {
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
 
-  const [bidAmount, setBidAmount] = useState('');
-  const [isApprovingBid, setIsApprovingBid] = useState<string | null>(null);
+  const [cityMap, setCityMap] = useState<{ city: string; state: string; label: string } | null>(null);
 
-  const { data: allLoads = [], isLoading: isLoadingLoad } = useGetLoadsQuery();
-  const { data: bids = [], refetch: refetchBids } = useGetBidsForLoadQuery(id ?? '', { skip: !id });
-  const [placeBid, { isLoading: isPlacingBid }] = usePlaceBidMutation();
-  const [approveBid] = useApproveBidMutation();
-  const [cancelBooking, { isLoading: isCancelling }] = useCancelBookingMutation();
-
-  const load = id ? allLoads.find((l) => l.id === id) ?? null : null;
+  const { data: load = null, isLoading: isLoadingLoad } = useGetLoadQuery(id ?? '', { skip: !id });
   const isBooked = !!load?.status && load.status !== 'OPEN';
   const isBroker = user?.role === 'broker';
   const isCarrier = user?.role === 'carrier';
 
   const { data: myCarrierProfile } = useGetMyCarrierProfileQuery(undefined, { skip: !isCarrier });
   const myCarrierId = myCarrierProfile?.id;
-  const myBid = myCarrierId ? bids.find((b) => b.carrierId === myCarrierId) : undefined;
   const isAssignedCarrier = isCarrier && !!myCarrierId && load?.assignedCarrierId === myCarrierId;
   const showSensitiveInfo = isBroker || isAssignedCarrier;
 
@@ -71,44 +74,31 @@ export function LoadDetail() {
     skip: !load?.brokerId,
   });
 
-  const handlePlaceBid = async () => {
-    if (!id || !bidAmount) return;
-    const amount = parseFloat(bidAmount);
-    if (isNaN(amount) || amount <= 0) {
-      toast.error('Please enter a valid bid amount.');
-      return;
-    }
-    try {
-      await placeBid({ loadId: id, amount, bookNow: false }).unwrap();
-      setBidAmount('');
-      toast.success('Bid placed!', { description: `$${amount.toLocaleString()} bid submitted.` });
-    } catch (err: any) {
-      toast.error('Failed to place bid', { description: err?.message || 'Please try again.' });
-    }
+  const { data: assignedCarrierInfo } = useGetCarrierPublicInfoQuery(load?.assignedCarrierId ?? '', {
+    skip: !load?.assignedCarrierId,
+  });
+
+  const [updateLoadStatus, { isLoading: isConfirmingPayment }] = useUpdateLoadStatusMutation();
+  const { data: submittedLoadIds } = useGetMySubmittedLoadIdsQuery(undefined, { skip: !isAssignedCarrier });
+  const [ratingOpen, setRatingOpen] = useState(false);
+  const [ratingSubmittedLocal, setRatingSubmittedLocal] = useState(false);
+
+  const RATEABLE_STATUSES = new Set(['DELIVERED', 'PAID', 'COMPLETED']);
+  const canRateBroker = isAssignedCarrier && !!load?.brokerId && RATEABLE_STATUSES.has(load?.status ?? '');
+  const alreadyRated = ratingSubmittedLocal || (submittedLoadIds?.includes(id ?? '') ?? false);
+  const STATUS_LABELS: Record<string, string> = {
+    ASSIGNED:  'Pickup confirmed!',
+    PICKED_UP: 'Delivery confirmed!',
+    DELIVERED: 'Payment confirmed!',
   };
 
-  const handleApproveBid = async (bid: BidDto) => {
-    if (!id) return;
-    setIsApprovingBid(bid.id);
-    try {
-      await approveBid({ loadId: id, bidId: bid.id }).unwrap();
-      refetchBids();
-      toast.success('Bid approved!', { description: 'The carrier has been assigned to this load.' });
-    } catch (err: any) {
-      toast.error('Failed to approve bid', { description: err?.message || 'Please try again.' });
-    } finally {
-      setIsApprovingBid(null);
-    }
-  };
-
-  const handleCancelBooking = async () => {
+  const handleAdvanceStatus = async () => {
     if (!id) return;
     try {
-      await cancelBooking(id).unwrap();
-      toast.success('Booking cancelled.');
-      navigate('/broker/dashboard');
+      await updateLoadStatus(id).unwrap();
+      toast.success(STATUS_LABELS[load?.status ?? ''] ?? 'Status updated!');
     } catch (err: any) {
-      toast.error('Failed to cancel', { description: err?.message || 'Please try again.' });
+      toast.error(err?.data?.message || 'Failed to update status.');
     }
   };
 
@@ -199,6 +189,18 @@ export function LoadDetail() {
             </div>
           </div>
         </div>
+
+        {/* Dispatch Sheet — shown when load is booked */}
+        {isBooked && (
+          <div className="mb-6">
+            <DispatchSheet
+              load={load}
+              brokerInfo={brokerInfo}
+              carrierInfo={assignedCarrierInfo}
+              showSensitiveInfo={showSensitiveInfo}
+            />
+          </div>
+        )}
 
         {/* Broker / Dealer card — visible to all */}
         {load.brokerId && (
@@ -308,11 +310,33 @@ export function LoadDetail() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Pickup</p>
-                <p className="font-semibold">
-                  {showSensitiveInfo
-                    ? [load.pickupStreet, load.pickupCity, load.pickupState, load.pickupZip].filter(Boolean).join(', ') || '—'
-                    : [load.pickupCity, load.pickupState].filter(Boolean).join(', ') || '—'}
-                </p>
+                {(() => {
+                  const fullAddr = [load.pickupStreet, load.pickupCity, load.pickupState, load.pickupZip].filter(Boolean).join(', ');
+                  const cityAddr = [load.pickupCity, load.pickupState, load.pickupZip].filter(Boolean).join(', ');
+                  if (showSensitiveInfo && fullAddr) {
+                    return (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="font-semibold flex items-center gap-1 hover:text-amber-600 transition-colors"
+                      >
+                        <MapPin className="size-3.5 text-amber-500 flex-shrink-0" />
+                        {fullAddr}
+                      </a>
+                    );
+                  }
+                  if (isCarrier && !isBooked && load.pickupCity) {
+                    return (
+                      <button
+                        onClick={() => setCityMap({ city: load.pickupCity, state: load.pickupState, label: `Pickup — ${cityAddr}` })}
+                        className="font-semibold text-left text-foreground hover:text-foreground cursor-pointer hover:underline decoration-muted-foreground underline-offset-2"
+                      >
+                        {cityAddr}
+                      </button>
+                    );
+                  }
+                  return <p className="font-semibold">{cityAddr || '—'}</p>;
+                })()}
                 {load.pickupType && <p className="text-xs text-muted-foreground">Type: {load.pickupType}</p>}
                 {formatDate(load.pickupDate) && (
                   <p className="text-xs flex items-center gap-1 text-muted-foreground">
@@ -323,11 +347,33 @@ export function LoadDetail() {
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Delivery</p>
-                <p className="font-semibold">
-                  {showSensitiveInfo
-                    ? [load.dropStreet, load.dropCity, load.dropState, load.dropZip].filter(Boolean).join(', ') || '—'
-                    : [load.dropCity, load.dropState].filter(Boolean).join(', ') || '—'}
-                </p>
+                {(() => {
+                  const fullAddr = [load.dropStreet, load.dropCity, load.dropState, load.dropZip].filter(Boolean).join(', ');
+                  const cityAddr = [load.dropCity, load.dropState, load.dropZip].filter(Boolean).join(', ');
+                  if (showSensitiveInfo && fullAddr) {
+                    return (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="font-semibold flex items-center gap-1 hover:text-amber-600 transition-colors"
+                      >
+                        <MapPin className="size-3.5 text-amber-500 flex-shrink-0" />
+                        {fullAddr}
+                      </a>
+                    );
+                  }
+                  if (isCarrier && !isBooked && load.dropCity) {
+                    return (
+                      <button
+                        onClick={() => setCityMap({ city: load.dropCity, state: load.dropState, label: `Delivery — ${cityAddr}` })}
+                        className="font-semibold text-left text-foreground hover:text-foreground cursor-pointer hover:underline decoration-muted-foreground underline-offset-2"
+                      >
+                        {cityAddr}
+                      </button>
+                    );
+                  }
+                  return <p className="font-semibold">{cityAddr || '—'}</p>;
+                })()}
                 {load.dropType && <p className="text-xs text-muted-foreground">Type: {load.dropType}</p>}
                 {formatDate(load.deliveryDate) && (
                   <p className="text-xs flex items-center gap-1 text-muted-foreground">
@@ -339,6 +385,15 @@ export function LoadDetail() {
             </div>
           </CardContent>
         </Card>
+
+        {cityMap && (
+          <CityMapModal
+            city={cityMap.city}
+            state={cityMap.state}
+            label={cityMap.label}
+            onClose={() => setCityMap(null)}
+          />
+        )}
 
         {/* Vehicles */}
         <Card className="mb-5">
@@ -427,14 +482,13 @@ export function LoadDetail() {
               {load.trailerType && (
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">Trailer</p>
-                  <p className="font-semibold">{load.trailerType.charAt(0).toUpperCase() + load.trailerType.slice(1)}</p>
+                  <div className="mt-0.5">{trailerTypeBadge(load.trailerType)}</div>
                 </div>
               )}
               {load.paymentMethod && (
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">Payment</p>
-                  <p className="font-semibold flex items-center gap-1">
-                    <CreditCard className="size-3.5 text-muted-foreground" />
+                  <p className="font-semibold">
                     {load.paymentMethod}
                     {load.paymentTiming ? ` (${load.paymentTiming})` : ''}
                   </p>
@@ -487,121 +541,66 @@ export function LoadDetail() {
           </CardContent>
         </Card>
 
-        {/* Carrier: Place a bid */}
-        {isCarrier && !isBooked && (
-          <Card className="mb-5">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">{myBid ? 'Your Bid' : 'Place a Bid'}</CardTitle>
-              {myBid && (
-                <p className="text-sm text-muted-foreground">
-                  Current bid: <strong>${Number(myBid.amount).toLocaleString()}</strong> · {myBid.status}
-                </p>
-              )}
-            </CardHeader>
-            {!myBid && (
-              <CardContent>
-                <div className="flex gap-3 items-end">
-                  <div className="flex-1">
-                    <Label htmlFor="bidAmount">Bid Amount ($)</Label>
-                    <Input
-                      id="bidAmount"
-                      type="number"
-                      min="1"
-                      placeholder="e.g. 850"
-                      value={bidAmount}
-                      onChange={(e) => setBidAmount(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
+
+        {/* Assigned carrier actions */}
+        {isAssignedCarrier && (() => {
+          const STATUS_NEXT: Record<string, { label: string; icon: React.ReactNode }> = {
+            ASSIGNED:  { label: 'Confirm Pickup',            icon: <PackageOpen  className="size-4" /> },
+            PICKED_UP: { label: 'Confirm Delivery',           icon: <PackageCheck className="size-4" /> },
+            DELIVERED: { label: 'Confirm Payment Received',   icon: <BadgeCheck   className="size-4" /> },
+          };
+          const nextStep = load.status ? STATUS_NEXT[load.status] : null;
+          return (
+            <Card className="mb-5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-3 items-center">
+                {nextStep && (
                   <Button
-                    onClick={handlePlaceBid}
-                    disabled={isPlacingBid || !bidAmount}
-                    className="bg-amber-500 hover:bg-amber-600 text-white font-semibold"
+                    onClick={handleAdvanceStatus}
+                    disabled={isConfirmingPayment}
+                    className="bg-amber-500 hover:bg-amber-600 text-white font-semibold gap-2"
                   >
-                    {isPlacingBid
-                      ? <><Loader2 className="size-4 animate-spin mr-2" />Submitting…</>
-                      : 'Submit Bid'}
+                    {isConfirmingPayment ? <Loader2 className="size-4 animate-spin" /> : nextStep.icon}
+                    {nextStep.label}
                   </Button>
-                </div>
-              </CardContent>
-            )}
-            {myBid && (
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-5 text-amber-500" />
-                  <span className="text-muted-foreground text-sm">
-                    You bid <strong>${Number(myBid.amount).toLocaleString()}</strong>. Waiting for broker approval.
+                )}
+                {canRateBroker && (
+                  alreadyRated ? (
+                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <CheckCircle className="size-4 text-amber-500" />
+                      Rating Submitted
+                    </span>
+                  ) : (
+                    <Button variant="outline" className="gap-2" onClick={() => setRatingOpen(true)}>
+                      <Star className="size-4 text-amber-500" />
+                      Rate Broker
+                    </Button>
+                  )
+                )}
+                {load.status === 'PAID' && !nextStep && !canRateBroker && (
+                  <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <CheckCircle className="size-4 text-amber-500" />
+                    Load completed
                   </span>
-                </div>
+                )}
               </CardContent>
-            )}
-          </Card>
-        )}
+            </Card>
+          );
+        })()}
 
-        {/* Broker: View bids & approve */}
-        {isBroker && (
-          <Card className="mb-5">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Carrier Bids ({bids.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {bids.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No bids yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {bids.map((bid) => (
-                    <div
-                      key={bid.id}
-                      className="flex items-start justify-between p-4 bg-muted border border-border gap-3"
-                    >
-                      <div className="min-w-0">
-                        <div className="font-semibold text-lg flex items-center gap-1">
-                          <DollarSign className="size-4" />
-                          {Number(bid.amount).toLocaleString()}
-                        </div>
-                        <div className="text-sm text-muted-foreground">Status: {bid.status}</div>
-                        <CarrierInfoInline carrierId={bid.carrierId} />
-                      </div>
-                      {bid.status === 'PENDING' && !isBooked ? (
-                        <Button
-                          size="sm"
-                          onClick={() => handleApproveBid(bid)}
-                          disabled={isApprovingBid === bid.id}
-                          className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0"
-                        >
-                          {isApprovingBid === bid.id
-                            ? <Loader2 className="size-4 animate-spin" />
-                            : 'Approve'}
-                        </Button>
-                      ) : (
-                        <Badge
-                          variant={bid.status === 'APPROVED' ? 'default' : 'secondary'}
-                          className={bid.status === 'APPROVED' ? 'bg-amber-500 text-white flex-shrink-0' : 'flex-shrink-0'}
-                        >
-                          {bid.status}
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {isBooked && (
-                <div className="mt-4">
-                  <Button
-                    variant="destructive"
-                    onClick={handleCancelBooking}
-                    disabled={isCancelling}
-                    className="w-full"
-                  >
-                    {isCancelling
-                      ? <><Loader2 className="size-4 animate-spin mr-2" />Cancelling…</>
-                      : 'Cancel Booking'}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {canRateBroker && !alreadyRated && (
+          <RateModal
+            open={ratingOpen}
+            onClose={() => setRatingOpen(false)}
+            onSubmitted={() => setRatingSubmittedLocal(true)}
+            targetId={load.brokerId!}
+            targetType="broker"
+            targetName={brokerName ?? ''}
+            loadId={id!}
+            vehicleTitle={[load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ')}
+          />
         )}
 
       </div>

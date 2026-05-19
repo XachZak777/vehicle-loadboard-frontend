@@ -11,7 +11,6 @@ import { Badge } from '../components/ui/badge';
 import {
   MapPin,
   Calendar,
-  DollarSign,
   Building2,
   Package,
   ArrowRight,
@@ -162,7 +161,6 @@ export function RequestedLoads() {
                     {/* Details Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="size-4 text-gray-500 dark:text-gray-400" />
                         <span className="text-sm text-gray-600 dark:text-gray-400">Load Price:</span>
                         <span className="font-bold text-lg text-amber-600 dark:text-amber-500">${load.price.toLocaleString()}</span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">({load.distance} mi • ${perMileRate}/mi)</span>
@@ -170,7 +168,6 @@ export function RequestedLoads() {
 
                       {booking.requestedPrice && (
                         <div className="flex items-center gap-2">
-                          <DollarSign className="size-4 text-gray-500 dark:text-gray-400" />
                           <span className="text-sm text-gray-600 dark:text-gray-400">Your Offer:</span>
                           <span className="font-bold text-lg text-gray-900 dark:text-gray-100">${parseFloat(booking.requestedPrice).toLocaleString()}</span>
                         </div>

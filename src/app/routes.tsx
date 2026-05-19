@@ -133,6 +133,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: '/carrier/completed',
+        element: (
+          <ProtectedRoute allowedRoles={['carrier']}>
+            <CarrierLoadsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: '/carrier/offers',
         element: (
           <ProtectedRoute allowedRoles={['carrier']}>
