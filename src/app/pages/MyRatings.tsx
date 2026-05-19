@@ -7,39 +7,6 @@ import type { MyRatingsResponse } from '../store/services/hauliusApi';
 import { useAppSelector } from '../store/hooks';
 import { MapBackground } from '../components/MapBackground';
 
-// Set to true to preview with mock data (no backend needed)
-const USE_MOCK = false;
-
-const MOCK_DATA: MyRatingsResponse = {
-  positiveCount: 1,
-  negativeCount: 1,
-  tagStats: [
-    { tag: 'communication', count: 2, total: 2 },
-    { tag: 'payment', count: 2, total: 2 },
-    { tag: 'accuracy', count: 2, total: 2 },
-  ],
-  ratings: [
-    {
-      id: 'mock-1',
-      type: 'positive',
-      fromName: 'Swift Logistics LLC',
-      fromRole: 'Carrier',
-      loadTitle: '1900 2 3',
-      tags: ['communication', 'payment', 'accuracy'],
-      createdAt: '2026-05-10',
-    },
-    {
-      id: 'mock-2',
-      type: 'negative',
-      fromName: 'Swift Logistics LLC',
-      fromRole: 'Carrier',
-      loadTitle: '1900 1233 123',
-      tags: ['communication', 'payment', 'accuracy'],
-      comment: 'adslkasldkasdfk kasdkf laskdf laskdf lkasldf kasldf kalsdkf laskdf laksdf lka sdl fkasldf kalsdfk alskfla skf laksd flaksdlf aksld kald fkalsdkf laksdf lasdlf kasldf kalsdkf laskdf laksdflaksdlf kaldf kalsdkf ladksf laksdl f',
-      createdAt: '2026-05-10',
-    },
-  ],
-};
 
 const TAG_LABELS: Record<string, string> = {
   communication: 'Proper Communication',
@@ -68,9 +35,9 @@ function tagBarColor(pct: number) {
 
 export function MyRatings() {
   const user = useAppSelector((s) => s.auth.user);
-  const { data: apiData } = useGetMyRatingsQuery(undefined, { skip: !user || USE_MOCK });
+  const { data: apiData } = useGetMyRatingsQuery(undefined, { skip: !user });
 
-  const data = USE_MOCK ? MOCK_DATA : apiData;
+  const data = apiData;
 
   const positive = data?.positiveCount ?? 0;
   const negative = data?.negativeCount ?? 0;

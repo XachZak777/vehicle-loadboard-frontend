@@ -75,7 +75,7 @@ export function Navbar() {
           <Link to="/loads" className="flex-shrink-0 hover:opacity-80 transition-opacity">
             <BrandLogo
               alt="Haulius"
-              className="h-18 w-auto max-w-[44vw] lg:max-w-none object-contain"
+              className="h-14 w-auto max-w-[44vw] lg:max-w-none object-contain"
             />
           </Link>
 

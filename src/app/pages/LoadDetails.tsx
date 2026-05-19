@@ -24,6 +24,7 @@ import {
   Home
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatPaymentLabel, calcPricePerMile } from '../utils/phone';
 
 export function LoadDetails() {
   const { loadId } = useParams<{ loadId: string }>();
@@ -100,7 +101,7 @@ export function LoadDetails() {
     );
   }
 
-  const perMileRate = load.distance > 0 ? (load.price / load.distance).toFixed(2) : '0.00';
+  const perMileRate = (calcPricePerMile(load.price, load.distance, load.additionalVehicles) ?? 0).toFixed(2);
   const isBrokerOrDealer = user?.role === 'broker' || user?.role === 'dealer';
   const canUpdateStatus = isBrokerOrDealer && booking && booking.status !== 'delivered';
 
@@ -392,7 +393,7 @@ export function LoadDetails() {
 
                 <div className="p-5 bg-gray-50 dark:bg-gray-800/50 rounded-none">
                   <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Payment Method</div>
-                  <div className="font-semibold text-gray-900 dark:text-gray-100 capitalize">{load.paymentMethod}</div>
+                  <div className="font-semibold text-gray-900 dark:text-gray-100">{formatPaymentLabel(load.paymentMethod)}</div>
                 </div>
 
                 <div className="p-5 bg-gray-50 dark:bg-gray-800/50 rounded-none">

@@ -46,7 +46,7 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="bondPolicyNumber">Bond Policy Number <span className="text-destructive">*</span></Label>
+            <Label htmlFor="bondPolicyNumber">Policy Number <span className="text-destructive">*</span></Label>
             <Input
               id="bondPolicyNumber"
               placeholder="XXXXXXXXX"
@@ -58,10 +58,10 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
             {fieldErrors.bondPolicyNumber && <p className="text-xs text-destructive mt-1">{fieldErrors.bondPolicyNumber}</p>}
           </div>
           <div>
-            <Label htmlFor="bondCoverage">Bond Coverage <span className="text-destructive">*</span></Label>
+            <Label htmlFor="bondCoverage">Coverage Amount <span className="text-destructive">*</span></Label>
             <Input
               id="bondCoverage"
-              placeholder="XXXXXX"
+              placeholder="e.g. 75000"
               inputMode="numeric"
               value={formData.bondCoverage}
               onChange={e => onChange('bondCoverage', e.target.value.replace(/[^\d]/g, ''))}
@@ -74,7 +74,7 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
         </div>
 
         <div>
-          <Label htmlFor="bondEffectiveDate">Bond Effective Date <span className="text-destructive">*</span></Label>
+          <Label htmlFor="bondEffectiveDate">Effective Date <span className="text-destructive">*</span></Label>
           <Input
             id="bondEffectiveDate"
             type="date"
@@ -87,7 +87,7 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="bondAgentFirstName">Bond Agent First Name <span className="text-destructive">*</span></Label>
+            <Label htmlFor="bondAgentFirstName">Agent First Name <span className="text-destructive">*</span></Label>
             <Input
               id="bondAgentFirstName"
               placeholder="First name"
@@ -99,7 +99,7 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
             {fieldErrors.bondAgentFirstName && <p className="text-xs text-destructive mt-1">{fieldErrors.bondAgentFirstName}</p>}
           </div>
           <div>
-            <Label htmlFor="bondAgentLastName">Bond Agent Last Name <span className="text-destructive">*</span></Label>
+            <Label htmlFor="bondAgentLastName">Agent Last Name <span className="text-destructive">*</span></Label>
             <Input
               id="bondAgentLastName"
               placeholder="Last name"
@@ -114,7 +114,7 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="bondAgentEmail">Bond Agent Email <span className="text-destructive">*</span></Label>
+            <Label htmlFor="bondAgentEmail">Agent Email <span className="text-destructive">*</span></Label>
             <Input
               id="bondAgentEmail"
               type="email"
@@ -127,7 +127,7 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
             {fieldErrors.bondAgentEmail && <p className="text-xs text-destructive mt-1">{fieldErrors.bondAgentEmail}</p>}
           </div>
           <div>
-            <Label htmlFor="bondAgentPhone">Bond Agent Phone <span className="text-destructive">*</span></Label>
+            <Label htmlFor="bondAgentPhone">Agent Phone <span className="text-destructive">*</span></Label>
             <PhoneInput
               id="bondAgentPhone"
               value={formData.bondAgentPhone}

@@ -12,47 +12,6 @@ import {
 import type { MyRatingsResponse } from '../store/services/hauliusApi';
 import { MapBackground } from '../components/MapBackground';
 
-// Set to true to preview with mock data (no backend needed)
-const USE_MOCK = false;
-
-const MOCK_DATA: MyRatingsResponse = {
-  positiveCount: 1,
-  negativeCount: 1,
-  tagStats: [
-    { tag: 'communication', count: 2, total: 2 },
-    { tag: 'payment', count: 2, total: 2 },
-    { tag: 'accuracy', count: 2, total: 2 },
-  ],
-  ratings: [
-    {
-      id: 'mock-1',
-      type: 'positive',
-      fromName: 'Swift Logistics LLC',
-      fromRole: 'Carrier',
-      loadTitle: '1900 2 3',
-      tags: ['communication', 'payment', 'accuracy'],
-      createdAt: '2026-05-10',
-    },
-    {
-      id: 'mock-2',
-      type: 'negative',
-      fromName: 'Swift Logistics LLC',
-      fromRole: 'Carrier',
-      loadTitle: '1900 1233 123',
-      tags: ['communication', 'payment', 'accuracy'],
-      comment: 'adslkasldkasdfk kasdkf laskdf laskdf lkasldf kasldf kalsdkf laskdf laksdf lka sdl fkasldf kalsdfk alskfla skf laksd flaksdlf aksld kald fkalsdkf laksdf lasdlf kasldf kalsdkf laskdf laksdflaksdlf kaldf kalsdkf ladksf laksdl f',
-      createdAt: '2026-05-10',
-    },
-  ],
-};
-
-const MOCK_INFO = {
-  companyName: 'Swift Logistics LLC',
-  email: '123@123.com',
-  phoneNumber: '15553456',
-  dotNumber: '123456',
-  mcNumber: undefined as string | undefined,
-};
 
 const TAG_LABELS: Record<string, string> = {
   // Broker tags
@@ -272,18 +231,14 @@ function RatingPageContent({
 }
 
 function BrokerContent({ id }: { id: string }) {
-  const { data: apiInfo, isLoading: loadingInfo } = useGetBrokerPublicInfoQuery(id, { skip: USE_MOCK });
-  const { data: apiRatings } = useGetCompanyRatingsQuery({ targetType: 'broker', id }, { skip: USE_MOCK });
-  const info = USE_MOCK ? MOCK_INFO : apiInfo;
-  const ratings = USE_MOCK ? MOCK_DATA : apiRatings;
+  const { data: info, isLoading: loadingInfo } = useGetBrokerPublicInfoQuery(id);
+  const { data: ratings } = useGetCompanyRatingsQuery({ targetType: 'broker', id });
   return <RatingPageContent type="Broker" info={info} ratings={ratings} isLoading={loadingInfo} />;
 }
 
 function CarrierContent({ id }: { id: string }) {
-  const { data: apiInfo, isLoading: loadingInfo } = useGetCarrierPublicInfoQuery(id, { skip: USE_MOCK });
-  const { data: apiRatings } = useGetCompanyRatingsQuery({ targetType: 'carrier', id }, { skip: USE_MOCK });
-  const info = USE_MOCK ? MOCK_INFO : apiInfo;
-  const ratings = USE_MOCK ? MOCK_DATA : apiRatings;
+  const { data: info, isLoading: loadingInfo } = useGetCarrierPublicInfoQuery(id);
+  const { data: ratings } = useGetCompanyRatingsQuery({ targetType: 'carrier', id });
   return <RatingPageContent type="Carrier" info={info} ratings={ratings} isLoading={loadingInfo} />;
 }
 

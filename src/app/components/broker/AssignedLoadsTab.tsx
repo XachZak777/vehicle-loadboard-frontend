@@ -26,14 +26,12 @@ function AssignedLoadCard({
   const [ratingOpen, setRatingOpen] = useState(false);
   const [ratingSubmittedLocal, setRatingSubmittedLocal] = useState(false);
   const { data: carrierInfo } = useGetCarrierPublicInfoQuery(load.assignedCarrierId ?? '', {
-    skip: !load.assignedCarrierId || load.assignedCarrierId === 'mock-carrier-001',
+    skip: !load.assignedCarrierId,
   });
   const { data: submittedLoadIds } = useGetMySubmittedLoadIdsQuery();
   const alreadyRated = ratingSubmittedLocal || (submittedLoadIds?.includes(load.id) ?? false);
   const canRate = !!load.assignedCarrierId && RATEABLE_STATUSES.has(load.status ?? '');
-  const carrierName = load.assignedCarrierId === 'mock-carrier-001'
-    ? 'Swift Logistics LLC'
-    : (carrierInfo?.companyName || carrierInfo?.legalName || 'the carrier');
+  const carrierName = carrierInfo?.companyName || carrierInfo?.legalName || 'the carrier';
   const vehicleTitle = [load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ') || `Load #${load.id.slice(0, 8)}`;
 
   return (

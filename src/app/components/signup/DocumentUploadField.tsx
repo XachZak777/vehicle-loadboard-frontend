@@ -19,7 +19,7 @@ export function DocumentUploadField({ label, fieldId, file, onChange, error }: P
         <input
           id={fieldId}
           type="file"
-          accept=".pdf,.doc,.docx"
+          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.gif,.heic"
           onChange={onChange}
           className="hidden"
         />
@@ -27,7 +27,7 @@ export function DocumentUploadField({ label, fieldId, file, onChange, error }: P
           <span className="upload-link">Click to upload {label}</span>
           <span className="upload-or"> or drag and drop</span>
         </DropZoneUploadLabel>
-        <DropZoneHint>PDF, DOC, or DOCX (max 5MB)</DropZoneHint>
+        <DropZoneHint>PDF, DOC, DOCX, PNG, JPG, WEBP (max 5MB)</DropZoneHint>
         {file && (
           <DropZoneSuccess>
             <CheckCircle className="size-4" />

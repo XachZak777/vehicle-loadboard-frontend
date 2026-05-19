@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Button } from '../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../components/ui/sheet';
 import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star, SlidersHorizontal, X } from 'lucide-react';
-import { formatPhone } from '../utils/phone';
+import { formatPhone, formatPaymentLabel, calcPricePerMile } from '../utils/phone';
 import { MapBackground } from '../components/MapBackground';
 import { CityMapModal } from '../components/CityMapModal';
 
@@ -35,9 +35,6 @@ function formatDate(dateStr?: string) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function formatPaymentLabel(value: string) {
-  return value.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-}
 
 function BrokerSummaryRow({ brokerId }: { brokerId: string }) {
   const navigate = useNavigate();
@@ -75,12 +72,8 @@ function InfoField({ label, value }: { label: string; value?: string }) {
 }
 
 function ConditionIcon({ condition }: { condition: string }) {
-  const isRunning = condition.toLowerCase() === 'running';
-  return isRunning ? (
-    <span className="inline-flex size-4 rounded-full items-center justify-center bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-      <CheckCircle className="size-3" />
-    </span>
-  ) : (
+  if (condition.toLowerCase() === 'running') return null;
+  return (
     <span className="inline-flex size-4 rounded-full items-center justify-center bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
       <AlertCircle className="size-3" />
     </span>
@@ -195,8 +188,8 @@ export function LoadBoard() {
       }
 
       if (minPricePerMile && load.price != null && load.distance != null && load.distance > 0) {
-        const ppm = load.price / load.distance;
-        if (ppm < parseFloat(minPricePerMile)) return false;
+        const ppm = calcPricePerMile(load.price, load.distance, load.additionalVehicles);
+        if (ppm == null || ppm < parseFloat(minPricePerMile)) return false;
       }
 
       return true;
@@ -208,8 +201,8 @@ export function LoadBoard() {
       if (sortBy === 'price-asc') return (a.price ?? 0) - (b.price ?? 0);
       if (sortBy === 'price-desc') return (b.price ?? 0) - (a.price ?? 0);
       if (sortBy === 'ppm-desc' || sortBy === 'ppm-asc') {
-        const ppmA = a.price != null && a.distance != null && a.distance > 0 ? a.price / a.distance : null;
-        const ppmB = b.price != null && b.distance != null && b.distance > 0 ? b.price / b.distance : null;
+        const ppmA = calcPricePerMile(a.price, a.distance, a.additionalVehicles);
+        const ppmB = calcPricePerMile(b.price, b.distance, b.additionalVehicles);
         if (ppmA == null && ppmB == null) return 0;
         if (ppmA == null) return 1;
         if (ppmB == null) return -1;
@@ -295,26 +288,26 @@ export function LoadBoard() {
                 style={{ width: filtersOpen ? 272 : 0 }}
               >
                 <div
-                  className="w-[272px] pr-5 transition-transform duration-300 ease-out"
+                  className="w-[272px] transition-transform duration-300 ease-out"
                   style={{ transform: filtersOpen ? 'translateX(0)' : 'translateX(-100%)' }}
                 >
-                  <div className="mb-4">
-                    <h2 className="text-base font-bold text-foreground">Filters</h2>
+                  <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+                    <h2 className="text-base font-bold text-foreground mb-4">Filters</h2>
+                    <FilterPanel
+                      sortBy={sortBy} setSortBy={setSortBy}
+                      searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+                      pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
+                      pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
+                      deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
+                      deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
+                      vehicleType={vehicleType} setVehicleType={setVehicleType}
+                      trailerType={trailerType} setTrailerType={setTrailerType}
+                      condition={condition} setCondition={setCondition}
+                      minPrice={minPrice} setMinPrice={setMinPrice}
+                      minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
+                      clearFilters={clearFilters}
+                    />
                   </div>
-                  <FilterPanel
-                    sortBy={sortBy} setSortBy={setSortBy}
-                    searchTerm={searchTerm} setSearchTerm={setSearchTerm}
-                    pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
-                    pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
-                    deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
-                    deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
-                    vehicleType={vehicleType} setVehicleType={setVehicleType}
-                    trailerType={trailerType} setTrailerType={setTrailerType}
-                    condition={condition} setCondition={setCondition}
-                    minPrice={minPrice} setMinPrice={setMinPrice}
-                    minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
-                    clearFilters={clearFilters}
-                  />
                 </div>
               </aside>
 
@@ -459,7 +452,7 @@ function FilterPanel({
         </FilterField>
       </FilterSection>
 
-      <div className="border-t border-border" />
+      <div className="border-t border-border/40" />
 
       {/* Location */}
       <FilterSection title="Location">
@@ -487,7 +480,7 @@ function FilterPanel({
         </FilterField>
       </FilterSection>
 
-      <div className="border-t border-border" />
+      <div className="border-t border-border/40" />
 
       {/* Vehicle */}
       <FilterSection title="Vehicle">
@@ -517,7 +510,7 @@ function FilterPanel({
         </FilterField>
       </FilterSection>
 
-      <div className="border-t border-border" />
+      <div className="border-t border-border/40" />
 
       {/* Price */}
       <FilterSection title="Price">
@@ -567,8 +560,7 @@ const LoadCard = memo(function LoadCard({
   const deliveryDateStr = formatDate(load.deliveryDate);
   const vehicleCount = 1 + (load.additionalVehicles?.length ?? 0);
   const isMulti = vehicleCount > 1;
-  const ppm = load.price != null && load.distance != null && load.distance > 0
-    ? load.price / load.distance : null;
+  const ppm = calcPricePerMile(load.price, load.distance, load.additionalVehicles);
 
   const vehicleTitle = isMulti
     ? 'Multi-Vehicle Load'
@@ -677,9 +669,9 @@ const LoadCard = memo(function LoadCard({
                   {vehicleCount} Vehicles
                 </span>
               )}
-              {load.trailerType && (
+              {load.trailerType === 'enclosed' && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                  {load.trailerType === 'enclosed' ? 'Enclosed Trailer' : load.trailerType === 'open' ? 'Open Trailer' : load.trailerType.charAt(0).toUpperCase() + load.trailerType.slice(1)}
+                  Enclosed Trailer
                 </span>
               )}
               {hasPendingBid && (

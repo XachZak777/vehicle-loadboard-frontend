@@ -18,6 +18,7 @@ import {
   ArrowRight,
   Clock
 } from 'lucide-react';
+import { calcPricePerMile } from '../utils/phone';
 
 export function AssignedLoads() {
   const { user } = useAuth();
@@ -136,7 +137,7 @@ export function AssignedLoads() {
               const load = getLoadById(booking.loadId);
               if (!load) return null;
 
-              const perMileRate = load.distance > 0 ? (load.price / load.distance).toFixed(2) : '0.00';
+              const perMileRate = (calcPricePerMile(load.price, load.distance, (load as any).additionalVehicles) ?? 0).toFixed(2);
 
               return (
                 <Card

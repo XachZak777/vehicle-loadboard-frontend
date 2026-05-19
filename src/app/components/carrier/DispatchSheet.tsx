@@ -5,7 +5,7 @@ import { Separator } from '../ui/separator';
 import { useGetLoadQuery, useGetBrokerPublicInfoQuery } from '../../store/services/hauliusApi';
 import type { CarrierBidWithLoadDto } from '../../store/services/hauliusApi';
 import { Printer, FileText, Loader2 } from 'lucide-react';
-import { formatPhone } from '../../utils/phone';
+import { formatPhone, formatPaymentLabel } from '../../utils/phone';
 import { printColors } from '../../../styles/theme';
 
 interface Props {
@@ -227,8 +227,8 @@ export function DispatchSheet({ bid, open, onClose }: Props) {
                   value={bid.amount != null ? `$${Number(bid.amount).toLocaleString()}` : (load.price != null ? `$${load.price.toLocaleString()}` : '—')}
                   highlight
                 />
-                {load.paymentMethod && <Row label="Method" value={load.paymentMethod} />}
-                {load.paymentTiming && <Row label="Timing" value={load.paymentTiming} />}
+                {load.paymentMethod && <Row label="Method" value={formatPaymentLabel(load.paymentMethod)} />}
+                {load.paymentTiming && <Row label="Timing" value={formatPaymentLabel(load.paymentTiming)} />}
               </Section>
 
               {/* Contact */}
