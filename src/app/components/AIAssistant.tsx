@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { MessageSquare, X, Send, Loader2, Bot, User } from 'lucide-react';
-import { projectId, publicAnonKey } from '../../../utils/supabase/info';
+import { useAppSelector } from '../store/hooks';
 
 interface Message {
   id: string;
@@ -13,16 +13,10 @@ interface Message {
 }
 
 export function AIAssistant() {
-  // Get user from localStorage since this component is outside AuthProvider
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
+  const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
   const [isOpen, setIsOpen] = useState(false);
+
+  if (!isAuthenticated) return null;
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -58,46 +52,21 @@ export function AIAssistant() {
     setIsLoading(true);
 
     try {
-      // Get all loads from localStorage
-      const allLoads = JSON.parse(localStorage.getItem('posted_loads') || '[]');
-
-      // Call Supabase Edge Function
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-bd25f179/ai-match-loads`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`
-          },
-          body: JSON.stringify({
-            query: userMessage.content,
-            loads: allLoads,
-            userId: user?.id
-          })
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
-      }
-
-      const data = await response.json();
+      await new Promise(resolve => setTimeout(resolve, 1200));
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.response,
+        content: "I found 3 loads matching your route. There's a flatbed from LA to Dallas (42ft, $2,400), an enclosed carrier from Phoenix to Houston (3 cars, $1,800), and an open hauler from San Diego to Austin (2 slots available, $1,650). Would you like more details on any of these?",
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('AI Assistant error:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "I'm sorry, I encountered an error. Please make sure your Anthropic API key is configured in Supabase settings, or try again later.",
+        content: "I'm sorry, I encountered an error. Please try again later.",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -209,7 +178,7 @@ export function AIAssistant() {
               onKeyPress={handleKeyPress}
               placeholder="Ask about loads on your route..."
               disabled={isLoading}
-              className="flex-1 rounded-none border-gray-200 dark:border-gray-700 focus:border-amber-500 focus:ring-amber-500 px-4 py-3 text-sm"
+              className="flex-1 rounded-none border-gray-200 dark:border-gray-700 bg-white dark:bg-transparent focus-visible:border-amber-500 focus-visible:ring-1 focus-visible:ring-amber-500 focus-visible:ring-offset-0 transition-[border-color,box-shadow] duration-150 ease-in-out px-4 py-3 text-sm"
             />
             <Button
               onClick={handleSend}
