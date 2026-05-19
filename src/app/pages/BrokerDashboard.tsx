@@ -111,18 +111,19 @@ export function BrokerDashboard() {
     );
   }
 
-  // if (isError) {
-  //   return (
-  //     <div className="min-h-screen bg-background">
-  //       <Navbar />
-  //       <div className="container mx-auto px-4 py-16 text-center">
-  //         <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
-  //         <p className="text-lg font-semibold text-red-600">{(error as any)?.message ?? 'Failed to load dashboard'}</p>
-  //         <Button className="mt-4" onClick={refetch}>Retry</Button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (isError) {
+    return (
+      <div className='min-h-screen bg-background map-background-detailed'>
+        <MapBackground />
+        <Navbar />
+        <div className='container mx-auto px-4 py-16 text-center'>
+          <AlertCircle className='w-12 h-12 mx-auto mb-4 text-red-500' />
+          <p className='text-lg font-semibold text-red-600'>{(error as any)?.message ?? 'Failed to load dashboard'}</p>
+          <Button className='mt-4' onClick={refetch}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen bg-background map-background-detailed'>

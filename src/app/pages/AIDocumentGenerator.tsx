@@ -67,8 +67,7 @@ export function AIDocumentGenerator() {
       };
     }).filter(Boolean); // Remove any loads that weren't found
 
-    console.log('📄 Available loads for documents:', loadsWithBookings);
-    setAvailableLoads(loadsWithBookings);
+setAvailableLoads(loadsWithBookings);
   }, [user]);
 
   const handleGenerate = async () => {

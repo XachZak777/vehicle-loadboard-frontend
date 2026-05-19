@@ -110,7 +110,7 @@ export function RequestedLoads() {
               const load = getLoadById(booking.loadId);
               if (!load) return null;
 
-              const perMileRate = (calcPricePerMile(load.price, load.distance, (load as any).additionalVehicles) ?? 0).toFixed(2);
+              const perMileRate = (calcPricePerMile(load.price, load.distance, load.additionalVehicles) ?? 0).toFixed(2);
 
               return (
                 <Card
