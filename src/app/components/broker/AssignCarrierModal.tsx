@@ -239,7 +239,7 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
           </>
         ) : (
           /* Confirmation step */
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4">
             {/* Load */}
             <div className="p-3 bg-muted/40 rounded-lg">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Load</p>

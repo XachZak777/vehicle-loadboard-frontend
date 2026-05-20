@@ -662,7 +662,8 @@ const LoadCard = memo(function LoadCard({
           </div>
         )}
 
-        <div className="flex items-start gap-3">
+        {/* ── Desktop layout (sm+): original unchanged ── */}
+        <div className="hidden sm:flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-0.5">
               <span className="text-base font-semibold text-foreground">{vehicleTitle}</span>
@@ -684,12 +685,10 @@ const LoadCard = memo(function LoadCard({
               )}
               {allConditions.map((c, i) => <ConditionIcon key={i} condition={c} />)}
             </div>
-
             {isMulti && vehicleListText && (
               <p className="text-xs text-muted-foreground mb-1.5">{vehicleListText}</p>
             )}
-
-            <div className="flex items-start gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1">
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
                   <MapPin className="size-3.5 text-amber-500 flex-shrink-0" />
@@ -728,16 +727,7 @@ const LoadCard = memo(function LoadCard({
                 {deliveryDateStr && <p className="text-xs text-muted-foreground pl-4">{deliveryDateStr}</p>}
               </div>
             </div>
-            {cityMap && (
-              <CityMapModal
-                city={cityMap.city}
-                state={cityMap.state}
-                label={cityMap.label}
-                onClose={() => setCityMap(null)}
-              />
-            )}
           </div>
-
           <div className="flex-shrink-0 text-right">
             {load.price != null && (
               <div className="text-lg font-bold text-foreground leading-tight">
@@ -750,11 +740,109 @@ const LoadCard = memo(function LoadCard({
               </div>
             )}
           </div>
-
           <div className="flex-shrink-0 p-1 self-start">
             <ChevronDown className={`size-4 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
           </div>
         </div>
+
+        {/* ── Mobile layout (< sm): two rows ── */}
+        <div className="flex flex-col gap-2 sm:hidden">
+          {/* Row 1: title + price + chevron */}
+          <div className="flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                <span className="text-base font-semibold text-foreground">{vehicleTitle}</span>
+                {isMulti && (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    {vehicleCount} Vehicles
+                  </span>
+                )}
+                {load.trailerType === 'enclosed' && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                    Enclosed Trailer
+                  </span>
+                )}
+                {hasPendingBid && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+                    <CheckCircle className="size-3" />
+                    Requested
+                  </span>
+                )}
+                {allConditions.map((c, i) => <ConditionIcon key={i} condition={c} />)}
+              </div>
+              {isMulti && vehicleListText && (
+                <p className="text-xs text-muted-foreground">{vehicleListText}</p>
+              )}
+            </div>
+            <div className="flex-shrink-0 text-right">
+              {load.price != null && (
+                <div className="text-lg font-bold text-foreground leading-tight">
+                  ${load.price.toLocaleString()}
+                </div>
+              )}
+              {ppm != null && load.distance != null && (
+                <div className="text-xs text-muted-foreground whitespace-nowrap">
+                  {load.distance.toLocaleString()} mi • ${ppm.toFixed(2)}/mi
+                </div>
+              )}
+            </div>
+            <div className="flex-shrink-0 p-1 self-start">
+              <ChevronDown className={`size-4 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
+            </div>
+          </div>
+
+          {/* Row 2: full-width lane */}
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start gap-1">
+                <MapPin className="size-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                {pickupExact ? (
+                  <span className="text-sm text-muted-foreground break-words">{pickupExact}</span>
+                ) : load.pickupCity ? (
+                  <button
+                    onClick={e => { e.stopPropagation(); setCityMap({ city: load.pickupCity!, state: load.pickupState!, label: `Pickup — ${pickupLoc}` }); }}
+                    className="text-sm text-muted-foreground hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left"
+                  >
+                    <span className="block whitespace-nowrap">{pickupLoc}</span>
+                    {load.pickupZip && <span className="block text-xs">{load.pickupZip}</span>}
+                  </button>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
+              </div>
+              {pickupDateStr && <p className="text-xs text-muted-foreground pl-4">{pickupDateStr}</p>}
+            </div>
+            <span className="text-amber-500 font-bold flex-shrink-0 pt-0.5">→</span>
+            <div className="min-w-0 flex-1 text-right">
+              <div className="flex items-start gap-1 flex-row-reverse">
+                <MapPin className="size-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                {dropExact ? (
+                  <span className="text-sm text-muted-foreground break-words">{dropExact}</span>
+                ) : load.dropCity ? (
+                  <button
+                    onClick={e => { e.stopPropagation(); setCityMap({ city: load.dropCity!, state: load.dropState!, label: `Delivery — ${dropLoc}` }); }}
+                    className="text-sm text-muted-foreground hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-right"
+                  >
+                    <span className="block whitespace-nowrap">{dropLoc}</span>
+                    {load.dropZip && <span className="block text-xs">{load.dropZip}</span>}
+                  </button>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
+              </div>
+              {deliveryDateStr && <p className="text-xs text-muted-foreground pr-4">{deliveryDateStr}</p>}
+            </div>
+          </div>
+        </div>
+
+        {cityMap && (
+          <CityMapModal
+            city={cityMap.city}
+            state={cityMap.state}
+            label={cityMap.label}
+            onClose={() => setCityMap(null)}
+          />
+        )}
       </div>
 
       {expanded && (
