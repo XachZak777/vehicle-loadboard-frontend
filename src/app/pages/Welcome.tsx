@@ -7,7 +7,6 @@ import { useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { BrandLogo } from '../components/BrandLogo';
-import { mockLoads } from '../data/mockLoads';
 import { APP_NAME } from '../constants';
 
 export function Welcome() {
@@ -29,15 +28,6 @@ export function Welcome() {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
-
-  // Get top 3 loads by price per mile
-  const topLoads = [...mockLoads]
-    .map(load => ({
-      ...load,
-      pricePerMile: load.price / load.distance
-    }))
-    .sort((a, b) => b.pricePerMile - a.pricePerMile)
-    .slice(0, 3);
 
   // ── Smooth-scroll helpers ──────────────────────────────────────────────────
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {

@@ -6,7 +6,7 @@ import {
 } from '../store/services/hauliusApi';
 import { Button } from '../components/ui/button';
 import { Printer, ArrowLeft, Loader2, FileText } from 'lucide-react';
-import { formatPhone } from '../utils/phone';
+import { formatPhone, formatPaymentLabel } from '../utils/phone';
 
 function fmt(d?: string | null) {
   if (!d) return '—';
@@ -180,8 +180,8 @@ export function DispatchSheetPage() {
               value={bid.amount != null ? `$${Number(bid.amount).toLocaleString()}` : (load.price != null ? `$${load.price.toLocaleString()}` : '—')}
               highlight
             />
-            {load.paymentMethod && <Row label="Method" value={load.paymentMethod} />}
-            {load.paymentTiming && <Row label="Timing" value={load.paymentTiming} />}
+            {load.paymentMethod && <Row label="Method" value={formatPaymentLabel(load.paymentMethod)} />}
+            {load.paymentTiming && <Row label="Timing" value={formatPaymentLabel(load.paymentTiming)} />}
           </Section>
         </div>
 

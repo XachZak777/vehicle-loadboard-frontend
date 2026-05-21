@@ -23,6 +23,7 @@ import {
   PackageCheck, PackageOpen, BadgeCheck, Star,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { calcPricePerMile } from '../utils/phone';
 
 type PageConfig = {
   title: string;
@@ -497,8 +498,8 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
 }
 
 function PreferredLoadCard({ load }: { load: LoadDto }) {
-  const ppm = load.price != null && load.distance != null && load.distance > 0
-    ? (load.price / load.distance).toFixed(2) : null;
+  const ppmVal = calcPricePerMile(load.price, load.distance, load.additionalVehicles);
+  const ppm = ppmVal != null ? ppmVal.toFixed(2) : null;
   const vehicleTitle = [load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ') || 'Vehicle';
   const pickupDateStr = load.pickupDate
     ? new Date(load.pickupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null;

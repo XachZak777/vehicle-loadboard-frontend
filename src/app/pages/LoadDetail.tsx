@@ -19,7 +19,7 @@ import {
   useUpdateLoadStatusMutation,
   useGetMySubmittedLoadIdsQuery,
 } from '../store/services/hauliusApi';
-import { formatPhone } from '../utils/phone';
+import { formatPhone, formatPaymentLabel, calcPricePerMile } from '../utils/phone';
 import { MapBackground } from '../components/MapBackground';
 import { CityMapModal } from '../components/CityMapModal';
 import { DispatchSheet } from '../components/DispatchSheet';
@@ -175,8 +175,8 @@ export function LoadDetail() {
               {load.price != null && (
                 <div className="text-3xl font-bold text-amber-500">${load.price.toLocaleString()}</div>
               )}
-              {load.price != null && load.distance != null && load.distance > 0 && (
-                <div className="text-sm text-muted-foreground">${(load.price / load.distance).toFixed(2)}/mi</div>
+              {calcPricePerMile(load.price, load.distance, load.additionalVehicles) != null && (
+                <div className="text-sm text-muted-foreground">${calcPricePerMile(load.price, load.distance, load.additionalVehicles)!.toFixed(2)}/mi</div>
               )}
               {load.status && (
                 <Badge
@@ -473,10 +473,10 @@ export function LoadDetail() {
                   <p className="font-semibold">{load.distance.toLocaleString()} mi</p>
                 </div>
               )}
-              {load.price != null && load.distance != null && load.distance > 0 && (
+              {calcPricePerMile(load.price, load.distance, load.additionalVehicles) != null && (
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">$/Mile</p>
-                  <p className="font-semibold">${(load.price / load.distance).toFixed(2)}</p>
+                  <p className="font-semibold">${calcPricePerMile(load.price, load.distance, load.additionalVehicles)!.toFixed(2)}</p>
                 </div>
               )}
               {load.trailerType && (
@@ -489,8 +489,8 @@ export function LoadDetail() {
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">Payment</p>
                   <p className="font-semibold">
-                    {load.paymentMethod}
-                    {load.paymentTiming ? ` (${load.paymentTiming})` : ''}
+                    {formatPaymentLabel(load.paymentMethod)}
+                    {load.paymentTiming ? ` (${formatPaymentLabel(load.paymentTiming)})` : ''}
                   </p>
                 </div>
               )}

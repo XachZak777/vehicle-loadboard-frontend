@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Button } from '../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../components/ui/sheet';
 import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star, SlidersHorizontal, X } from 'lucide-react';
-import { formatPhone } from '../utils/phone';
+import { formatPhone, formatPaymentLabel, calcPricePerMile } from '../utils/phone';
 import { MapBackground } from '../components/MapBackground';
 import { CityMapModal } from '../components/CityMapModal';
 
@@ -35,9 +35,6 @@ function formatDate(dateStr?: string) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function formatPaymentLabel(value: string) {
-  return value.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-}
 
 function BrokerSummaryRow({ brokerId }: { brokerId: string }) {
   const navigate = useNavigate();
@@ -75,12 +72,8 @@ function InfoField({ label, value }: { label: string; value?: string }) {
 }
 
 function ConditionIcon({ condition }: { condition: string }) {
-  const isRunning = condition.toLowerCase() === 'running';
-  return isRunning ? (
-    <span className="inline-flex size-4 rounded-full items-center justify-center bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-      <CheckCircle className="size-3" />
-    </span>
-  ) : (
+  if (condition.toLowerCase() === 'running') return null;
+  return (
     <span className="inline-flex size-4 rounded-full items-center justify-center bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
       <AlertCircle className="size-3" />
     </span>
@@ -195,8 +188,8 @@ export function LoadBoard() {
       }
 
       if (minPricePerMile && load.price != null && load.distance != null && load.distance > 0) {
-        const ppm = load.price / load.distance;
-        if (ppm < parseFloat(minPricePerMile)) return false;
+        const ppm = calcPricePerMile(load.price, load.distance, load.additionalVehicles);
+        if (ppm == null || ppm < parseFloat(minPricePerMile)) return false;
       }
 
       return true;
@@ -208,8 +201,8 @@ export function LoadBoard() {
       if (sortBy === 'price-asc') return (a.price ?? 0) - (b.price ?? 0);
       if (sortBy === 'price-desc') return (b.price ?? 0) - (a.price ?? 0);
       if (sortBy === 'ppm-desc' || sortBy === 'ppm-asc') {
-        const ppmA = a.price != null && a.distance != null && a.distance > 0 ? a.price / a.distance : null;
-        const ppmB = b.price != null && b.distance != null && b.distance > 0 ? b.price / b.distance : null;
+        const ppmA = calcPricePerMile(a.price, a.distance, a.additionalVehicles);
+        const ppmB = calcPricePerMile(b.price, b.distance, b.additionalVehicles);
         if (ppmA == null && ppmB == null) return 0;
         if (ppmA == null) return 1;
         if (ppmB == null) return -1;
@@ -295,26 +288,26 @@ export function LoadBoard() {
                 style={{ width: filtersOpen ? 272 : 0 }}
               >
                 <div
-                  className="w-[272px] pr-5 transition-transform duration-300 ease-out"
+                  className="w-[272px] transition-transform duration-300 ease-out"
                   style={{ transform: filtersOpen ? 'translateX(0)' : 'translateX(-100%)' }}
                 >
-                  <div className="mb-4">
-                    <h2 className="text-base font-bold text-foreground">Filters</h2>
+                  <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+                    <h2 className="text-base font-bold text-foreground mb-4">Filters</h2>
+                    <FilterPanel
+                      sortBy={sortBy} setSortBy={setSortBy}
+                      searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+                      pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
+                      pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
+                      deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
+                      deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
+                      vehicleType={vehicleType} setVehicleType={setVehicleType}
+                      trailerType={trailerType} setTrailerType={setTrailerType}
+                      condition={condition} setCondition={setCondition}
+                      minPrice={minPrice} setMinPrice={setMinPrice}
+                      minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
+                      clearFilters={clearFilters}
+                    />
                   </div>
-                  <FilterPanel
-                    sortBy={sortBy} setSortBy={setSortBy}
-                    searchTerm={searchTerm} setSearchTerm={setSearchTerm}
-                    pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
-                    pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
-                    deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
-                    deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
-                    vehicleType={vehicleType} setVehicleType={setVehicleType}
-                    trailerType={trailerType} setTrailerType={setTrailerType}
-                    condition={condition} setCondition={setCondition}
-                    minPrice={minPrice} setMinPrice={setMinPrice}
-                    minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
-                    clearFilters={clearFilters}
-                  />
                 </div>
               </aside>
 
@@ -459,7 +452,7 @@ function FilterPanel({
         </FilterField>
       </FilterSection>
 
-      <div className="border-t border-border" />
+      <div className="border-t border-border/40" />
 
       {/* Location */}
       <FilterSection title="Location">
@@ -487,7 +480,7 @@ function FilterPanel({
         </FilterField>
       </FilterSection>
 
-      <div className="border-t border-border" />
+      <div className="border-t border-border/40" />
 
       {/* Vehicle */}
       <FilterSection title="Vehicle">
@@ -517,7 +510,7 @@ function FilterPanel({
         </FilterField>
       </FilterSection>
 
-      <div className="border-t border-border" />
+      <div className="border-t border-border/40" />
 
       {/* Price */}
       <FilterSection title="Price">
@@ -567,8 +560,7 @@ const LoadCard = memo(function LoadCard({
   const deliveryDateStr = formatDate(load.deliveryDate);
   const vehicleCount = 1 + (load.additionalVehicles?.length ?? 0);
   const isMulti = vehicleCount > 1;
-  const ppm = load.price != null && load.distance != null && load.distance > 0
-    ? load.price / load.distance : null;
+  const ppm = calcPricePerMile(load.price, load.distance, load.additionalVehicles);
 
   const vehicleTitle = isMulti
     ? 'Multi-Vehicle Load'
@@ -595,6 +587,8 @@ const LoadCard = memo(function LoadCard({
   const dropLoc = [load.dropCity, load.dropState].filter(Boolean).join(', ');
   const pickupLocFull = [pickupLoc, load.pickupZip].filter(Boolean).join(' ');
   const dropLocFull = [dropLoc, load.dropZip].filter(Boolean).join(' ');
+  const pickupExact = isBooked ? [load.pickupStreet, pickupLocFull].filter(Boolean).join(', ') : null;
+  const dropExact = isBooked ? [load.dropStreet, dropLocFull].filter(Boolean).join(', ') : null;
 
   const openBidForm = (editMode: boolean) => {
     setIsEditMode(editMode);
@@ -668,7 +662,8 @@ const LoadCard = memo(function LoadCard({
           </div>
         )}
 
-        <div className="flex items-start gap-3">
+        {/* ── Desktop layout (sm+): original unchanged ── */}
+        <div className="hidden sm:flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-0.5">
               <span className="text-base font-semibold text-foreground">{vehicleTitle}</span>
@@ -677,9 +672,9 @@ const LoadCard = memo(function LoadCard({
                   {vehicleCount} Vehicles
                 </span>
               )}
-              {load.trailerType && (
+              {load.trailerType === 'enclosed' && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                  {load.trailerType === 'enclosed' ? 'Enclosed Trailer' : load.trailerType === 'open' ? 'Open Trailer' : load.trailerType.charAt(0).toUpperCase() + load.trailerType.slice(1)}
+                  Enclosed Trailer
                 </span>
               )}
               {hasPendingBid && (
@@ -690,16 +685,16 @@ const LoadCard = memo(function LoadCard({
               )}
               {allConditions.map((c, i) => <ConditionIcon key={i} condition={c} />)}
             </div>
-
             {isMulti && vehicleListText && (
               <p className="text-xs text-muted-foreground mb-1.5">{vehicleListText}</p>
             )}
-
-            <div className="flex items-start gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1">
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
                   <MapPin className="size-3.5 text-amber-500 flex-shrink-0" />
-                  {isCarrier && !isBooked && load.pickupCity ? (
+                  {pickupExact ? (
+                    <span className="text-sm text-muted-foreground truncate">{pickupExact}</span>
+                  ) : load.pickupCity ? (
                     <button
                       onClick={e => { e.stopPropagation(); setCityMap({ city: load.pickupCity!, state: load.pickupState!, label: `Pickup — ${pickupLoc}` }); }}
                       className="text-sm text-muted-foreground truncate hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left"
@@ -707,7 +702,7 @@ const LoadCard = memo(function LoadCard({
                       {pickupLocFull || '—'}
                     </button>
                   ) : (
-                    <span className="text-sm text-muted-foreground truncate">{pickupLocFull || '—'}</span>
+                    <span className="text-sm text-muted-foreground truncate">—</span>
                   )}
                 </div>
                 {pickupDateStr && <p className="text-xs text-muted-foreground pl-4">{pickupDateStr}</p>}
@@ -716,7 +711,9 @@ const LoadCard = memo(function LoadCard({
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
                   <MapPin className="size-3.5 text-amber-500 flex-shrink-0" />
-                  {isCarrier && !isBooked && load.dropCity ? (
+                  {dropExact ? (
+                    <span className="text-sm text-muted-foreground truncate">{dropExact}</span>
+                  ) : load.dropCity ? (
                     <button
                       onClick={e => { e.stopPropagation(); setCityMap({ city: load.dropCity!, state: load.dropState!, label: `Delivery — ${dropLoc}` }); }}
                       className="text-sm text-muted-foreground truncate hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left"
@@ -724,22 +721,13 @@ const LoadCard = memo(function LoadCard({
                       {dropLocFull || '—'}
                     </button>
                   ) : (
-                    <span className="text-sm text-muted-foreground truncate">{dropLocFull || '—'}</span>
+                    <span className="text-sm text-muted-foreground truncate">—</span>
                   )}
                 </div>
                 {deliveryDateStr && <p className="text-xs text-muted-foreground pl-4">{deliveryDateStr}</p>}
               </div>
             </div>
-            {cityMap && (
-              <CityMapModal
-                city={cityMap.city}
-                state={cityMap.state}
-                label={cityMap.label}
-                onClose={() => setCityMap(null)}
-              />
-            )}
           </div>
-
           <div className="flex-shrink-0 text-right">
             {load.price != null && (
               <div className="text-lg font-bold text-foreground leading-tight">
@@ -752,11 +740,109 @@ const LoadCard = memo(function LoadCard({
               </div>
             )}
           </div>
-
           <div className="flex-shrink-0 p-1 self-start">
             <ChevronDown className={`size-4 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
           </div>
         </div>
+
+        {/* ── Mobile layout (< sm): two rows ── */}
+        <div className="flex flex-col gap-2 sm:hidden">
+          {/* Row 1: title + price + chevron */}
+          <div className="flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                <span className="text-base font-semibold text-foreground">{vehicleTitle}</span>
+                {isMulti && (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    {vehicleCount} Vehicles
+                  </span>
+                )}
+                {load.trailerType === 'enclosed' && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                    Enclosed Trailer
+                  </span>
+                )}
+                {hasPendingBid && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+                    <CheckCircle className="size-3" />
+                    Requested
+                  </span>
+                )}
+                {allConditions.map((c, i) => <ConditionIcon key={i} condition={c} />)}
+              </div>
+              {isMulti && vehicleListText && (
+                <p className="text-xs text-muted-foreground">{vehicleListText}</p>
+              )}
+            </div>
+            <div className="flex-shrink-0 text-right">
+              {load.price != null && (
+                <div className="text-lg font-bold text-foreground leading-tight">
+                  ${load.price.toLocaleString()}
+                </div>
+              )}
+              {ppm != null && load.distance != null && (
+                <div className="text-xs text-muted-foreground whitespace-nowrap">
+                  {load.distance.toLocaleString()} mi • ${ppm.toFixed(2)}/mi
+                </div>
+              )}
+            </div>
+            <div className="flex-shrink-0 p-1 self-start">
+              <ChevronDown className={`size-4 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
+            </div>
+          </div>
+
+          {/* Row 2: full-width lane */}
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start gap-1">
+                <MapPin className="size-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                {pickupExact ? (
+                  <span className="text-sm text-muted-foreground break-words">{pickupExact}</span>
+                ) : load.pickupCity ? (
+                  <button
+                    onClick={e => { e.stopPropagation(); setCityMap({ city: load.pickupCity!, state: load.pickupState!, label: `Pickup — ${pickupLoc}` }); }}
+                    className="text-sm text-muted-foreground hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left"
+                  >
+                    <span className="block whitespace-nowrap">{pickupLoc}</span>
+                    {load.pickupZip && <span className="block text-xs">{load.pickupZip}</span>}
+                  </button>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
+              </div>
+              {pickupDateStr && <p className="text-xs text-muted-foreground pl-4">{pickupDateStr}</p>}
+            </div>
+            <span className="text-amber-500 font-bold flex-shrink-0 pt-0.5">→</span>
+            <div className="min-w-0 flex-1 text-right">
+              <div className="flex items-start gap-1 flex-row-reverse">
+                <MapPin className="size-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                {dropExact ? (
+                  <span className="text-sm text-muted-foreground break-words">{dropExact}</span>
+                ) : load.dropCity ? (
+                  <button
+                    onClick={e => { e.stopPropagation(); setCityMap({ city: load.dropCity!, state: load.dropState!, label: `Delivery — ${dropLoc}` }); }}
+                    className="text-sm text-muted-foreground hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-right"
+                  >
+                    <span className="block whitespace-nowrap">{dropLoc}</span>
+                    {load.dropZip && <span className="block text-xs">{load.dropZip}</span>}
+                  </button>
+                ) : (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
+              </div>
+              {deliveryDateStr && <p className="text-xs text-muted-foreground pr-4">{deliveryDateStr}</p>}
+            </div>
+          </div>
+        </div>
+
+        {cityMap && (
+          <CityMapModal
+            city={cityMap.city}
+            state={cityMap.state}
+            label={cityMap.label}
+            onClose={() => setCityMap(null)}
+          />
+        )}
       </div>
 
       {expanded && (

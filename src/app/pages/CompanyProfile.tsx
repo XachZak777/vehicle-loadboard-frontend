@@ -476,7 +476,7 @@ export function CompanyProfile() {
               {editingBond ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
+                    <div className="sm:col-span-2">
                       <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Bond Company</Label>
                       <Input value={bondForm.bondCompany} onChange={e => setBondForm(f => ({ ...f, bondCompany: e.target.value }))} className="h-8 text-sm mt-1" />
                     </div>

@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY package*.json ./
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --ignore-scripts
+    npm ci --ignore-scripts --legacy-peer-deps
 
 COPY . .
 ARG VITE_API_BASE_URL

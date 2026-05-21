@@ -1,6 +1,6 @@
 import { Building2, MapPin, Truck, CalendarDays, Phone, Mail, ShieldCheck, Printer, Hash } from 'lucide-react';
 import type { LoadPostingDto, BrokerPublicInfo, CarrierPublicInfo } from '../store/services/hauliusApi';
-import { formatPhone } from '../utils/phone';
+import { formatPhone, formatPaymentLabel, calcPricePerMile } from '../utils/phone';
 
 type Props = {
   load: LoadPostingDto;
@@ -317,10 +317,10 @@ export function DispatchSheet({ load, brokerInfo, carrierInfo, showSensitiveInfo
                 <p className="text-base font-bold mt-0.5">{load.distance.toLocaleString()} mi</p>
               </div>
             )}
-            {load.price != null && load.distance != null && load.distance > 0 && (
+            {calcPricePerMile(load.price, load.distance, load.additionalVehicles) != null && (
               <div className="bg-muted/40 border border-border rounded-lg px-4 py-3">
                 <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Rate / Mile</p>
-                <p className="text-base font-bold mt-0.5">${(load.price / load.distance).toFixed(2)}</p>
+                <p className="text-base font-bold mt-0.5">${calcPricePerMile(load.price, load.distance, load.additionalVehicles)!.toFixed(2)}</p>
               </div>
             )}
             {trailerLabel && (
@@ -339,12 +339,12 @@ export function DispatchSheet({ load, brokerInfo, carrierInfo, showSensitiveInfo
             <div className="flex items-center gap-3 flex-wrap">
               {load.paymentMethod && (
                 <span className="text-sm font-semibold bg-muted border border-border px-4 py-2 rounded-lg">
-                  {load.paymentMethod}
+                  {formatPaymentLabel(load.paymentMethod)}
                 </span>
               )}
               {load.paymentTiming && (
                 <span className="text-sm font-semibold bg-muted border border-border px-4 py-2 rounded-lg">
-                  {load.paymentTiming}
+                  {formatPaymentLabel(load.paymentTiming)}
                 </span>
               )}
             </div>

@@ -142,7 +142,7 @@ export function AIAssistant() {
               >
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                 <p className={`text-xs mt-2 ${message.role === 'user' ? 'text-white/70' : 'text-gray-500'}`}>
-                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toUpperCase()}
                 </p>
               </div>
               {message.role === 'user' && (

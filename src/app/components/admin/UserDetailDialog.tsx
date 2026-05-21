@@ -605,10 +605,10 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
                     </Select>
                     <label className="flex items-center gap-1.5 cursor-pointer h-8 px-3 text-sm rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground">
                       <Upload className="size-3" />Choose File
-                      <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" className="sr-only" onChange={handleDocumentUpload} />
+                      <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.gif,.heic" className="sr-only" onChange={handleDocumentUpload} />
                     </label>
                   </div>
-                  <p className="text-xs text-muted-foreground">PDF, DOC, DOCX — max 5MB</p>
+                  <p className="text-xs text-muted-foreground">PDF, DOC, DOCX, PNG, JPG, WEBP — max 5MB</p>
                 </div>
               )}
             </CardContent>

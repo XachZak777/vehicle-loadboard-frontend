@@ -18,6 +18,7 @@ import {
   Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { calcPricePerMile } from '../utils/phone';
 
 export function RequestedLoads() {
   const { user } = useAuth();
@@ -109,7 +110,7 @@ export function RequestedLoads() {
               const load = getLoadById(booking.loadId);
               if (!load) return null;
 
-              const perMileRate = load.distance > 0 ? (load.price / load.distance).toFixed(2) : '0.00';
+              const perMileRate = (calcPricePerMile(load.price, load.distance, load.additionalVehicles) ?? 0).toFixed(2);
 
               return (
                 <Card
