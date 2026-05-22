@@ -56,7 +56,6 @@ export function VerifyLogin() {
         email: res.email,
         companyName: res.companyName,
         phoneVerified: true,
-        fmcsaVerified: true,
         createdAt: new Date().toISOString(),
       };
 

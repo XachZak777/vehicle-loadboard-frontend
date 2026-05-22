@@ -24,8 +24,6 @@ export interface UserProfile {
   taxId?: string;
   taxIdType?: 'SSN' | 'EIN';
 
-  // FMCSA Verification
-  fmcsaVerified?: boolean;
   verificationDate?: string;
 
   // Additional Info
