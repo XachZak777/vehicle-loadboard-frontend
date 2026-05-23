@@ -48,7 +48,7 @@ function BrokerSummaryRow({ brokerId }: { brokerId: string }) {
       onClick={(e) => { e.stopPropagation(); navigate(`/company/broker/${brokerId}`); }}
     >
       <span className="text-sm font-semibold text-amber-600 hover:underline">{name}</span>
-      <span className="flex items-center gap-1 text-sm text-muted-foreground">
+      <span className="flex items-center gap-1 text-sm font-bold text-black dark:text-white">
         <Star className="size-3.5 fill-amber-400 text-amber-400" />
         {rating != null ? `${Math.round(rating)}%` : 'N/A'}
       </span>
@@ -81,7 +81,7 @@ function ConditionIcon({ condition }: { condition: string }) {
 }
 
 export function LoadBoard() {
-  const { data: loads = [], isLoading, isError, error, refetch } = useGetLoadsQuery();
+  const { data: loads = [], isLoading, isFetching, isError, error, refetch } = useGetLoadsQuery();
   const user = useAppSelector(s => s.auth.user);
   const isCarrier = user?.role === 'carrier';
   const { data: myCarrierProfile } = useGetMyCarrierProfileQuery(undefined, { skip: !isCarrier });
@@ -349,16 +349,26 @@ export function LoadBoard() {
                     available load{filteredLoads.length !== 1 ? 's' : ''}
                   </p>
 
-                  {/* Active filter chips — desktop only */}
-                  {activeFilterCount > 0 && (
+                  <div className="ml-auto flex items-center gap-3">
+                    {activeFilterCount > 0 && (
+                      <button
+                        onClick={clearFilters}
+                        className="hidden sm:inline-flex items-center gap-1 text-xs text-amber-600 hover:underline"
+                      >
+                        <X className="size-3" />
+                        Clear all filters
+                      </button>
+                    )}
                     <button
-                      onClick={clearFilters}
-                      className="hidden sm:inline-flex items-center gap-1 ml-auto text-xs text-amber-600 hover:underline"
+                      onClick={() => refetch()}
+                      disabled={isFetching}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-sm text-foreground disabled:opacity-50"
+                      title="Refresh loads"
                     >
-                      <X className="size-3" />
-                      Clear all filters
+                      <Loader2 className={`size-4 ${isFetching ? 'animate-spin text-amber-500' : 'text-muted-foreground'}`} />
+                      Refresh
                     </button>
-                  )}
+                  </div>
                 </div>
 
                 <div className="space-y-3">

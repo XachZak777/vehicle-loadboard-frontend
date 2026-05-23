@@ -296,6 +296,7 @@ export type CarrierBidWithLoadDto = {
   deliveryDate?: string;
   loadStatus?: string;
   brokerId?: string;
+  orderId?: string;
 };
 
 export type BrokerProfile = {

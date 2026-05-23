@@ -1,7 +1,7 @@
-import { Link } from 'react-router';
 import { Button } from '../components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { BrandLogo } from '../components/BrandLogo';
 
 export function TermsOfService() {
   return (
@@ -10,20 +10,17 @@ export function TermsOfService() {
       <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-3">
-              <div>
-                <h1 className="text-lg font-bold">Haulius</h1>
-                <p className="text-xs text-muted-foreground">Vehicle Transport Network</p>
-              </div>
-            </Link>
+            <a href="/" className="flex items-center">
+              <BrandLogo className="h-8 w-auto" />
+            </a>
             <div className="flex items-center gap-4">
               <ThemeToggle />
-              <Link to="/">
+              <a href="/">
                 <Button variant="outline" size="sm" className="gap-2">
                   <ArrowLeft className="size-4" />
                   Back to Home
                 </Button>
-              </Link>
+              </a>
             </div>
           </div>
         </div>

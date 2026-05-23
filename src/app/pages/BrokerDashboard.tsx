@@ -142,19 +142,19 @@ export function BrokerDashboard() {
           assignedLoads={activeLoads}
         />
 
-        <Tabs defaultValue='pending' className='space-y-4'>
+        <Tabs defaultValue='myloads' className='space-y-4'>
           <TabsList>
-            <TabsTrigger value='pending'>Pending Bids</TabsTrigger>
+            <TabsTrigger value='myloads'>All Loads ({loads.length})</TabsTrigger>
             <TabsTrigger value='active'>Active ({activeLoads.length})</TabsTrigger>
             <TabsTrigger value='completed'>Completed ({completedLoads.length})</TabsTrigger>
-            <TabsTrigger value='myloads'>All Loads ({loads.length})</TabsTrigger>
+            <TabsTrigger value='pending'>Pending Bids</TabsTrigger>
           </TabsList>
 
-          <TabsContent value='pending' className='space-y-4'>
-            <PendingBidsTab
-              openLoads={openLoads}
+          <TabsContent value='myloads' className='space-y-4'>
+            <AllLoadsTab
+              loads={loads}
               getStatusBadge={getStatusBadge}
-              onApproveBid={handleApproveBid}
+              onDeleteLoad={handleDeleteLoad}
               actionLoading={actionLoading}
             />
           </TabsContent>
@@ -177,11 +177,11 @@ export function BrokerDashboard() {
             />
           </TabsContent>
 
-          <TabsContent value='myloads' className='space-y-4'>
-            <AllLoadsTab
-              loads={loads}
+          <TabsContent value='pending' className='space-y-4'>
+            <PendingBidsTab
+              openLoads={openLoads}
               getStatusBadge={getStatusBadge}
-              onDeleteLoad={handleDeleteLoad}
+              onApproveBid={handleApproveBid}
               actionLoading={actionLoading}
             />
           </TabsContent>
