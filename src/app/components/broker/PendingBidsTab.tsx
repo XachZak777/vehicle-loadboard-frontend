@@ -20,7 +20,9 @@ import {
   ChevronRight,
   Loader2,
   Users,
+  Hash,
 } from 'lucide-react';
+import { Link } from 'react-router';
 import { Checkbox } from '../ui/checkbox';
 import { CarrierInfoInline } from './CarrierInfoInline';
 import { LoadWithBidsLoader } from './LoadWithBidsLoader';
@@ -102,6 +104,15 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
                 <CardHeader className="bg-muted/40 pb-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
+                      {load.orderId && (
+                        <Link
+                          to={`/load/${load.id}`}
+                          className="inline-flex items-center gap-1 mb-1.5 text-xs font-mono font-semibold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
+                        >
+                          <Hash className="size-3" />
+                          {load.orderId}
+                        </Link>
+                      )}
                       <div className="flex items-center gap-2 mb-1">
                         <Truck className={`w-4 h-4 ${colors.accentText} flex-shrink-0`} />
                         <CardTitle className="text-base">
@@ -247,6 +258,15 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
               {/* Load summary */}
               <div className="p-3 bg-muted/40 rounded-lg">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Load</p>
+                {pendingApproval.load.orderId && (
+                  <Link
+                    to={`/load/${pendingApproval.load.id}`}
+                    className="inline-flex items-center gap-1 mb-1.5 text-xs font-mono font-semibold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
+                  >
+                    <Hash className="size-3" />
+                    {pendingApproval.load.orderId}
+                  </Link>
+                )}
                 <p className="font-semibold text-sm">
                   {pendingApproval.load.vehicleYear} {pendingApproval.load.vehicleMake} {pendingApproval.load.vehicleModel}
                 </p>

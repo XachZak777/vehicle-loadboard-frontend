@@ -24,6 +24,7 @@ import {
   Building2,
   Phone,
   Star,
+  Hash,
 } from 'lucide-react';
 
 
@@ -96,7 +97,15 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
     <Card className="border-2 border-gray-200 dark:border-gray-700 hover:border-amber-400 dark:hover:border-amber-500 transition-all duration-200">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg">{vehicleTitle}</CardTitle>
+          <div>
+            {bid.orderId && (
+              <Link to={`/load/${bid.loadId}`} className="inline-flex items-center gap-1 mb-1.5 text-xs font-mono font-semibold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
+                <Hash className="size-3" />
+                {bid.orderId}
+              </Link>
+            )}
+            <CardTitle className="text-lg">{vehicleTitle}</CardTitle>
+          </div>
           {getStatusBadge(bid.bidStatus)}
         </div>
         {(bid.pickupCity || bid.dropCity) && (
@@ -313,25 +322,25 @@ export function CarrierHistory() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="pending" className="space-y-4">
+        <Tabs defaultValue="all" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="pending">Pending ({pendingBids.length})</TabsTrigger>
-            <TabsTrigger value="approved">Approved ({approvedBids.length})</TabsTrigger>
             <TabsTrigger value="all">All Bids ({bids.length})</TabsTrigger>
+            <TabsTrigger value="approved">Approved ({approvedBids.length})</TabsTrigger>
+            <TabsTrigger value="pending">Pending ({pendingBids.length})</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pending" className="space-y-4">
-            {pendingBids.length === 0 ? (
+          <TabsContent value="all" className="space-y-4">
+            {bids.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-muted-foreground">
-                  <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No pending bids</p>
-                  <p className="text-sm mt-2">Browse available loads and place bids</p>
-                  <Button className="mt-4" onClick={() => navigate('/loads')}>Browse Loads</Button>
+                  <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No bid history yet</p>
+                  <p className="text-sm mt-2">Start bidding on loads to build your history</p>
+                  <Button className="mt-4" onClick={() => navigate('/loads')}>Browse Available Loads</Button>
                 </CardContent>
               </Card>
             ) : (
-              pendingBids.map(bid => <BidCard key={bid.bidId} bid={bid} />)
+              bids.map(bid => <BidCard key={bid.bidId} bid={bid} />)
             )}
           </TabsContent>
 
@@ -349,20 +358,21 @@ export function CarrierHistory() {
             )}
           </TabsContent>
 
-          <TabsContent value="all" className="space-y-4">
-            {bids.length === 0 ? (
+          <TabsContent value="pending" className="space-y-4">
+            {pendingBids.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-muted-foreground">
-                  <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No bid history yet</p>
-                  <p className="text-sm mt-2">Start bidding on loads to build your history</p>
-                  <Button className="mt-4" onClick={() => navigate('/loads')}>Browse Available Loads</Button>
+                  <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No pending bids</p>
+                  <p className="text-sm mt-2">Browse available loads and place bids</p>
+                  <Button className="mt-4" onClick={() => navigate('/loads')}>Browse Loads</Button>
                 </CardContent>
               </Card>
             ) : (
-              bids.map(bid => <BidCard key={bid.bidId} bid={bid} />)
+              pendingBids.map(bid => <BidCard key={bid.bidId} bid={bid} />)
             )}
           </TabsContent>
+
         </Tabs>
       </div>
     </div>

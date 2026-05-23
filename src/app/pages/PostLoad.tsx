@@ -200,6 +200,38 @@ export function PostLoad() {
     }
   };
 
+  const scrollToFirstError = (
+    newVehicleErrors: FieldErrors[],
+    errs: FieldErrors,
+    trailerErr: string,
+    consentOk: boolean,
+  ) => {
+    for (let i = 0; i < newVehicleErrors.length; i++) {
+      if (Object.keys(newVehicleErrors[i]).length > 0) {
+        document.getElementById(`vehicle-section-${i}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    }
+    if (trailerErr) {
+      document.getElementById('sharedTrailerType')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    const orderedFields = [
+      'pickupStreet', 'pickupCity', 'pickupState', 'pickupZip', 'pickupDate',
+      'dropStreet', 'dropCity', 'dropState', 'dropZip', 'deliveryDate',
+      'price', 'contactName', 'contactPhone', 'contactEmail', 'orderId',
+    ];
+    for (const f of orderedFields) {
+      if (errs[f]) {
+        document.getElementById(f)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    }
+    if (!consentOk) {
+      document.getElementById('postConsent')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const currentYear = new Date().getFullYear();
@@ -258,6 +290,7 @@ export function PostLoad() {
     if (!consentChecked) setConsentError(true);
     if (hasVehicleErrors || Object.keys(errs).length || trailerErr || !consentChecked) {
       toast.error('Please fix the highlighted fields before submitting.');
+      scrollToFirstError(newVehicleErrors, errs, trailerErr, consentChecked);
       return;
     }
 
@@ -368,7 +401,7 @@ export function PostLoad() {
           <form onSubmit={handleSubmit}>
             {/* Vehicles */}
             {vehicles.map((vehicle, index) => (
-              <div key={index} className="relative mb-2">
+              <div key={index} id={`vehicle-section-${index}`} className="relative mb-2">
                 {vehicles.length > 1 && (
                   <div className="flex items-center gap-2 mb-2">
                     <div className="flex-shrink-0 w-7 h-7 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">

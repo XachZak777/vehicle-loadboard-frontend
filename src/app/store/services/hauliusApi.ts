@@ -66,92 +66,6 @@ export type DocumentUploadResponse = {
   uploadedAt: string;
 };
 
-export type LookupRequest = {
-  lookupValue: string;
-  lookupType: 'DOT' | 'MC';
-};
-
-export type FmcsaInspectionStats = {
-  inspections?: string;
-  outOfService?: string;
-  outOfServicePercent?: string;
-  nationalAverage?: string;
-};
-
-export type FmcsaInspections = {
-  vehicle?: FmcsaInspectionStats;
-  driver?: FmcsaInspectionStats;
-  hazmat?: FmcsaInspectionStats;
-  iep?: FmcsaInspectionStats;
-};
-
-export type FmcsaCrashes = {
-  tow?: number;
-  fatal?: number;
-  injury?: number;
-  total?: number;
-};
-
-export type LookupResponse = {
-  // Session
-  validationId: string;
-  lookupType: string;
-  lookupValue: string;
-  // Identity
-  dotNumber: string;
-  mcNumber: string;
-  legalName: string;
-  dbaName?: string;
-  entityType?: string;
-  // Status
-  operatingStatus?: string;
-  allowedToOperate?: string;
-  outOfServiceDate?: string;
-  latestUpdate?: string;
-  // Physical address
-  phyStreet?: string;
-  phyCity?: string;
-  phyState?: string;
-  phyZip?: string;
-  phyCountry?: string;
-  // Mailing address
-  mailingStreet?: string;
-  mailingCity?: string;
-  mailingState?: string;
-  mailingZip?: string;
-  mailingCountry?: string;
-  // Contact / Fleet
-  phone?: string;
-  totalDrivers?: number;
-  totalPowerUnits?: number;
-  // Operation
-  operationClassification?: string[];
-  carrierOperation?: string[];
-  cargoCarried?: string[];
-  // MCS-150
-  mcs150Date?: string;
-  mcs150Mileage?: number;
-  mcs150Year?: number;
-  // Safety
-  safetyRating?: string;
-  safetyRatingDate?: string;
-  safetyReviewDate?: string;
-  safetyType?: string;
-  // Inspections & Crashes
-  usInspections?: FmcsaInspections;
-  canadaInspections?: FmcsaInspections;
-  usCrashes?: FmcsaCrashes;
-  canadaCrashes?: FmcsaCrashes;
-  // Broker-specific
-  brokerAuthorityActive?: boolean;
-};
-
-export type SaveFromValidationRequest = {
-  validationId: string;
-  email: string;
-  password: string;
-};
-
 export type RegisterDealerPayload = {
   email: string;
   password: string;
@@ -382,6 +296,7 @@ export type CarrierBidWithLoadDto = {
   deliveryDate?: string;
   loadStatus?: string;
   brokerId?: string;
+  orderId?: string;
 };
 
 export type BrokerProfile = {
@@ -578,7 +493,6 @@ export type AdminUserDto = {
   /** True when admin actively declined this registration (distinct from "never reviewed"). */
   declined: boolean;
   declinedAt?: string;
-  fmcsaVerified?: boolean;
   verificationDate?: string;
   createdAt?: string;
   profileId?: string;
@@ -670,33 +584,6 @@ export const hauliusApi = createApi({
       query: () => ({ url: '/api/auth/logout', method: 'POST' }),
     }),
 
-    // ── FMCSA Validation ──────────────────────────────────────────────────
-    validateCarrier: builder.mutation<LookupResponse, LookupRequest>({
-      query: (body) => ({ url: '/api/validate/carrier', method: 'POST', body }),
-    }),
-    validateBroker: builder.mutation<LookupResponse, LookupRequest>({
-      query: (body) => ({ url: '/api/validate/broker', method: 'POST', body }),
-    }),
-    saveCarrierFromValidation: builder.mutation<
-      AuthResponse,
-      SaveFromValidationRequest
-    >({
-      query: (body) => ({
-        url: '/api/validate/carrier/save',
-        method: 'POST',
-        body,
-      }),
-    }),
-    saveBrokerFromValidation: builder.mutation<
-      AuthResponse,
-      SaveFromValidationRequest
-    >({
-      query: (body) => ({
-        url: '/api/validate/broker/save',
-        method: 'POST',
-        body,
-      }),
-    }),
     verifyEmail: builder.query<void, string>({
       query: (token) => `/api/auth/verify-email?token=${token}`,
     }),
@@ -1116,10 +1003,6 @@ export const {
   useUploadDealerW9Mutation,
   useLoginUserMutation,
   useLogoutUserMutation,
-  useValidateCarrierMutation,
-  useValidateBrokerMutation,
-  useSaveCarrierFromValidationMutation,
-  useSaveBrokerFromValidationMutation,
   useVerifyEmailQuery,
   useResendVerificationMutation,
   useForgotPasswordMutation,

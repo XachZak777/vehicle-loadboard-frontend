@@ -322,9 +322,9 @@ export function Welcome() {
             <div>
               <h4 className="font-semibold mb-3 text-sm">Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/privacy" className="hover:text-amber-500 transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/terms" className="hover:text-amber-500 transition-colors">Terms of Service</Link></li>
-                <li><Link to="/cookies" className="hover:text-amber-500 transition-colors">Cookie Policy</Link></li>
+                <li><a href="/privacy" className="hover:text-amber-500 transition-colors">Privacy Policy</a></li>
+                <li><a href="/terms" className="hover:text-amber-500 transition-colors">Terms of Service</a></li>
+                <li><a href="/cookies" className="hover:text-amber-500 transition-colors">Cookie Policy</a></li>
               </ul>
             </div>
           </div>

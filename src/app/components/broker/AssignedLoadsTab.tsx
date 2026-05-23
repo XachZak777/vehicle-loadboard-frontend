@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Truck, MapPin, DollarSign, X, Star, CheckCircle, ArrowRight, Eye } from 'lucide-react';
+import { Truck, MapPin, X, Star, CheckCircle, ArrowRight, Eye, Hash } from 'lucide-react';
 import { CarrierInfoInline } from './CarrierInfoInline';
 import { RateModal } from '../RateModal';
 import { useGetCarrierPublicInfoQuery, useGetMySubmittedLoadIdsQuery } from '../../store/services/hauliusApi';
@@ -39,6 +39,15 @@ function AssignedLoadCard({
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
+            {load.orderId && (
+              <Link
+                to={`/load/${load.id}`}
+                className="inline-flex items-center gap-1 mb-1.5 text-xs font-mono font-semibold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
+              >
+                <Hash className="size-3" />
+                {load.orderId}
+              </Link>
+            )}
             <CardTitle className="text-lg">{vehicleTitle}</CardTitle>
             <div className="text-sm text-muted-foreground mt-1">
               {load.assignedCarrierId
