@@ -72,6 +72,11 @@ export function Login() {
 
     try {
       const captchaToken = executeRecaptcha ? await executeRecaptcha('login') : undefined;
+      if (!captchaToken) {
+        setIsLoading(false);
+        setError('Security check failed. Please refresh the page and try again.');
+        return;
+      }
       const res = await loginUser({ email: email.trim(), password, captchaToken }).unwrap();
 
       // Admin users get a token directly — no email code step

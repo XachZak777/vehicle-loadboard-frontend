@@ -9,6 +9,8 @@ RUN --mount=type=cache,target=/root/.npm \
 COPY . .
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ARG VITE_CAPTCHA_WEB_KEY
+ENV VITE_CAPTCHA_WEB_KEY=$VITE_CAPTCHA_WEB_KEY
 RUN npm run build
 
 FROM nginx:alpine
