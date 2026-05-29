@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router';
 import {
   ArrowLeft, Building2, MapPin, Phone, Mail, Shield, Truck,
-  ThumbsUp, ThumbsDown, Star, CheckCircle, AlertCircle, Loader2,
+  ThumbsUp, ThumbsDown, Star, CheckCircle, AlertCircle, Loader2, FileCheck,
 } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
@@ -30,20 +30,6 @@ function fmtDate(d?: string | null) {
   return new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function RatingScoreBadge({ score, total }: { score: number; total: number }) {
-  if (total === 0) return <span className="text-sm text-muted-foreground">No ratings yet</span>;
-  const color = score >= 80 ? 'text-amber-600' : score >= 50 ? 'text-muted-foreground' : 'text-orange-500';
-  const label = score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Fair' : 'Needs Improvement';
-  return (
-    <div className="flex items-center gap-2">
-      <span className={`text-3xl font-bold ${color}`}>{score}%</span>
-      <div>
-        <p className={`text-sm font-semibold ${color}`}>{label}</p>
-        <p className="text-xs text-muted-foreground">Based on {total} rating{total !== 1 ? 's' : ''}</p>
-      </div>
-    </div>
-  );
-}
 
 function InfoItem({ icon: Icon, label, value, href }: {
   icon: React.ElementType; label: string; value?: string | null; href?: string;
@@ -89,12 +75,14 @@ function CompanyPageContent({
   const ratingList = ratings?.ratings ?? [];
 
   const name = info?.companyName || info?.legalName || (infoLoading ? '' : 'Unknown Company');
-  const city = type === 'Carrier'
-    ? (info as CarrierPublicInfo)?.phyCity
-    : (info as BrokerPublicInfo)?.city;
-  const state = type === 'Carrier'
-    ? (info as CarrierPublicInfo)?.phyState
-    : (info as BrokerPublicInfo)?.state;
+
+  const carrierInfo = type === 'Carrier' ? (info as CarrierPublicInfo) : null;
+  const brokerInfo  = type === 'Broker'  ? (info as BrokerPublicInfo)  : null;
+
+  const street = carrierInfo?.phyStreet ?? brokerInfo?.mailingAddress;
+  const city   = carrierInfo?.phyCity   ?? brokerInfo?.city;
+  const state  = carrierInfo?.phyState  ?? brokerInfo?.state;
+  const zip    = carrierInfo?.phyZip    ?? brokerInfo?.zipCode;
   const location = [city, state].filter(Boolean).join(', ');
 
   const operatingStatus = info?.operatingStatus;
@@ -158,39 +146,75 @@ function CompanyPageContent({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Company Info */}
-        <Card className="border-2 border-gray-200 dark:border-gray-700">
-          <CardHeader className="border-b border-border pb-3 pt-4 px-5">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Company Info</CardTitle>
-          </CardHeader>
-          <CardContent className="px-5 py-3">
-            <InfoItem icon={Shield} label="DOT Number" value={info?.dotNumber} />
-            <InfoItem icon={Shield} label="MC Number" value={info?.mcNumber} />
-            {type === 'Carrier' && (info as CarrierPublicInfo)?.safetyRating && (
-              <InfoItem icon={Shield} label="Safety Rating" value={(info as CarrierPublicInfo).safetyRating} />
-            )}
-            {type === 'Carrier' && (info as CarrierPublicInfo)?.totalPowerUnits != null && (
+        <div className="space-y-5">
+          <Card className="border-2 border-gray-200 dark:border-gray-700">
+            <CardHeader className="border-b border-border pb-3 pt-4 px-5">
+              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Company Info</CardTitle>
+            </CardHeader>
+            <CardContent className="px-5 py-3">
+              <InfoItem icon={Shield} label="DOT Number" value={info?.dotNumber} />
+              <InfoItem icon={Shield} label="MC Number" value={info?.mcNumber} />
+              {carrierInfo?.safetyRating && (
+                <InfoItem icon={Shield} label="Safety Rating" value={carrierInfo.safetyRating} />
+              )}
+              {carrierInfo?.totalPowerUnits != null && (
+                <InfoItem icon={Truck} label="Power Units" value={String(carrierInfo.totalPowerUnits)} />
+              )}
               <InfoItem
-                icon={Truck}
-                label="Power Units"
-                value={String((info as CarrierPublicInfo).totalPowerUnits)}
+                icon={Phone}
+                label="Phone"
+                value={info?.phoneNumber ? formatPhone(info.phoneNumber) : null}
+                href={info?.phoneNumber ? `tel:${info.phoneNumber}` : undefined}
               />
-            )}
-            <InfoItem
-              icon={Phone}
-              label="Phone"
-              value={info?.phoneNumber ? formatPhone(info.phoneNumber) : null}
-              href={info?.phoneNumber ? `tel:${info.phoneNumber}` : undefined}
-            />
-            {type === 'Broker' && (
-              <InfoItem
-                icon={Mail}
-                label="Email"
-                value={(info as BrokerPublicInfo)?.email}
-                href={(info as BrokerPublicInfo)?.email ? `mailto:${(info as BrokerPublicInfo).email}` : undefined}
-              />
-            )}
-          </CardContent>
-        </Card>
+              {brokerInfo?.email && (
+                <InfoItem
+                  icon={Mail}
+                  label="Email"
+                  value={brokerInfo.email}
+                  href={`mailto:${brokerInfo.email}`}
+                />
+              )}
+              {/* Full address */}
+              {street && <InfoItem icon={MapPin} label="Street" value={street} />}
+              {(city || state || zip) && (
+                <InfoItem
+                  icon={MapPin}
+                  label="City / State"
+                  value={[city, state, zip].filter(Boolean).join(', ')}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Bond Information — brokers only */}
+          {brokerInfo && (brokerInfo.bondCompany || brokerInfo.bondAgentFirstName || brokerInfo.bondAgentLastName || brokerInfo.bondAgentPhone) && (
+            <Card className="border-2 border-gray-200 dark:border-gray-700">
+              <CardHeader className="border-b border-border pb-3 pt-4 px-5">
+                <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Bond Information</CardTitle>
+              </CardHeader>
+              <CardContent className="px-5 py-3">
+                {brokerInfo.bondCompany && (
+                  <InfoItem icon={FileCheck} label="Bond Company" value={brokerInfo.bondCompany} />
+                )}
+                {(brokerInfo.bondAgentFirstName || brokerInfo.bondAgentLastName) && (
+                  <InfoItem
+                    icon={FileCheck}
+                    label="Agent Name"
+                    value={[brokerInfo.bondAgentFirstName, brokerInfo.bondAgentLastName].filter(Boolean).join(' ')}
+                  />
+                )}
+                {brokerInfo.bondAgentPhone && (
+                  <InfoItem
+                    icon={Phone}
+                    label="Agent Phone"
+                    value={formatPhone(brokerInfo.bondAgentPhone)}
+                    href={`tel:${brokerInfo.bondAgentPhone}`}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         {/* Rating Summary */}
         <Card className="border-2 border-amber-200 dark:border-amber-800/60">
@@ -198,56 +222,71 @@ function CompanyPageContent({
             <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Rating Overview</CardTitle>
           </CardHeader>
           <CardContent className="px-5 py-4 space-y-4">
-            <RatingScoreBadge score={score} total={total} />
-
-            {total > 0 && (
-              <>
-                <div className="h-2 bg-muted overflow-hidden">
-                  <div className="h-full bg-amber-400 transition-all duration-500" style={{ width: `${score}%` }} />
+            {total === 0 ? (
+              <div className="flex flex-col items-center py-6 text-center gap-2">
+                <div className="size-14 rounded-full bg-muted flex items-center justify-center">
+                  <Star className="size-6 text-muted-foreground opacity-40" />
                 </div>
-                <div className="flex gap-4">
-                  <div className="flex items-center gap-2 text-sm">
-                    <div className="size-7 bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                      <ThumbsUp className="size-3.5 text-amber-600" />
-                    </div>
-                    <span className="font-semibold">{positive}</span>
-                    <span className="text-muted-foreground">positive</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <div className="size-7 bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                      <ThumbsDown className="size-3.5 text-orange-500" />
-                    </div>
-                    <span className="font-semibold">{negative}</span>
-                    <span className="text-muted-foreground">negative</span>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {tagStats.length > 0 && (
-              <div className="space-y-2 pt-1">
-                {tagStats.map((stat) => {
-                  const pct = stat.total > 0 ? Math.round((stat.count / stat.total) * 100) : 0;
-                  return (
-                    <div key={stat.tag}>
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-muted-foreground">{TAG_LABELS[stat.tag] ?? stat.tag}</span>
-                        <span className="font-semibold text-amber-600">{pct}%</span>
-                      </div>
-                      <div className="h-1.5 bg-muted overflow-hidden">
-                        <div
-                          className="h-full bg-amber-400 transition-all duration-500"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+                <p className="text-sm font-medium text-muted-foreground">No ratings yet</p>
+                <p className="text-xs text-muted-foreground/70">Reviews will appear here after completed loads.</p>
               </div>
-            )}
+            ) : (
+              <>
+                {/* Score hero */}
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50/40 dark:from-amber-950/30 dark:to-transparent border border-amber-100 dark:border-amber-900/40">
+                  <div className="flex-shrink-0 text-center">
+                    <div className={`text-4xl font-bold ${score >= 80 ? 'text-amber-600' : score >= 50 ? 'text-foreground' : 'text-orange-500'}`}>
+                      {score}%
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Fair' : 'Needs Improvement'}
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${score >= 80 ? 'bg-amber-400' : score >= 50 ? 'bg-amber-300' : 'bg-orange-400'}`}
+                        style={{ width: `${score}%` }}
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <span className="flex items-center gap-1.5 text-xs">
+                        <span className="inline-flex size-5 rounded-full bg-amber-100 dark:bg-amber-900/40 items-center justify-center">
+                          <ThumbsUp className="size-2.5 text-amber-600" />
+                        </span>
+                        <span className="font-semibold">{positive}</span>
+                        <span className="text-muted-foreground">positive</span>
+                      </span>
+                      <span className="flex items-center gap-1.5 text-xs">
+                        <span className="inline-flex size-5 rounded-full bg-orange-100 dark:bg-orange-900/40 items-center justify-center">
+                          <ThumbsDown className="size-2.5 text-orange-500" />
+                        </span>
+                        <span className="font-semibold">{negative}</span>
+                        <span className="text-muted-foreground">negative</span>
+                      </span>
+                      <span className="ml-auto text-xs text-muted-foreground">{total} review{total !== 1 ? 's' : ''}</span>
+                    </div>
+                  </div>
+                </div>
 
-            {total === 0 && (
-              <p className="text-xs text-muted-foreground">This company hasn't received any ratings yet.</p>
+                {tagStats.length > 0 && (
+                  <div className="space-y-2.5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Highlights</p>
+                    {tagStats.map((stat) => {
+                      const pct = stat.total > 0 ? Math.round((stat.count / stat.total) * 100) : 0;
+                      return (
+                        <div key={stat.tag} className="flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground w-40 flex-shrink-0 truncate">{TAG_LABELS[stat.tag] ?? stat.tag}</span>
+                          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-amber-400 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-xs font-semibold text-amber-600 w-8 text-right">{pct}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>

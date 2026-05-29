@@ -1,4 +1,4 @@
-import { Building2, MapPin, Truck, CalendarDays, Phone, Mail, ShieldCheck, Printer, Hash } from 'lucide-react';
+import { Building2, MapPin, Truck, CalendarDays, Phone, Mail, ShieldCheck, Hash } from 'lucide-react';
 import type { LoadPostingDto, BrokerPublicInfo, CarrierPublicInfo } from '../store/services/hauliusApi';
 import { formatPhone, formatPaymentLabel, calcPricePerMile } from '../utils/phone';
 
@@ -67,28 +67,19 @@ export function DispatchSheet({ load, brokerInfo, carrierInfo, showSensitiveInfo
           <Truck className="size-5 text-white" />
           <div>
             <p className="text-[11px] font-bold uppercase tracking-widest text-amber-100">Dispatch Sheet</p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <Hash className="size-4 text-white" />
-              <span className="text-white font-bold text-lg leading-none">
-                {load.orderId ?? load.id ?? '—'}
-              </span>
-            </div>
+            {load.orderId && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <Hash className="size-4 text-white" />
+                <span className="text-white font-bold text-xl leading-none tracking-wide">{load.orderId}</span>
+              </div>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {load.status && (
-            <span className="text-xs font-semibold uppercase tracking-wide bg-white/20 text-white px-3 py-1 rounded-full">
-              {load.status.replace(/-/g, ' ')}
-            </span>
-          )}
-          <button
-            onClick={() => window.print()}
-            className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-white bg-white/20 hover:bg-white/30 transition-colors px-3 py-1.5 rounded-lg print:hidden"
-          >
-            <Printer className="size-3.5" />
-            Print
-          </button>
-        </div>
+        {load.status && (
+          <span className="text-xs font-semibold uppercase tracking-wide bg-white/20 text-white px-3 py-1 rounded-full">
+            {load.status.replace(/-/g, ' ')}
+          </span>
+        )}
       </div>
 
       <div className="p-6 space-y-6">

@@ -1,5 +1,8 @@
+import { MapBackground } from '../components/MapBackground';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import { useShowRecaptchaBadge } from '../hooks/useShowRecaptchaBadge';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout, setCredentials } from '../store/slices/authSlice';
 import { hauliusApi, useLoginUserMutation, useLogoutUserMutation } from '../store/services/hauliusApi';
@@ -19,6 +22,8 @@ export function Login() {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const { executeRecaptcha } = useGoogleReCaptcha();
+  useShowRecaptchaBadge();
   const [loginUser] = useLoginUserMutation();
   const [logoutUser] = useLogoutUserMutation();
   const [email, setEmail] = useState('');
@@ -66,7 +71,8 @@ export function Login() {
     }
 
     try {
-      const res = await loginUser({ email: email.trim(), password }).unwrap();
+      const captchaToken = executeRecaptcha ? await executeRecaptcha('login') : undefined;
+      const res = await loginUser({ email: email.trim(), password, captchaToken }).unwrap();
 
       // Admin users get a token directly — no email code step
       if (res.token && res.role?.toLowerCase() === 'admin') {
@@ -111,7 +117,8 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <AuthNavbar showSignup={true} />
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">
         <div className="w-full max-w-md">

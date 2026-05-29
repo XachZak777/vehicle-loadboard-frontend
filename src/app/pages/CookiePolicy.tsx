@@ -1,3 +1,4 @@
+import { MapBackground } from '../components/MapBackground';
 import { Button } from '../components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -5,7 +6,8 @@ import { BrandLogo } from '../components/BrandLogo';
 
 export function CookiePolicy() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       {/* Navigation Bar */}
       <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

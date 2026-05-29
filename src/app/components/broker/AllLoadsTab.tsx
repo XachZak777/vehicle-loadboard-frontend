@@ -180,8 +180,22 @@ export function AllLoadsTab({ loads, getStatusBadge, onDeleteLoad, actionLoading
                       </Link>
                     )}
                     <CardTitle className="text-lg">
-                      {load.vehicleYear} {load.vehicleMake} {load.vehicleModel}
+                      {load.additionalVehicles && load.additionalVehicles.length > 0
+                        ? `Multi-Vehicle Load (${1 + load.additionalVehicles.length})`
+                        : [load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ')}
                     </CardTitle>
+                    {load.additionalVehicles && load.additionalVehicles.length > 0 && (
+                      <div className="mt-0.5 space-y-0.5">
+                        <p className="text-sm text-foreground/80">
+                          {[load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ')}
+                        </p>
+                        {load.additionalVehicles.map((v, i) => (
+                          <p key={i} className="text-sm text-muted-foreground">
+                            {[v.vehicleYear, v.vehicleMake, v.vehicleModel].filter(Boolean).join(' ')}
+                          </p>
+                        ))}
+                      </div>
+                    )}
                     <p className="text-sm text-muted-foreground mt-1">
                       {load.pickupCity}, {load.pickupState} → {load.dropCity}, {load.dropState}
                     </p>

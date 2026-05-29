@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAppSelector } from '../store/hooks';
-import { useGetMyCarrierBidsQuery, useGetBrokerPublicInfoQuery } from '../store/services/hauliusApi';
+import { useGetMyCarrierBidsQuery, useGetBrokerPublicInfoQuery, useGetMySubmittedLoadIdsQuery } from '../store/services/hauliusApi';
 import { formatPhone } from '../utils/phone';
 import type { CarrierBidWithLoadDto } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
@@ -25,6 +25,7 @@ import {
   Phone,
   Star,
   Hash,
+  MessageSquare,
 } from 'lucide-react';
 
 
@@ -86,13 +87,18 @@ function getStatusBadge(status: string) {
   }
 }
 
+const RATEABLE_STATUSES = new Set(['DELIVERED', 'PAID', 'COMPLETED']);
+
 function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
   const [ratingOpen, setRatingOpen] = useState(false);
-  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [ratingSubmittedLocal, setRatingSubmittedLocal] = useState(false);
   const { data: brokerInfo } = useGetBrokerPublicInfoQuery(bid.brokerId ?? '', { skip: !bid.brokerId });
+  const { data: submittedLoadIds } = useGetMySubmittedLoadIdsQuery();
   const brokerName = brokerInfo?.companyName || brokerInfo?.legalName || 'the broker';
   const vehicleTitle = [bid.vehicleYear, bid.vehicleMake, bid.vehicleModel].filter(Boolean).join(' ') || `Load #${bid.loadId.slice(0, 8)}`;
   const isApproved = bid.bidStatus === 'APPROVED';
+  const canRateBroker = isApproved && !!bid.brokerId && RATEABLE_STATUSES.has(bid.loadStatus ?? '');
+  const alreadyRated = ratingSubmittedLocal || (submittedLoadIds?.includes(bid.loadId) ?? false);
   return (
     <Card className="border-2 border-gray-200 dark:border-gray-700 hover:border-amber-400 dark:hover:border-amber-500 transition-all duration-200">
       <CardHeader className="pb-2">
@@ -105,6 +111,11 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
               </Link>
             )}
             <CardTitle className="text-lg">{vehicleTitle}</CardTitle>
+            {bid.additionalVehicles?.map((v, i) => (
+              <p key={i} className="text-sm text-muted-foreground">
+                {[v.vehicleYear, v.vehicleMake, v.vehicleModel].filter(Boolean).join(' ')}
+              </p>
+            ))}
           </div>
           {getStatusBadge(bid.bidStatus)}
         </div>
@@ -170,6 +181,12 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
             </div>
           )}
         </div>
+        {bid.notes && (
+          <div className="flex items-start gap-2 p-2.5 bg-muted/50 border border-border rounded">
+            <MessageSquare className="size-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <p className="text-xs text-foreground leading-relaxed">{bid.notes}</p>
+          </div>
+        )}
         {isApproved ? (
           <>
             <div className="flex items-center gap-2 text-sm mt-2 p-3 bg-amber-500/10 dark:bg-amber-500/10 border border-amber-500/40 dark:border-amber-500/40">
@@ -188,8 +205,8 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
           <Link to={`/load/${bid.loadId}`}>
             <Button variant="outline" size="sm">View Load</Button>
           </Link>
-          {isApproved && bid.brokerId && (
-            ratingSubmitted ? (
+          {canRateBroker && (
+            alreadyRated ? (
               <span className="flex items-center gap-1.5 text-sm font-medium text-amber-600">
                 <CheckCircle className="size-4" />
                 Rating Submitted
@@ -208,12 +225,12 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
         </div>
       </CardContent>
 
-      {bid.brokerId && (
+      {canRateBroker && !alreadyRated && (
         <RateModal
           open={ratingOpen}
           onClose={() => setRatingOpen(false)}
-          onSubmitted={() => setRatingSubmitted(true)}
-          targetId={bid.brokerId}
+          onSubmitted={() => setRatingSubmittedLocal(true)}
+          targetId={bid.brokerId!}
           targetType="broker"
           targetName={brokerName}
           loadId={bid.loadId}

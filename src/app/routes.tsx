@@ -1,5 +1,6 @@
-import { lazy, Suspense } from 'react';
-import { createBrowserRouter, Outlet } from 'react-router';
+import { lazy, Suspense, useEffect } from 'react';
+import { createBrowserRouter, Outlet, useLocation } from 'react-router';
+import { Footer } from './components/Footer';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Lazy-loaded pages — Vite splits each into its own chunk
@@ -36,6 +37,14 @@ const AboutUs         = lazy(() => import('./pages/AboutUs').then(m => ({ defaul
 const Contact         = lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
 const Settings        = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 const DispatchSheetPage = lazy(() => import('./pages/DispatchSheetPage').then(m => ({ default: m.DispatchSheetPage })));
+const FAQ             = lazy(() => import('./pages/FAQ').then(m => ({ default: m.FAQ })));
+const Resources       = lazy(() => import('./pages/Resources').then(m => ({ default: m.Resources })));
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 
 // Thin root layout – Redux Provider lives in App.tsx
 function RootLayout() {
@@ -47,7 +56,9 @@ function RootLayout() {
         </div>
       }
     >
+      <ScrollToTop />
       <Outlet />
+      <Footer />
     </Suspense>
   );
 }
@@ -149,7 +160,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: '/carrier/dispatch/:bidId',
+        path: '/carrier/dispatch/:loadId',
         element: (
           <ProtectedRoute allowedRoles={['carrier']}>
             <DispatchSheetPage />
@@ -243,6 +254,14 @@ export const router = createBrowserRouter([
       {
         path: '/contact',
         element: <Contact />,
+      },
+      {
+        path: '/faq',
+        element: <FAQ />,
+      },
+      {
+        path: '/resources',
+        element: <Resources />,
       },
       {
         path: '/my-rating',

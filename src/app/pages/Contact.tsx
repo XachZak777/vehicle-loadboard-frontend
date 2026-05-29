@@ -1,3 +1,4 @@
+import { MapBackground } from '../components/MapBackground';
 import { Link } from 'react-router';
 import { Button } from '../components/ui/button';
 import { ArrowLeft, Mail, Phone, MapPin, Clock } from 'lucide-react';
@@ -40,7 +41,8 @@ export function Contact() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       {/* Navigation Bar */}
       <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -242,6 +244,22 @@ export function Contact() {
               <p className="text-sm text-muted-foreground">
                 Professional vehicle transport marketplace connecting carriers and brokers nationwide.
               </p>
+              <div className="flex items-center gap-2 mt-4">
+                <span className="text-xs text-muted-foreground">Follow us:</span>
+                <a
+                  href="https://www.instagram.com/haul1us"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Haulius on Instagram"
+                  className="text-muted-foreground hover:text-pink-500 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="size-4">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <circle cx="12" cy="12" r="4" />
+                    <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+                  </svg>
+                </a>
+              </div>
             </div>
             <div className="flex gap-8 md:gap-12 md:col-span-2">
               <div>

@@ -1,5 +1,8 @@
+import { MapBackground } from '../components/MapBackground';
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import { useShowRecaptchaBadge } from '../hooks/useShowRecaptchaBadge';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -12,13 +15,16 @@ import { isBusinessEmail } from '../utils/validation';
 export function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const { executeRecaptcha } = useGoogleReCaptcha();
+  useShowRecaptchaBadge();
   const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isBusinessEmail(email.trim())) return;
     try {
-      await forgotPassword({ email: email.trim() }).unwrap();
+      const captchaToken = executeRecaptcha ? await executeRecaptcha('forgot_password') : undefined;
+      await forgotPassword({ email: email.trim(), captchaToken }).unwrap();
     } catch {
       // Intentionally ignored — always show the same message (anti-enumeration)
     } finally {
@@ -27,7 +33,8 @@ export function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <AuthNavbar showLogin={true} />
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">
       <div className="w-full max-w-md">

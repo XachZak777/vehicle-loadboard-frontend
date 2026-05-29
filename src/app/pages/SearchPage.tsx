@@ -23,7 +23,8 @@ function ScoreBar({ score, total }: { score: number; total: number }) {
 function BrokerCard({ broker }: { broker: BrokerPublicInfo }) {
   const navigate = useNavigate();
   const name = broker.companyName || broker.legalName || 'Unknown Broker';
-  const location = [broker.city, broker.state].filter(Boolean).join(', ');
+  const street = broker.mailingAddress;
+  const cityStateZip = [broker.city, broker.state, broker.zipCode].filter(Boolean).join(', ');
   const ratingScore = broker.ratingScore ?? null;
 
   return (
@@ -40,9 +41,14 @@ function BrokerCard({ broker }: { broker: BrokerPublicInfo }) {
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-semibold text-base leading-tight truncate">{name}</p>
-                {location && (
+                {street && (
                   <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                    <MapPin className="size-3 flex-shrink-0" /> {location}
+                    <MapPin className="size-3 flex-shrink-0" /> {street}
+                  </p>
+                )}
+                {cityStateZip && (
+                  <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                    <MapPin className="size-3 flex-shrink-0 opacity-0" /> {cityStateZip}
                   </p>
                 )}
               </div>
@@ -77,7 +83,8 @@ function BrokerCard({ broker }: { broker: BrokerPublicInfo }) {
 function CarrierCard({ carrier }: { carrier: CarrierPublicInfo }) {
   const navigate = useNavigate();
   const name = carrier.companyName || carrier.legalName || carrier.dbaName || 'Unknown Carrier';
-  const location = [carrier.phyCity, carrier.phyState].filter(Boolean).join(', ');
+  const street = carrier.phyStreet;
+  const cityStateZip = [carrier.phyCity, carrier.phyState, carrier.phyZip].filter(Boolean).join(', ');
   const ratingScore = carrier.ratingScore ?? null;
 
   return (
@@ -94,9 +101,14 @@ function CarrierCard({ carrier }: { carrier: CarrierPublicInfo }) {
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-semibold text-base leading-tight truncate">{name}</p>
-                {location && (
+                {street && (
                   <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                    <MapPin className="size-3 flex-shrink-0" /> {location}
+                    <MapPin className="size-3 flex-shrink-0" /> {street}
+                  </p>
+                )}
+                {cityStateZip && (
+                  <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                    <MapPin className="size-3 flex-shrink-0 opacity-0" /> {cityStateZip}
                   </p>
                 )}
               </div>

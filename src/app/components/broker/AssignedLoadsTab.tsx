@@ -5,10 +5,11 @@ import { Button } from '../ui/button';
 import { Truck, MapPin, X, Star, CheckCircle, ArrowRight, Eye, Hash } from 'lucide-react';
 import { CarrierInfoInline } from './CarrierInfoInline';
 import { RateModal } from '../RateModal';
-import { useGetCarrierPublicInfoQuery, useGetMySubmittedLoadIdsQuery } from '../../store/services/hauliusApi';
+import { useGetCarrierPublicInfoQuery, useGetMySubmittedLoadIdsQuery, useGetBidsForLoadQuery } from '../../store/services/hauliusApi';
 import type { LoadDto } from '../../store/services/hauliusApi';
 import type { ReactNode } from 'react';
 import { colors } from '../../styles/colors';
+import { MessageSquare } from 'lucide-react';
 
 const RATEABLE_STATUSES = new Set(['DELIVERED', 'PAID', 'COMPLETED']);
 
@@ -29,10 +30,15 @@ function AssignedLoadCard({
     skip: !load.assignedCarrierId,
   });
   const { data: submittedLoadIds } = useGetMySubmittedLoadIdsQuery();
+  const { data: bids = [] } = useGetBidsForLoadQuery(load.id);
+  const approvedBid = bids.find(b => b.status === 'APPROVED');
   const alreadyRated = ratingSubmittedLocal || (submittedLoadIds?.includes(load.id) ?? false);
   const canRate = !!load.assignedCarrierId && RATEABLE_STATUSES.has(load.status ?? '');
   const carrierName = carrierInfo?.companyName || carrierInfo?.legalName || 'the carrier';
-  const vehicleTitle = [load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ') || `Load #${load.id.slice(0, 8)}`;
+  const isMulti = load.additionalVehicles && load.additionalVehicles.length > 0;
+  const vehicleTitle = isMulti
+    ? `Multi-Vehicle Load (${1 + load.additionalVehicles!.length})`
+    : [load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ') || `Load #${load.id.slice(0, 8)}`;
 
   return (
     <Card>
@@ -49,6 +55,18 @@ function AssignedLoadCard({
               </Link>
             )}
             <CardTitle className="text-lg">{vehicleTitle}</CardTitle>
+            {isMulti && (
+              <div className="mt-0.5 space-y-0.5">
+                <p className="text-sm text-foreground/80">
+                  {[load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ')}
+                </p>
+                {load.additionalVehicles!.map((v, i) => (
+                  <p key={i} className="text-sm text-muted-foreground">
+                    {[v.vehicleYear, v.vehicleMake, v.vehicleModel].filter(Boolean).join(' ')}
+                  </p>
+                ))}
+              </div>
+            )}
             <div className="text-sm text-muted-foreground mt-1">
               {load.assignedCarrierId
                 ? <CarrierInfoInline carrierId={load.assignedCarrierId} />
@@ -93,6 +111,15 @@ function AssignedLoadCard({
             </div>
           );
         })()}
+        {approvedBid?.notes && (
+          <div className="flex items-start gap-2 p-2.5 bg-muted/50 border border-border rounded">
+            <MessageSquare className="size-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Carrier Notes</p>
+              <p className="text-xs text-foreground leading-relaxed">{approvedBid.notes}</p>
+            </div>
+          </div>
+        )}
         {load.price != null && (
           <div className="flex items-center gap-2 text-sm">
             <span className={`font-bold ${colors.accentTextStrong} dark:${colors.accentText}`}>${load.price.toLocaleString()}</span>

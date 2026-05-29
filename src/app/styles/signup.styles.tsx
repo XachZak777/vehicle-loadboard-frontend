@@ -1,11 +1,15 @@
 import { cn } from '../components/ui/utils';
 import {PropsWithChildren} from "react";
+import { MapBackground } from '../components/MapBackground';
 
 // ─── Page Shell ──────────────────────────────────────────────────────────────
 
 export function PageWrapper({ children }: PropsWithChildren) {
   return (
-    <div className="min-h-screen bg-background text-foreground">{children}</div>
+    <div className="min-h-screen bg-background map-background-detailed text-foreground">
+      <MapBackground />
+      {children}
+    </div>
   );
 }
 

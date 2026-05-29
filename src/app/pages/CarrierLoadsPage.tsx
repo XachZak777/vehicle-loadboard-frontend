@@ -7,6 +7,7 @@ import {
   useUpdateBidMutation,
   useUpdateLoadStatusMutation,
   useGetMySubmittedLoadIdsQuery,
+  useRejectAssignedLoadMutation,
 } from '../store/services/hauliusApi';
 import type { CarrierBidWithLoadDto, LoadDto } from '../store/services/hauliusApi';
 import { Navbar } from '../components/Navbar';
@@ -20,7 +21,7 @@ import { MapBackground } from '../components/MapBackground';
 import {
   MapPin, DollarSign, Clock, CheckCircle, Loader2, Package,
   ArrowRight, Calendar, Building2, TrendingUp, Truck, FileText, Pencil,
-  PackageCheck, PackageOpen, BadgeCheck, Star,
+  PackageCheck, PackageOpen, BadgeCheck, Star, Hash, XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { calcPricePerMile } from '../utils/phone';
@@ -86,6 +87,7 @@ const STATUS_NEXT: Record<string, { label: string; next: string; icon: React.Rea
 function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
   const [updateBid, { isLoading: isUpdating }] = useUpdateBidMutation();
   const [updateLoadStatus, { isLoading: isStatusUpdating }] = useUpdateLoadStatusMutation();
+  const [rejectAssignedLoad, { isLoading: isRejecting }] = useRejectAssignedLoadMutation();
   const [showEdit, setShowEdit] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
   const [cityMap, setCityMap] = useState<{ city: string; state: string; label: string } | null>(null);
@@ -144,6 +146,15 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
     }
   };
 
+  const handleReject = async () => {
+    try {
+      await rejectAssignedLoad(bid.loadId).unwrap();
+      toast.success('Assignment rejected — the load has been returned to the board.');
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to reject assignment.');
+    }
+  };
+
   const title =
     [bid.vehicleYear, bid.vehicleMake, bid.vehicleModel].filter(Boolean).join(' ') ||
     `Load #${bid.loadId.slice(0, 8)}`;
@@ -165,9 +176,22 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
     <Card className={cardClass}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            {title}
-          </CardTitle>
+          <div>
+            {bid.orderId && (
+              <span className="inline-flex items-center gap-1 mb-1.5 text-xs font-mono font-semibold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                <Hash className="size-3" />
+                {bid.orderId}
+              </span>
+            )}
+            <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              {title}
+            </CardTitle>
+            {bid.additionalVehicles?.map((v, i) => (
+              <p key={i} className="text-sm text-muted-foreground">
+                {[v.vehicleYear, v.vehicleMake, v.vehicleModel].filter(Boolean).join(' ')}
+              </p>
+            ))}
+          </div>
           {isApproved && <Badge className="bg-amber-500 text-white shrink-0">Approved</Badge>}
           {isPending && <Badge className="bg-amber-500 border-2 border-amber-600 text-white shrink-0">Pending</Badge>}
           {bid.bidStatus === 'REJECTED' && <Badge variant="destructive" className="shrink-0">Rejected</Badge>}
@@ -440,11 +464,32 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
               View Load
             </Button>
           </Link>
+          {isApproved && (
+            <Button size="sm" variant="outline" asChild
+              className="gap-1.5 border-amber-400 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10">
+              <Link to={`/carrier/dispatch/${bid.loadId}`} target="_blank" rel="noopener noreferrer">
+                <FileText className="size-3.5" />
+                Dispatch Sheet
+              </Link>
+            </Button>
+          )}
           {isPending && !showEdit && (
             <Button size="sm" variant="outline" onClick={openEdit}
               className="border-amber-500 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10">
               <Pencil className="size-3.5 mr-1" />
               Edit Bid
+            </Button>
+          )}
+          {isApproved && bid.loadStatus === 'ASSIGNED' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleReject}
+              disabled={isRejecting}
+              className="border-red-400 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 gap-1.5"
+            >
+              {isRejecting ? <Loader2 className="size-3.5 animate-spin" /> : <XCircle className="size-3.5" />}
+              {isRejecting ? 'Rejecting…' : 'Reject Assignment'}
             </Button>
           )}
           {canRateBroker && (
@@ -460,15 +505,6 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
                 Rate Broker
               </Button>
             )
-          )}
-          {isApproved && (
-            <Button size="sm" variant="outline" asChild
-              className="gap-1.5 border-border text-muted-foreground hover:text-foreground ml-auto">
-              <Link to={`/carrier/dispatch/${bid.bidId}`} target="_blank" rel="noopener noreferrer">
-                <FileText className="size-3.5" />
-                Dispatch Sheet
-              </Link>
-            </Button>
           )}
         </div>
 
@@ -614,7 +650,7 @@ export function CarrierLoadsPage() {
           <div className="grid gap-4">
             {isOffers
               ? (filtered as LoadDto[]).map(load => <PreferredLoadCard key={load.id} load={load} />)
-              : (filtered as CarrierBidWithLoadDto[]).map(bid => <BidCard key={bid.bidId} bid={bid} />)
+              : (filtered as CarrierBidWithLoadDto[]).map(bid => <BidCard key={bid.loadId} bid={bid} />)
             }
           </div>
         )}

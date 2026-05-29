@@ -1,3 +1,4 @@
+import { MapBackground } from '../components/MapBackground';
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { Mail, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
@@ -80,7 +81,8 @@ export function VerifyLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <AuthNavbar showSignup={false} />
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">
         <div className="w-full max-w-md">

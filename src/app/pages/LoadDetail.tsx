@@ -7,7 +7,7 @@ import { Badge } from '../components/ui/badge';
 import {
   ArrowLeft, MapPin, Truck, FileText,
   Loader2, Phone, Mail, Building2, ShieldCheck, Star, CalendarDays,
-  User, Package, BadgeCheck, CheckCircle, PackageOpen, PackageCheck,
+  User, Package, BadgeCheck, CheckCircle, PackageOpen, PackageCheck, MessageSquare, Hash,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppSelector } from '../store/hooks';
@@ -18,6 +18,7 @@ import {
   useGetCarrierPublicInfoQuery,
   useUpdateLoadStatusMutation,
   useGetMySubmittedLoadIdsQuery,
+  useGetBidsForLoadQuery,
 } from '../store/services/hauliusApi';
 import { formatPhone, formatPaymentLabel, calcPricePerMile } from '../utils/phone';
 import { MapBackground } from '../components/MapBackground';
@@ -79,13 +80,19 @@ export function LoadDetail() {
   });
 
   const [updateLoadStatus, { isLoading: isConfirmingPayment }] = useUpdateLoadStatusMutation();
-  const { data: submittedLoadIds } = useGetMySubmittedLoadIdsQuery(undefined, { skip: !isAssignedCarrier });
+  const { data: submittedLoadIds } = useGetMySubmittedLoadIdsQuery(undefined, { skip: !isAssignedCarrier && !isBroker });
+  const { data: loadBids = [] } = useGetBidsForLoadQuery(id ?? '', { skip: !id || !isBroker });
+  const approvedBid = loadBids.find(b => b.status === 'APPROVED');
   const [ratingOpen, setRatingOpen] = useState(false);
   const [ratingSubmittedLocal, setRatingSubmittedLocal] = useState(false);
+  const [carrierRatingOpen, setCarrierRatingOpen] = useState(false);
+  const [carrierRatingSubmittedLocal, setCarrierRatingSubmittedLocal] = useState(false);
 
   const RATEABLE_STATUSES = new Set(['DELIVERED', 'PAID', 'COMPLETED']);
   const canRateBroker = isAssignedCarrier && !!load?.brokerId && RATEABLE_STATUSES.has(load?.status ?? '');
   const alreadyRated = ratingSubmittedLocal || (submittedLoadIds?.includes(id ?? '') ?? false);
+  const canRateCarrier = isBroker && !!load?.assignedCarrierId && RATEABLE_STATUSES.has(load?.status ?? '');
+  const carrierAlreadyRated = carrierRatingSubmittedLocal || (submittedLoadIds?.includes(id ?? '') ?? false);
   const STATUS_LABELS: Record<string, string> = {
     ASSIGNED:  'Pickup confirmed!',
     PICKED_UP: 'Delivery confirmed!',
@@ -159,6 +166,12 @@ export function LoadDetail() {
 
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
+              {load.orderId && (
+                <span className="inline-flex items-center gap-1 mb-2 text-xs font-mono font-semibold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                  <Hash className="size-3" />
+                  {load.orderId}
+                </span>
+              )}
               <div className="flex items-center gap-2 text-2xl font-bold">
                 <MapPin className="size-5 text-amber-500 flex-shrink-0" />
                 {pickupLabel}
@@ -529,18 +542,65 @@ export function LoadDetail() {
               )}
             </div>
 
-            {load.description && (
-              <div className="mt-4 pt-4 border-t border-border">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                  <FileText className="size-3.5" />
-                  Notes
-                </p>
-                <p className="text-sm">{load.description}</p>
+            {(load.paymentNotes || load.description) && (
+              <div className="mt-4 pt-4 border-t border-border space-y-3">
+                {load.paymentNotes && (
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                      <FileText className="size-3.5" />
+                      Payment Notes
+                    </p>
+                    <p className="text-sm">{load.paymentNotes}</p>
+                  </div>
+                )}
+                {load.description && (
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                      <FileText className="size-3.5" />
+                      Additional Notes
+                    </p>
+                    <p className="text-sm">{load.description}</p>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
 
+
+        {/* Carrier bid notes — visible to broker */}
+        {isBroker && approvedBid?.notes && (
+          <Card className="mb-5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MessageSquare className="size-4 text-muted-foreground" />
+                Carrier Notes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-foreground leading-relaxed">{approvedBid.notes}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Rate carrier — visible to broker on completed loads */}
+        {canRateCarrier && (
+          <Card className="mb-5">
+            <CardContent className="flex flex-wrap gap-3 items-center py-4">
+              {carrierAlreadyRated ? (
+                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <CheckCircle className="size-4 text-amber-500" />
+                  Carrier rating submitted
+                </span>
+              ) : (
+                <Button variant="outline" className="gap-2" onClick={() => setCarrierRatingOpen(true)}>
+                  <Star className="size-4 text-amber-500" />
+                  Rate Carrier
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Assigned carrier actions */}
         {isAssignedCarrier && (() => {
@@ -598,6 +658,19 @@ export function LoadDetail() {
             targetId={load.brokerId!}
             targetType="broker"
             targetName={brokerName ?? ''}
+            loadId={id!}
+            vehicleTitle={[load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ')}
+          />
+        )}
+
+        {canRateCarrier && !carrierAlreadyRated && (
+          <RateModal
+            open={carrierRatingOpen}
+            onClose={() => setCarrierRatingOpen(false)}
+            onSubmitted={() => setCarrierRatingSubmittedLocal(true)}
+            targetId={load.assignedCarrierId!}
+            targetType="carrier"
+            targetName={assignedCarrierInfo?.companyName ?? assignedCarrierInfo?.legalName ?? 'Carrier'}
             loadId={id!}
             vehicleTitle={[load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ')}
           />

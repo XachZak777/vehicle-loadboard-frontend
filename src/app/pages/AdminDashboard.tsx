@@ -11,6 +11,9 @@ import {
   useApproveBrokerMutation,
   useDeclineBrokerMutation,
   useRevokeBrokerMutation,
+  useApproveDealerMutation,
+  useDeclineDealerMutation,
+  useRevokeDealerMutation,
   useDeleteAdminUserMutation,
   type AdminUserDto,
 } from '../store/services/hauliusApi';
@@ -19,7 +22,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Loader2, AlertCircle, Users, Truck, Building2, Clock, XCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Users, Truck, Building2, Clock, XCircle, Store } from 'lucide-react';
 import { toast } from 'sonner';
 import { UserDetailDialog } from '../components/admin/UserDetailDialog';
 import { DeleteConfirmDialog } from '../components/admin/DeleteConfirmDialog';
@@ -43,6 +46,9 @@ export function AdminDashboard() {
   const [approveBroker]   = useApproveBrokerMutation();
   const [declineBroker]   = useDeclineBrokerMutation();
   const [revokeBroker]    = useRevokeBrokerMutation();
+  const [approveDealer]   = useApproveDealerMutation();
+  const [declineDealer]   = useDeclineDealerMutation();
+  const [revokeDealer]    = useRevokeDealerMutation();
   const [deleteUser]      = useDeleteAdminUserMutation();
 
   const [selectedUser, setSelectedUser]   = useState<AdminUserDto | null>(null);
@@ -52,6 +58,7 @@ export function AdminDashboard() {
 
   const carriers = allUsers.filter(u => u.role === 'CARRIER');
   const brokers  = allUsers.filter(u => u.role === 'BROKER');
+  const dealers  = allUsers.filter(u => u.role === 'DEALER');
 
   const refetchAll_ = () => {
     refetchAll();
@@ -65,6 +72,7 @@ export function AdminDashboard() {
     try {
       if (!user.profileId) throw new Error('No profile ID');
       if (user.role === 'CARRIER') await approveCarrier(user.profileId).unwrap();
+      else if (user.role === 'DEALER') await approveDealer(user.profileId).unwrap();
       else await approveBroker(user.profileId).unwrap();
       toast.success('Registration approved', { description: user.email });
       setSelectedUser(null);
@@ -80,6 +88,7 @@ export function AdminDashboard() {
     try {
       if (!user.profileId) throw new Error('No profile ID');
       if (user.role === 'CARRIER') await declineCarrier(user.profileId).unwrap();
+      else if (user.role === 'DEALER') await declineDealer(user.profileId).unwrap();
       else await declineBroker(user.profileId).unwrap();
       toast.success('Registration declined', { description: user.email });
       setSelectedUser(null);
@@ -95,6 +104,7 @@ export function AdminDashboard() {
     try {
       if (!user.profileId) throw new Error('No profile ID');
       if (user.role === 'CARRIER') await revokeCarrier(user.profileId).unwrap();
+      else if (user.role === 'DEALER') await revokeDealer(user.profileId).unwrap();
       else await revokeBroker(user.profileId).unwrap();
       refetchAll_();
       toast.success('Approval revoked — moved back to Pending', { description: user.email });
@@ -130,6 +140,7 @@ export function AdminDashboard() {
     { label: 'Rejected',       value: rejected.length,  icon: XCircle,   color: 'text-red-500' },
     { label: 'Carriers',       value: carriers.length,  icon: Truck,     color: 'text-green-500' },
     { label: 'Brokers',        value: brokers.length,   icon: Building2, color: 'text-purple-500' },
+    { label: 'Dealers',        value: dealers.length,   icon: Store,     color: 'text-orange-500' },
   ];
 
   const UserTable = ({ rows }: { rows: AdminUserDto[] }) =>
@@ -178,7 +189,7 @@ export function AdminDashboard() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {statsCards.map(({ label, value, icon: Icon, color }) => (
             <Card key={label}>
               <CardContent className="flex items-center gap-3 p-4">
@@ -224,6 +235,24 @@ export function AdminDashboard() {
                   {rejected.length}
                 </Badge>
               </TabsTrigger>
+              <TabsTrigger value="carriers">
+                Carriers
+                <Badge className="ml-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                  {carriers.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="brokers">
+                Brokers
+                <Badge className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                  {brokers.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="dealers">
+                Dealers
+                <Badge className="ml-2 bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                  {dealers.length}
+                </Badge>
+              </TabsTrigger>
               <TabsTrigger value="all">
                 All
                 <Badge className="ml-2 bg-muted text-muted-foreground">
@@ -248,6 +277,18 @@ export function AdminDashboard() {
                 </span>
               </div>
               <UserTable rows={rejected} />
+            </TabsContent>
+
+            <TabsContent value="carriers">
+              <UserTable rows={carriers} />
+            </TabsContent>
+
+            <TabsContent value="brokers">
+              <UserTable rows={brokers} />
+            </TabsContent>
+
+            <TabsContent value="dealers">
+              <UserTable rows={dealers} />
             </TabsContent>
 
             <TabsContent value="all">

@@ -5,15 +5,17 @@ import { Input } from '../ui/input';
 import { Separator } from '../ui/separator';
 import {
   Search, MapPin, ArrowRight, Loader2, Truck, ShieldCheck,
-  Star, CheckCircle, AlertCircle, Users,
+  Star, CheckCircle, AlertCircle, Users, Pencil, RotateCcw,
 } from 'lucide-react';
 import { Checkbox } from '../ui/checkbox';
 import { toast } from 'sonner';
 import {
   useLazySearchCarriersQuery,
   useDirectAssignCarrierMutation,
+  useUpdateLoadMutation,
 } from '../../store/services/hauliusApi';
 import type { LoadDto, CarrierPublicInfo } from '../../store/services/hauliusApi';
+import { LoadEditForm, initEditForm } from './LoadEditForm';
 import { formatPhone } from '../../utils/phone';
 import { colors } from '../../styles/colors';
 
@@ -110,10 +112,13 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
   const [selected, setSelected] = useState<CarrierPublicInfo | null>(null);
   const [assigning, setAssigning] = useState(false);
   const [consent, setConsent] = useState(false);
+  const [editForm, setEditForm] = useState(() => initEditForm(load));
+  const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [triggerSearch, { data: results = [], isFetching, isUninitialized }] = useLazySearchCarriersQuery();
   const [directAssign] = useDirectAssignCarrierMutation();
+  const [updateLoad] = useUpdateLoadMutation();
 
   const vehicleTitle = [load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ')
     || `Load #${load.id.slice(0, 8)}`;
@@ -132,6 +137,10 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
     if (!selected?.id) return;
     setAssigning(true);
     try {
+      const original = initEditForm(load);
+      if (JSON.stringify(editForm) !== JSON.stringify(original)) {
+        await updateLoad({ id: load.id, body: editForm }).unwrap();
+      }
       await directAssign({ loadId: load.id, carrierId: selected.id }).unwrap();
       toast.success('Carrier assigned successfully');
       handleClose();
@@ -146,6 +155,7 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
     setQuery('');
     setSelected(null);
     setConsent(false);
+    setIsEditing(false);
     onClose();
   };
 
@@ -273,6 +283,43 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
               </div>
               {selected.operatingStatus && (
                 <p className="text-xs mt-1 text-muted-foreground">Status: <span className="font-medium text-foreground">{selected.operatingStatus}</span></p>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Edit load details toggle */}
+            <div className="rounded-lg border border-border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setIsEditing(v => !v)}
+                className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+              >
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <Pencil className="size-3.5 text-amber-500" />
+                  Edit Load Details
+                </span>
+                <div className="flex items-center gap-2">
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setEditForm(initEditForm(load)); }}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground px-2 py-0.5 rounded hover:bg-muted transition-colors"
+                    >
+                      <RotateCcw className="size-3" />
+                      Reset
+                    </button>
+                  )}
+                  <span className="text-xs text-muted-foreground">{isEditing ? 'Hide ▲' : 'Show ▼'}</span>
+                </div>
+              </button>
+              {isEditing && (
+                <div className="px-4 py-4 border-t border-border">
+                  <LoadEditForm
+                    form={editForm}
+                    onChange={patch => setEditForm(prev => ({ ...prev, ...patch }))}
+                  />
+                </div>
               )}
             </div>
 

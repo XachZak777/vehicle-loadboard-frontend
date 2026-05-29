@@ -81,9 +81,15 @@ export function ContactInfoSection({ formData, fieldErrors, onChange }: Props) {
             id="additionalNotes"
             placeholder="Any special requirements, preferred trailer type, or other important information..."
             rows={3}
+            maxLength={1000}
             value={formData.additionalNotes}
             onChange={e => onChange('additionalNotes', e.target.value)}
+            aria-invalid={!!fieldErrors.additionalNotes}
           />
+          <p className="text-xs text-muted-foreground mt-1 text-right">
+            {formData.additionalNotes.length}/1000
+          </p>
+          {fieldErrors.additionalNotes && <p className="text-xs text-destructive mt-1">{fieldErrors.additionalNotes}</p>}
         </div>
       </CardContent>
     </Card>

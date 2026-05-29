@@ -95,7 +95,7 @@ export function PostLoad() {
       dropStreet: '', dropCity: '', dropState: '', dropZip: '',
       dropType: 'RESIDENCE', deliveryDate: '', deliveryTime: '',
       dropFacilityName: '', dropLocationContactName: '', dropLocationContactPhone: '',
-      price: '', paymentMethod: '', paymentTiming: '', description: '',
+      price: '', paymentMethod: '', paymentTiming: '', paymentNotes: '', description: '',
       contactName: '', contactPhone: '', contactEmail: '', orderId: '', additionalNotes: '',
     };
     return {
@@ -122,6 +122,7 @@ export function PostLoad() {
       price: cloneFrom.price != null ? String(cloneFrom.price) : '',
       paymentMethod: cloneFrom.paymentMethod || '',
       paymentTiming: cloneFrom.paymentTiming || '',
+      paymentNotes: cloneFrom.paymentNotes || '',
       description: cloneFrom.description || '',
       contactName: cloneFrom.contactName || '',
       contactPhone: cloneFrom.contactPhone || '',
@@ -270,6 +271,7 @@ export function PostLoad() {
       [!!formData.dropZip.trim() && !isValidZip(formData.dropZip), 'dropZip', 'ZIP code must be 5 digits.'],
       [!formData.deliveryDate, 'deliveryDate', 'Delivery date is required.'],
       [!!formData.deliveryDate && formData.deliveryDate < new Date().toISOString().split('T')[0], 'deliveryDate', 'Delivery date cannot be in the past.'],
+      [!!formData.deliveryDate && !!formData.pickupDate && formData.deliveryDate < formData.pickupDate, 'deliveryDate', 'Delivery date cannot be earlier than pickup date.'],
       [!formData.price.trim(), 'price', 'Price is required.'],
       [!!formData.price.trim() && !isValidPrice(formData.price), 'price', 'Price must be between $1 and $999,999.'],
       [!formData.contactName.trim(), 'contactName', 'Contact name is required.'],
@@ -279,7 +281,8 @@ export function PostLoad() {
       [!formData.contactEmail.trim(), 'contactEmail', 'Email address is required.'],
       [!!formData.contactEmail.trim() && !isValidEmail(formData.contactEmail), 'contactEmail', 'Enter a valid email address.'],
       [!formData.orderId.trim(), 'orderId', 'Order ID is required.'],
-      [!!formData.description.trim() && formData.description.trim().length > 1000, 'description', 'Notes must be 1,000 characters or fewer.'],
+      [!!formData.paymentNotes.trim() && formData.paymentNotes.trim().length > 1000, 'paymentNotes', 'Payment notes must be 1,000 characters or fewer.'],
+      [!!formData.additionalNotes.trim() && formData.additionalNotes.trim().length > 1000, 'additionalNotes', 'Notes must be 1,000 characters or fewer.'],
     ]);
     setSharedErrors(errs);
 
@@ -342,7 +345,8 @@ export function PostLoad() {
         pickupTime: formData.pickupTime,
         deliveryDate: formData.deliveryDate,
         deliveryTime: formData.deliveryTime,
-        description: formData.description || undefined,
+        paymentNotes: formData.paymentNotes.trim() || undefined,
+        description: formData.additionalNotes.trim() || undefined,
         contactName: formData.contactName || undefined,
         contactPhone: formData.contactPhone || undefined,
         contactEmail: formData.contactEmail || undefined,
@@ -482,13 +486,14 @@ export function PostLoad() {
               formData={{ street: formData.dropStreet, city: formData.dropCity, state: formData.dropState, zip: formData.dropZip, type: formData.dropType, date: formData.deliveryDate, time: formData.deliveryTime, facilityName: formData.dropFacilityName, locationContactName: formData.dropLocationContactName, locationContactPhone: formData.dropLocationContactPhone }}
               fieldErrors={sharedErrors}
               onChange={handleSharedInputChange}
+              minDate={formData.pickupDate || undefined}
             />
             <PricingNotesSection
               formData={{
                 price: formData.price,
                 paymentMethod: formData.paymentMethod,
                 paymentTiming: formData.paymentTiming,
-                description: formData.description,
+                paymentNotes: formData.paymentNotes,
               }}
               fieldErrors={sharedErrors}
               onChange={handleSharedInputChange}

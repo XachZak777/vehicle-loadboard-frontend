@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useAppSelector } from '../store/hooks';
-import { useGetMyBrokerProfileQuery, useGetMyCarrierProfileQuery } from '../store/services/hauliusApi';
+import { useGetMyBrokerProfileQuery, useGetMyCarrierProfileQuery, useGetNotificationCountQuery } from '../store/services/hauliusApi';
 import { useLogout } from '../hooks/useLogout';
 import { Button } from './ui/button';
 import { BrandLogo } from './BrandLogo';
 import {
   LayoutDashboard, Building2, LogOut, Plus, FileText,
   Star, Settings, ChevronDown, Menu, X, Search, History, Truck, Package,
+  HelpCircle, MessageCircle, BookOpen, Phone, Bookmark,
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { useInactivityLogout } from '../hooks/useInactivityLogout';
@@ -52,6 +53,12 @@ export function Navbar() {
   const isCarrier = user.role === 'carrier';
   const isAdmin = user.role === 'admin';
 
+  const { data: notifData } = useGetNotificationCountQuery(undefined, {
+    skip: isAdmin,
+    pollingInterval: 30_000,
+  });
+  const notifCount = notifData?.total ?? 0;
+
   const apiProfile = isBrokerRole ? brokerProfile : isCarrierRole ? carrierProfile : null;
   const displayName = apiProfile?.legalName || apiProfile?.companyName || user.companyName;
 
@@ -70,12 +77,12 @@ export function Navbar() {
   return (
     <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 gap-4">
+        <div className="flex items-center justify-between h-16 gap-4 relative">
           {/* Logo */}
           <Link to="/loads" className="flex-shrink-0 hover:opacity-80 transition-opacity">
             <BrandLogo
               alt="Haulius"
-              className="h-14 w-auto max-w-[44vw] lg:max-w-none object-contain"
+              className="h-6 lg:h-8 w-auto"
             />
           </Link>
 
@@ -97,22 +104,34 @@ export function Navbar() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`gap-1 ${location.pathname.startsWith('/broker') || location.pathname.startsWith('/post-load') ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
+                    className={`gap-1 relative ${(isActive('/post-load') || location.pathname.startsWith('/broker')) ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     Dashboard
                     <ChevronDown className="h-3 w-3" />
+                    {notifCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-[10px] font-bold text-white leading-none">
+                        {notifCount > 9 ? '9+' : notifCount}
+                      </span>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-44">
-                  <DropdownMenuItem asChild>
-                    <Link to="/post-load" className="flex items-center gap-2 cursor-pointer">
-                      <Plus className="h-4 w-4" /> Post Load
+                <DropdownMenuContent align="start" className="w-56 sm:w-72 p-0">
+                  <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
+                    <Link to="/post-load" className="flex items-center gap-3 w-full">
+                      <Plus className="h-5 w-5 flex-shrink-0" />
+                      <span className="text-base">Post Load</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/broker/dashboard" className="flex items-center gap-2 cursor-pointer">
-                      <FileText className="h-4 w-4" /> My Loads
+                  <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
+                    <Link to="/broker/dashboard" className="flex items-center gap-3 w-full">
+                      <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
+                      <span className="text-base flex-1">My Loads</span>
+                      {notifCount > 0 && (
+                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-[11px] font-bold text-white leading-none">
+                          {notifCount > 9 ? '9+' : notifCount}
+                        </span>
+                      )}
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -125,11 +144,16 @@ export function Navbar() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`gap-1 ${location.pathname.startsWith('/carrier') ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
+                    className={`gap-1 relative ${location.pathname.startsWith('/carrier') ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     Dashboard
                     <ChevronDown className="h-3 w-3" />
+                    {notifCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-[10px] font-bold text-white leading-none">
+                        {notifCount > 9 ? '9+' : notifCount}
+                      </span>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56 sm:w-72 p-0">
@@ -142,7 +166,12 @@ export function Navbar() {
                   <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
                     <Link to="/carrier/assigned" className="flex items-center gap-3 w-full">
                       <Truck className="h-5 w-5 flex-shrink-0" />
-                      <span className="text-base">Assigned Loads</span>
+                      <span className="text-base flex-1">Assigned Loads</span>
+                      {notifCount > 0 && (
+                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-[11px] font-bold text-white leading-none">
+                          {notifCount > 9 ? '9+' : notifCount}
+                        </span>
+                      )}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
@@ -172,6 +201,36 @@ export function Navbar() {
                 </Button>
               </Link>
             )}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+                  <HelpCircle className="h-4 w-4" />
+                  Help
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 p-0">
+                <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
+                  <Link to="/faq" className="flex items-center gap-3 w-full">
+                    <MessageCircle className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-base">FAQ</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
+                  <Link to="/resources" className="flex items-center gap-3 w-full">
+                    <BookOpen className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-base">Resources</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
+                  <Link to="/contact" className="flex items-center gap-3 w-full">
+                    <Phone className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-base">Help Center</span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Center Search */}
@@ -269,18 +328,25 @@ export function Navbar() {
             {isBrokerOrDealer && (
               <>
                 <Link to="/post-load" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
+                  <Button variant="ghost" size="sm"
+                    className={`w-full justify-start gap-2 ${isActive('/post-load') ? 'font-semibold text-foreground' : ''}`}>
                     <Plus className="h-4 w-4" /> Post Load
                   </Button>
                 </Link>
                 <Link to="/broker/dashboard" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="ghost" size="sm"
-                    className={`w-full justify-start gap-2 ${isActive('/broker/dashboard') ? 'font-semibold text-foreground' : ''}`}>
-                    <LayoutDashboard className="h-4 w-4" /> Dashboard
+                    className={`w-full justify-start gap-2 relative ${location.pathname.startsWith('/broker') ? 'font-semibold text-foreground' : ''}`}>
+                    <LayoutDashboard className="h-4 w-4" /> My Loads
+                    {notifCount > 0 && (
+                      <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-[11px] font-bold text-white leading-none">
+                        {notifCount > 9 ? '9+' : notifCount}
+                      </span>
+                    )}
                   </Button>
                 </Link>
-                <Link to={user.role === 'dealer' ? '/broker/company' : '/broker/company'} onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
+                <Link to="/broker/company" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" size="sm"
+                    className={`w-full justify-start gap-2 ${isActive('/broker/company') ? 'font-semibold text-foreground' : ''}`}>
                     <Building2 className="h-4 w-4" /> My Company
                   </Button>
                 </Link>
@@ -297,8 +363,13 @@ export function Navbar() {
                 </Link>
                 <Link to="/carrier/assigned" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="ghost" size="sm"
-                    className={`w-full justify-start gap-2 ${isActive('/carrier/assigned') ? 'font-semibold text-foreground' : ''}`}>
+                    className={`w-full justify-start gap-2 relative ${isActive('/carrier/assigned') ? 'font-semibold text-foreground' : ''}`}>
                     <Truck className="h-4 w-4" /> Assigned Loads
+                    {isCarrier && notifCount > 0 && (
+                      <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-[11px] font-bold text-white leading-none">
+                        {notifCount > 9 ? '9+' : notifCount}
+                      </span>
+                    )}
                   </Button>
                 </Link>
                 <Link to="/carrier/requested" onClick={() => setMobileMenuOpen(false)}>
@@ -311,6 +382,12 @@ export function Navbar() {
                   <Button variant="ghost" size="sm"
                     className={`w-full justify-start gap-2 ${isActive('/carrier/offers') ? 'font-semibold text-foreground' : ''}`}>
                     <Package className="h-4 w-4" /> Offers
+                  </Button>
+                </Link>
+                <Link to="/carrier/preferred" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" size="sm"
+                    className={`w-full justify-start gap-2 ${isActive('/carrier/preferred') ? 'font-semibold text-foreground' : ''}`}>
+                    <Bookmark className="h-4 w-4" /> Preferred Loads
                   </Button>
                 </Link>
                 <Link to="/carrier/company" onClick={() => setMobileMenuOpen(false)}>
@@ -344,6 +421,21 @@ export function Navbar() {
                 <p className="text-sm font-medium">{displayName}</p>
                 <p className="text-xs text-muted-foreground">{roleLabel}</p>
               </div>
+              <Link to="/faq" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
+                  <MessageCircle className="h-4 w-4" /> FAQ
+                </Button>
+              </Link>
+              <Link to="/resources" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
+                  <BookOpen className="h-4 w-4" /> Resources
+                </Button>
+              </Link>
+              <Link to="/contact" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
+                  <Phone className="h-4 w-4" /> Help Center
+                </Button>
+              </Link>
               <Link to="/settings" onClick={() => setMobileMenuOpen(false)}>
                 <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
                   <Settings className="h-4 w-4" /> Settings

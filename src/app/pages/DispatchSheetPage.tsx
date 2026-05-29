@@ -28,11 +28,10 @@ function mapsSearchUrl(street?: string | null, city?: string | null, state?: str
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q + ', USA')}`;
 }
 
-
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mb-5">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">{title}</p>
+    <div className="ds-section mb-2">
+      <p className="ds-section-title text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">{title}</p>
       <div className="border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100">
         {children}
       </div>
@@ -45,7 +44,7 @@ function Row({ label, value, mono = false, highlight = false, href }: {
 }) {
   return (
     <div className={`flex text-sm ${highlight ? 'bg-amber-50' : ''}`}>
-      <span className="w-28 sm:w-44 flex-shrink-0 px-2 sm:px-4 py-2.5 text-xs text-gray-500 font-medium bg-gray-50 border-r border-gray-100">
+      <span className="ds-row-label w-16 flex-shrink-0 px-2 py-1 text-[10px] text-gray-500 font-medium bg-gray-50 border-r border-gray-100 leading-tight">
         {label}
       </span>
       {href ? (
@@ -53,12 +52,12 @@ function Row({ label, value, mono = false, highlight = false, href }: {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className={`px-4 py-2.5 font-semibold text-amber-600 hover:underline underline-offset-2 ${mono ? 'font-mono text-xs' : ''}`}
+          className={`ds-row-value px-2 py-1 font-semibold text-amber-600 hover:underline underline-offset-2 leading-tight min-w-0 break-words ${mono ? 'font-mono text-[10px]' : 'text-[11px]'}`}
         >
           {value}
         </a>
       ) : (
-        <span className={`px-4 py-2.5 font-semibold text-gray-900 ${mono ? 'font-mono text-xs' : ''} ${highlight ? 'text-amber-700 text-base' : ''}`}>
+        <span className={`ds-row-value px-2 py-1 font-semibold text-gray-900 leading-tight min-w-0 break-words ${mono ? 'font-mono text-[10px]' : 'text-[11px]'} ${highlight ? 'text-amber-700' : ''}`}>
           {value}
         </span>
       )}
@@ -67,12 +66,12 @@ function Row({ label, value, mono = false, highlight = false, href }: {
 }
 
 export function DispatchSheetPage() {
-  const { bidId } = useParams<{ bidId: string }>();
+  const { loadId } = useParams<{ loadId: string }>();
   const { data: bids = [], isLoading: bidsLoading } = useGetMyCarrierBidsQuery();
-  const bid = bids.find(b => b.bidId === bidId);
+  const bid = bids.find(b => b.loadId === loadId);
 
-  const { data: load, isLoading: loadLoading } = useGetLoadQuery(bid?.loadId ?? '', {
-    skip: !bid?.loadId,
+  const { data: load, isLoading: loadLoading } = useGetLoadQuery(loadId ?? '', {
+    skip: !loadId,
   });
   const { data: broker, isLoading: brokerLoading } = useGetBrokerPublicInfoQuery(bid?.brokerId ?? '', {
     skip: !bid?.brokerId,
@@ -105,8 +104,14 @@ export function DispatchSheetPage() {
   }
 
   const vehicle = [bid.vehicleYear, bid.vehicleMake, bid.vehicleModel].filter(Boolean).join(' ');
+  const totalVehicles = 1 + (load.additionalVehicles?.length ?? 0);
+  const toolbarLabel = totalVehicles > 1 ? `${vehicle} +${totalVehicles - 1} more` : vehicle;
   const brokerName = broker?.companyName || broker?.legalName || 'Broker';
 
+  const agreedAmount = bid.amount != null ? Number(bid.amount) : load.price;
+  const ratePerMile = agreedAmount != null && load.distance && load.distance > 0
+    ? (agreedAmount / load.distance).toFixed(2)
+    : null;
 
   return (
     <div className="min-h-screen bg-white">
@@ -122,7 +127,7 @@ export function DispatchSheetPage() {
           <div className="flex items-center gap-2 text-gray-800">
             <FileText className="size-4 text-amber-500" />
             <span className="font-semibold text-sm">Dispatch Sheet</span>
-            {vehicle && <span className="text-gray-400 text-sm">— {vehicle}</span>}
+            {vehicle && <span className="text-gray-400 text-sm">— {toolbarLabel}</span>}
           </div>
         </div>
         <Button
@@ -136,31 +141,31 @@ export function DispatchSheetPage() {
       </div>
 
       {/* Sheet */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-10 print:px-0 print:py-0 print:max-w-none">
+      <div id="ds-content" className="max-w-4xl mx-auto px-4 sm:px-8 py-3 sm:py-5">
+
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8 pb-6 border-b-4 border-amber-400">
+        <div className="ds-header flex flex-col sm:flex-row sm:items-start justify-between gap-1 mb-3 pb-2 border-b-4 border-amber-400">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">DISPATCH SHEET</h1>
+            <h1 className="text-xl font-extrabold tracking-tight text-gray-900">DISPATCH SHEET</h1>
             {load.orderId && (
-              <p className="text-xs text-gray-400 mt-1">Order # {load.orderId}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Order # {load.orderId}</p>
             )}
             <p className="text-xs text-gray-400 mt-0.5">
               Issued: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </p>
           </div>
-          <div className="flex flex-col sm:items-end gap-2">
-            <span className="inline-block bg-amber-500 text-white text-sm font-bold px-4 py-1.5 rounded tracking-wide">
+          <div className="flex flex-col sm:items-end gap-1">
+            <span className="inline-block bg-amber-500 text-white text-xs font-bold px-4 py-1 rounded tracking-wide">
               {load.status ?? 'ASSIGNED'}
             </span>
             {load.distance && (
-              <p className="text-sm text-gray-400">{Math.round(load.distance).toLocaleString()} miles</p>
+              <p className="text-xs text-gray-400">{Math.round(load.distance).toLocaleString()} miles</p>
             )}
           </div>
         </div>
 
-        {/* Two-column top block */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-5">
-          {/* Broker / Shipper */}
+        {/* 2-column: Broker (left) | Vehicle + Payment stacked (right) */}
+        <div className="ds-grid grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
           <Section title="Broker / Shipper">
             <Row label="Company" value={brokerName} />
             {broker?.mcNumber && <Row label="MC Number" value={broker.mcNumber} mono />}
@@ -173,52 +178,51 @@ export function DispatchSheetPage() {
             {broker?.operatingStatus && <Row label="Status" value={broker.operatingStatus} />}
           </Section>
 
-          {/* Payment */}
-          <Section title="Payment">
-            <Row
-              label="Agreed Amount"
-              value={bid.amount != null ? `$${Number(bid.amount).toLocaleString()}` : (load.price != null ? `$${load.price.toLocaleString()}` : '—')}
-              highlight
-            />
-            {load.paymentMethod && <Row label="Method" value={formatPaymentLabel(load.paymentMethod)} />}
-            {load.paymentTiming && <Row label="Timing" value={formatPaymentLabel(load.paymentTiming)} />}
-          </Section>
+          <div className="flex flex-col gap-2">
+            <Section title={`Vehicles (${totalVehicles})`}>
+              {/* Primary vehicle */}
+              <div className="px-2 py-0.5 bg-gray-50 border-b border-gray-100">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Vehicle 1</p>
+              </div>
+              <Row label="Vehicle" value={vehicle || '—'} />
+              {load.vin && <Row label="VIN" value={load.vin} mono />}
+              {load.vehicleType && <Row label="Type" value={load.vehicleType} />}
+              {load.vehicleCondition && <Row label="Condition" value={load.vehicleCondition} />}
+              {load.weight && <Row label="Weight" value={`${load.weight.toLocaleString()} lbs`} />}
+              {/* Additional vehicles */}
+              {load.additionalVehicles?.map((av, i) => (
+                <div key={i}>
+                  <div className="px-2 py-0.5 bg-gray-50 border-t border-b border-gray-100">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Vehicle {i + 2}</p>
+                  </div>
+                  <Row label="Vehicle" value={[av.vehicleYear, av.vehicleMake, av.vehicleModel].filter(Boolean).join(' ') || '—'} />
+                  {av.vin && <Row label="VIN" value={av.vin} mono />}
+                  {av.vehicleType && <Row label="Type" value={av.vehicleType} />}
+                  {av.vehicleCondition && <Row label="Condition" value={av.vehicleCondition} />}
+                  {av.weight && <Row label="Weight" value={`${av.weight.toLocaleString()} lbs`} />}
+                  {av.vehicleAdditionalInfo && <Row label="Notes" value={av.vehicleAdditionalInfo} />}
+                </div>
+              ))}
+            </Section>
+
+            <Section title="Payment">
+              <Row
+                label="Amount"
+                value={agreedAmount != null ? `$${agreedAmount.toLocaleString()}` : '—'}
+                highlight
+              />
+              {load.distance && load.distance > 0 && (
+                <Row label="Distance" value={`${Math.round(load.distance).toLocaleString()} mi`} />
+              )}
+              {ratePerMile && <Row label="Rate / Mile" value={`$${ratePerMile}`} />}
+              {load.paymentMethod && <Row label="Method" value={formatPaymentLabel(load.paymentMethod)} />}
+              {load.paymentTiming && <Row label="Timing" value={formatPaymentLabel(load.paymentTiming)} />}
+            </Section>
+          </div>
         </div>
 
-        {/* Vehicle */}
-        <Section title="Vehicle Information">
-          <Row label="Vehicle" value={vehicle || '—'} />
-          {load.vin && <Row label="VIN" value={load.vin} mono />}
-          {load.vehicleType && <Row label="Type" value={load.vehicleType} />}
-          {load.vehicleCondition && <Row label="Condition" value={load.vehicleCondition} />}
-          {load.trailerType && <Row label="Trailer Type" value={load.trailerType} />}
-          {load.weight && <Row label="Weight" value={`${load.weight.toLocaleString()} lbs`} />}
-        </Section>
-
-        {/* Additional vehicles */}
-        {load.additionalVehicles && load.additionalVehicles.length > 0 && (
-          <Section title={`Additional Vehicles (${load.additionalVehicles.length})`}>
-            {load.additionalVehicles.map((av, i) => (
-              <div key={i} className="px-4 py-3 border-b border-gray-100 last:border-b-0">
-                <p className="text-sm font-semibold text-gray-900">
-                  {[av.vehicleYear, av.vehicleMake, av.vehicleModel].filter(Boolean).join(' ')}
-                </p>
-                <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-0.5 text-xs text-gray-500">
-                  {av.vehicleType && <span>{av.vehicleType}</span>}
-                  {av.vehicleCondition && <span>{av.vehicleCondition}</span>}
-                  {av.vin && <span className="font-mono">VIN: {av.vin}</span>}
-                  {av.weight && <span>{av.weight.toLocaleString()} lbs</span>}
-                </div>
-                {av.vehicleAdditionalInfo && (
-                  <p className="text-xs text-gray-400 mt-0.5 italic">{av.vehicleAdditionalInfo}</p>
-                )}
-              </div>
-            ))}
-          </Section>
-        )}
-
-        {/* Route — full width two-col */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-5">
+        {/* Route — 2-col */}
+        <div className="ds-grid grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
           <Section title="Pickup">
             {load.pickupStreet && (
               <Row label="Street" value={load.pickupStreet} href={mapsSearchUrl(load.pickupStreet, load.pickupCity, load.pickupState, load.pickupZip) ?? undefined} />
@@ -228,7 +232,6 @@ export function DispatchSheetPage() {
               return <Row label="City / State" value={cityState || '—'} href={cityState ? mapsSearchUrl(load.pickupStreet, load.pickupCity, load.pickupState, load.pickupZip) ?? undefined : undefined} />;
             })()}
             {load.pickupZip && <Row label="ZIP" value={load.pickupZip} />}
-            {load.pickupCountry && <Row label="Country" value={load.pickupCountry} />}
             {load.pickupLotNumber && <Row label="Lot #" value={load.pickupLotNumber} />}
             {load.pickupType && <Row label="Type" value={load.pickupType} />}
             {load.pickupContactName && <Row label="Contact" value={load.pickupContactName} />}
@@ -248,7 +251,6 @@ export function DispatchSheetPage() {
               return <Row label="City / State" value={cityState || '—'} href={cityState ? mapsSearchUrl(load.dropStreet, load.dropCity, load.dropState, load.dropZip) ?? undefined : undefined} />;
             })()}
             {load.dropZip && <Row label="ZIP" value={load.dropZip} />}
-            {load.dropCountry && <Row label="Country" value={load.dropCountry} />}
             {load.dropLotNumber && <Row label="Lot #" value={load.dropLotNumber} />}
             {load.dropType && <Row label="Type" value={load.dropType} />}
             {load.dropContactName && <Row label="Contact" value={load.dropContactName} />}
@@ -260,49 +262,114 @@ export function DispatchSheetPage() {
           </Section>
         </div>
 
-        {/* Broker contact (if separate from company info) */}
-        {(load.contactName || load.contactPhone || load.contactEmail) && (
-          <Section title="Broker Contact">
-            {load.contactName && <Row label="Name" value={load.contactName} />}
-            {load.contactPhone && <Row label="Phone" value={formatPhone(load.contactPhone)} />}
-            {load.contactEmail && <Row label="Email" value={load.contactEmail} />}
-          </Section>
-        )}
-
-        {/* Notes */}
-        {load.description && (
-          <Section title="Notes / Special Instructions">
-            <div className="px-4 py-3 text-sm text-gray-800 whitespace-pre-wrap">{load.description}</div>
-          </Section>
+        {/* Broker contact + Notes */}
+        {(load.contactName || load.contactPhone || load.contactEmail || load.trailerType || load.description || bid.notes) && (
+          <div className={`ds-grid grid grid-cols-1 gap-2 mb-2 ${(load.contactName || load.contactPhone || load.contactEmail) && (load.trailerType || load.description || bid.notes) ? 'sm:grid-cols-2' : ''}`}>
+            {(load.contactName || load.contactPhone || load.contactEmail) && (
+              <Section title="Broker Contact">
+                {load.contactName && <Row label="Name" value={load.contactName} />}
+                {load.contactPhone && <Row label="Phone" value={formatPhone(load.contactPhone)} />}
+                {load.contactEmail && <Row label="Email" value={load.contactEmail} />}
+              </Section>
+            )}
+            {(load.trailerType || load.description || bid.notes) && (
+              <Section title="Notes / Special Instructions">
+                {load.trailerType && <Row label="Trailer Type" value={load.trailerType} />}
+                {load.description && (
+                  <div className="px-2 py-1.5 text-[11px] text-gray-800 whitespace-pre-wrap border-b border-gray-100 last:border-b-0">
+                    {load.description}
+                  </div>
+                )}
+                {bid.notes && (
+                  <div className="px-2 py-1.5">
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">Carrier Notes</p>
+                    <p className="text-[11px] text-gray-800 whitespace-pre-wrap">{bid.notes}</p>
+                  </div>
+                )}
+              </Section>
+            )}
+          </div>
         )}
 
         {/* Signatures */}
-        <div className="mt-8 pt-6 border-t-2 border-gray-200">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+        <div className="ds-sigs mt-2 pt-2 border-t-2 border-gray-200">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Carrier Signature</p>
-              <div className="h-16 border border-gray-300 rounded-lg" />
-              <p className="text-xs text-gray-400 mt-2">Printed name &amp; date</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-1">Carrier Signature</p>
+              <div className="h-8 border border-gray-300 rounded" />
+              <p className="text-[10px] text-gray-400 mt-0.5">Printed name &amp; date</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Broker / Shipper Signature</p>
-              <div className="h-16 border border-gray-300 rounded-lg" />
-              <p className="text-xs text-gray-400 mt-2">Printed name &amp; date</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-1">Broker / Shipper Signature</p>
+              <div className="h-8 border border-gray-300 rounded" />
+              <p className="text-[10px] text-gray-400 mt-0.5">Printed name &amp; date</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 pt-4 border-t border-amber-400 flex justify-between text-xs text-gray-400">
+        <div className="mt-2 pt-1 border-t border-amber-400 flex justify-between text-[10px] text-gray-400">
           <span>LoadBoard · Dispatch Sheet</span>
           <span>Load ID: {load.id.slice(0, 8).toUpperCase()}</span>
         </div>
       </div>
 
-      {/* Print-only styles */}
       <style>{`
         @media print {
-          @page { margin: 1.2cm 1.5cm; size: A4; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          @page {
+            size: letter portrait;
+            margin: 0.4cm 0.6cm;
+          }
+
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            margin: 0;
+            padding: 0;
+          }
+
+          /* Hide everything except the sheet */
+          body > *:not(#root) { display: none !important; }
+
+          /* Sheet container: full width, no padding */
+          #ds-content {
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+
+          /* Enforce 2-column grids in print */
+          .ds-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 4px !important;
+          }
+
+          /* Tighten section spacing */
+          .ds-section {
+            margin-bottom: 4px !important;
+          }
+          .ds-section-title {
+            margin-bottom: 1px !important;
+          }
+
+          /* Tighten row padding */
+          .ds-row-label,
+          .ds-row-value {
+            padding-top: 1px !important;
+            padding-bottom: 1px !important;
+          }
+
+          /* Header */
+          .ds-header {
+            margin-bottom: 4px !important;
+            padding-bottom: 3px !important;
+          }
+
+          /* Signatures */
+          .ds-sigs {
+            margin-top: 4px !important;
+            padding-top: 3px !important;
+          }
         }
       `}</style>
     </div>

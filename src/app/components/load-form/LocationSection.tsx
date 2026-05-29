@@ -29,9 +29,10 @@ interface Props {
   };
   fieldErrors: FieldErrors;
   onChange: (field: string, value: string) => void;
+  minDate?: string;
 }
 
-export function LocationSection({ prefix, title, description, formData, fieldErrors, onChange }: Props) {
+export function LocationSection({ prefix, title, description, formData, fieldErrors, onChange, minDate }: Props) {
   const field = (name: string) => `${prefix}${name.charAt(0).toUpperCase() + name.slice(1)}`;
   const dateField = prefix === 'pickup' ? 'pickupDate' : 'deliveryDate';
   const dateLabel = prefix === 'pickup' ? 'Pickup Date' : 'Delivery Date';
@@ -105,7 +106,7 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
               id={dateField}
               type="date"
               value={formData.date}
-              min={new Date().toISOString().split('T')[0]}
+              min={minDate && minDate > new Date().toISOString().split('T')[0] ? minDate : new Date().toISOString().split('T')[0]}
               onChange={(e) => onChange(dateField, e.target.value)}
               aria-invalid={!!fieldErrors[dateField]}
             />

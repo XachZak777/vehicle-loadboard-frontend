@@ -1,9 +1,10 @@
-import { useState, useMemo, memo } from 'react';
+import { useState, useMemo, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import {
   useGetLoadsQuery, usePlaceBidMutation, useUpdateBidMutation,
   useGetBrokerPublicInfoQuery, useGetMyCarrierBidsQuery, useGetMyCarrierProfileQuery,
+  useGetSavedLoadIdsQuery, useAddSavedLoadMutation, useRemoveSavedLoadMutation,
   type LoadDto, type CarrierBidWithLoadDto,
 } from '../store/services/hauliusApi';
 import { useAppSelector } from '../store/hooks';
@@ -12,7 +13,8 @@ import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Button } from '../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../components/ui/sheet';
-import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star, SlidersHorizontal, X } from 'lucide-react';
+import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star, SlidersHorizontal, X, Bookmark } from 'lucide-react';
+import { useGetSavedLoadsQuery } from '../store/services/hauliusApi';
 import { formatPhone, formatPaymentLabel, calcPricePerMile } from '../utils/phone';
 import { MapBackground } from '../components/MapBackground';
 import { CityMapModal } from '../components/CityMapModal';
@@ -86,7 +88,11 @@ export function LoadBoard() {
   const isCarrier = user?.role === 'carrier';
   const { data: myCarrierProfile } = useGetMyCarrierProfileQuery(undefined, { skip: !isCarrier });
   const { data: myCarrierBids = [] } = useGetMyCarrierBidsQuery(undefined, { skip: !isCarrier });
+  const { data: savedLoadIds = [] } = useGetSavedLoadIdsQuery(undefined, { skip: !isCarrier });
   const myCarrierId = myCarrierProfile?.id;
+
+  const [activeTab, setActiveTab] = useState<'all' | 'saved'>('all');
+  const { data: savedLoads = [] } = useGetSavedLoadsQuery(undefined, { skip: !isCarrier });
 
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -101,6 +107,8 @@ export function LoadBoard() {
   const [minPrice, setMinPrice] = useState('');
   const [minPricePerMile, setMinPricePerMile] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -114,6 +122,7 @@ export function LoadBoard() {
     setMinPrice('');
     setMinPricePerMile('');
     setSortBy('newest');
+    setPage(1);
   };
 
   const activeFilterCount = [
@@ -214,6 +223,12 @@ export function LoadBoard() {
     return result;
   }, [loads, searchTerm, pickupLocation, deliveryLocation, vehicleType, trailerType, condition, minPrice, minPricePerMile, sortBy]);
 
+  useEffect(() => { setPage(1); }, [filteredLoads]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredLoads.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedLoads = filteredLoads.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
   const fetchError = isError ? ((error as any)?.message || 'Failed to load data.') : '';
 
   return (
@@ -238,7 +253,7 @@ export function LoadBoard() {
 
         {!isLoading && !fetchError && (
           <>
-            {/* ── Mobile filter sheet (slides up from bottom) ── */}
+            {/* ── Mobile filter sheet ── */}
             <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
               <SheetContent side="bottom" className="h-[90dvh] flex flex-col p-0 rounded-t-2xl sm:hidden">
                 <SheetHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
@@ -250,7 +265,6 @@ export function LoadBoard() {
                     )}
                   </SheetTitle>
                 </SheetHeader>
-
                 <div className="flex-1 overflow-y-auto px-5 py-4">
                   <FilterPanel
                     sortBy={sortBy} setSortBy={setSortBy}
@@ -267,7 +281,6 @@ export function LoadBoard() {
                     clearFilters={clearFilters}
                   />
                 </div>
-
                 <SheetFooter className="px-5 py-4 border-t border-border shrink-0 grid grid-cols-2 gap-3 sm:justify-start">
                   <Button variant="outline" onClick={clearFilters}
                     className="border-amber-500 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10">
@@ -284,7 +297,7 @@ export function LoadBoard() {
             <div className="flex gap-6">
               {/* ── Desktop filter sidebar ── */}
               <aside
-                className="hidden sm:block flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-out"
+                className="hidden sm:block flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-out self-start sticky top-20"
                 style={{ width: filtersOpen ? 272 : 0 }}
               >
                 <div
@@ -313,9 +326,33 @@ export function LoadBoard() {
 
               {/* ── Load list ── */}
               <div className="flex-1 min-w-0">
+                {/* Tabs — carriers only */}
+                {isCarrier && (
+                  <div className="flex gap-1 mb-4 p-1 bg-muted rounded-lg w-fit">
+                    <button
+                      onClick={() => setActiveTab('all')}
+                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'all' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                      All Loads
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('saved')}
+                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'saved' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                      <Bookmark className={`size-3.5 ${activeTab === 'saved' ? 'fill-amber-500 text-amber-500' : ''}`} />
+                      Saved
+                      {savedLoads.length > 0 && (
+                        <span className="inline-flex items-center justify-center size-4 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">
+                          {savedLoads.length}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                )}
+
                 {/* Toolbar */}
-                <div className="flex items-center gap-3 mb-4">
-                  {/* Mobile: floating pill filter button */}
+                <div className={`flex items-center gap-3 mb-4 ${activeTab === 'saved' ? 'hidden' : ''}`}>
+                  {/* Mobile: filter button */}
                   <button
                     onClick={() => setMobileFiltersOpen(true)}
                     className="sm:hidden inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-background hover:bg-muted transition-colors text-sm text-foreground shadow-sm"
@@ -351,10 +388,7 @@ export function LoadBoard() {
 
                   <div className="ml-auto flex items-center gap-3">
                     {activeFilterCount > 0 && (
-                      <button
-                        onClick={clearFilters}
-                        className="hidden sm:inline-flex items-center gap-1 text-xs text-amber-600 hover:underline"
-                      >
+                      <button onClick={clearFilters} className="hidden sm:inline-flex items-center gap-1 text-xs text-amber-600 hover:underline">
                         <X className="size-3" />
                         Clear all filters
                       </button>
@@ -363,7 +397,6 @@ export function LoadBoard() {
                       onClick={() => refetch()}
                       disabled={isFetching}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-sm text-foreground disabled:opacity-50"
-                      title="Refresh loads"
                     >
                       <Loader2 className={`size-4 ${isFetching ? 'animate-spin text-amber-500' : 'text-muted-foreground'}`} />
                       Refresh
@@ -371,28 +404,94 @@ export function LoadBoard() {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  {filteredLoads.map(load => (
-                    <LoadCard
-                      key={load.id}
-                      load={load}
-                      myCarrierId={myCarrierId}
-                      existingBid={myCarrierBids.find(b => b.loadId === load.id)}
-                    />
-                  ))}
+                {activeTab === 'saved' ? (
+                  <div className="space-y-3">
+                    {savedLoads.length === 0 ? (
+                      <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
+                        <Bookmark className="size-10 mx-auto mb-3 text-muted-foreground opacity-30" />
+                        <h3 className="text-base font-semibold mb-1">No saved loads</h3>
+                        <p className="text-sm text-muted-foreground">Bookmark loads from the All Loads tab to save them here.</p>
+                      </div>
+                    ) : (
+                      savedLoads.map(load => (
+                        <LoadCard
+                          key={load.id}
+                          load={load}
+                          myCarrierId={myCarrierId}
+                          existingBid={myCarrierBids.find(b => b.loadId === load.id)}
+                          isSaved={true}
+                        />
+                      ))
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {pagedLoads.map(load => (
+                      <LoadCard
+                        key={load.id}
+                        load={load}
+                        myCarrierId={myCarrierId}
+                        existingBid={myCarrierBids.find(b => b.loadId === load.id)}
+                        isSaved={savedLoadIds.includes(load.id)}
+                      />
+                    ))}
 
-                  {filteredLoads.length === 0 && (
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
-                      <h3 className="text-lg font-semibold text-foreground mb-2">No loads found</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Try adjusting your filters to find available loads.
-                      </p>
-                      <Button onClick={clearFilters} className="bg-amber-500 hover:bg-amber-600 text-white">
-                        Clear Filters
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                    {filteredLoads.length === 0 && (
+                      <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
+                        <h3 className="text-lg font-semibold text-foreground mb-2">No loads found</h3>
+                        <p className="text-muted-foreground mb-4">Try adjusting your filters to find available loads.</p>
+                        <Button onClick={clearFilters} className="bg-amber-500 hover:bg-amber-600 text-white">
+                          Clear Filters
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'all' && totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-1 pt-4 pb-2">
+                    <button
+                      onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      disabled={safePage === 1}
+                      className="px-3 py-1.5 rounded-md border border-border text-sm text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Previous
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                      .reduce<(number | '…')[]>((acc, p, idx, arr) => {
+                        if (idx > 0 && typeof arr[idx - 1] === 'number' && (p as number) - (arr[idx - 1] as number) > 1) acc.push('…');
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((p, idx) =>
+                        p === '…' ? (
+                          <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground text-sm">…</span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => { setPage(p as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
+                              safePage === p
+                                ? 'bg-amber-500 border-amber-500 text-white font-semibold'
+                                : 'border-border text-muted-foreground hover:bg-muted'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                      )}
+
+                    <button
+                      onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      disabled={safePage === totalPages}
+                      className="px-3 py-1.5 rounded-md border border-border text-sm text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </>
@@ -401,6 +500,7 @@ export function LoadBoard() {
     </div>
   );
 }
+
 
 type FilterPanelProps = {
   sortBy: string; setSortBy: (v: string) => void;
@@ -414,7 +514,7 @@ type FilterPanelProps = {
   condition: string; setCondition: (v: string) => void;
   minPrice: string; setMinPrice: (v: string) => void;
   minPricePerMile: string; setMinPricePerMile: (v: string) => void;
-  clearFilters: () => void; // kept on type for backwards compat, not used inside FilterPanel
+  clearFilters: () => void;
 };
 
 function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
@@ -445,8 +545,6 @@ function FilterPanel({
 }: Omit<FilterPanelProps, 'clearFilters'>) {
   return (
     <div className="space-y-6">
-
-      {/* Sort & Search */}
       <FilterSection title="Sort & Search">
         <FilterField label="Sort By">
           <Select value={sortBy} onValueChange={setSortBy}>
@@ -464,7 +562,6 @@ function FilterPanel({
 
       <div className="border-t border-border/40" />
 
-      {/* Location */}
       <FilterSection title="Location">
         <FilterField label="Pickup">
           <Input placeholder="City, State, or ZIP" value={pickupLocation}
@@ -492,7 +589,6 @@ function FilterPanel({
 
       <div className="border-t border-border/40" />
 
-      {/* Vehicle */}
       <FilterSection title="Vehicle">
         <FilterField label="Type">
           <Select value={vehicleType} onValueChange={setVehicleType}>
@@ -522,7 +618,6 @@ function FilterPanel({
 
       <div className="border-t border-border/40" />
 
-      {/* Price */}
       <FilterSection title="Price">
         <FilterField label="Min Price ($)">
           <Input type="number" placeholder="0" min="0" value={minPrice}
@@ -533,23 +628,25 @@ function FilterPanel({
             onChange={e => setMinPricePerMile(e.target.value)} className="h-9" />
         </FilterField>
       </FilterSection>
-
     </div>
   );
 }
 
 const LoadCard = memo(function LoadCard({
-  load, myCarrierId, existingBid,
+  load, myCarrierId, existingBid, isSaved = false,
 }: {
   load: LoadDto;
   myCarrierId?: string;
   existingBid?: CarrierBidWithLoadDto;
+  isSaved?: boolean;
 }) {
   const navigate = useNavigate();
   const user = useAppSelector(s => s.auth.user);
   const isCarrier = user?.role === 'carrier';
   const [placeBid, { isLoading: isBidding }] = usePlaceBidMutation();
   const [updateBid, { isLoading: isUpdating }] = useUpdateBidMutation();
+  const [addSaved, { isLoading: isSaving }] = useAddSavedLoadMutation();
+  const [removeSaved, { isLoading: isRemoving }] = useRemoveSavedLoadMutation();
 
   const isAssigned = !!myCarrierId && load.assignedCarrierId === myCarrierId;
   const isBooked = !!load.status && load.status !== 'OPEN';
@@ -565,6 +662,7 @@ const LoadCard = memo(function LoadCard({
   const [requestedPickupTime, setRequestedPickupTime] = useState('');
   const [requestedDropDate, setRequestedDropDate] = useState('');
   const [requestedDropTime, setRequestedDropTime] = useState('');
+  const [bidNotes, setBidNotes] = useState('');
 
   const pickupDateStr = formatDate(load.pickupDate);
   const deliveryDateStr = formatDate(load.deliveryDate);
@@ -608,12 +706,14 @@ const LoadCard = memo(function LoadCard({
       setRequestedPickupTime(existingBid.requestedPickupTime ?? '');
       setRequestedDropDate(existingBid.requestedDropDate ?? '');
       setRequestedDropTime(existingBid.requestedDropTime ?? '');
+      setBidNotes(existingBid.notes ?? '');
     } else {
       setBidAmount('');
       setRequestedPickupDate(load.pickupDate ?? '');
       setRequestedPickupTime('');
       setRequestedDropDate(load.deliveryDate ?? '');
       setRequestedDropTime('');
+      setBidNotes('');
     }
     setShowBidForm(true);
   };
@@ -625,6 +725,7 @@ const LoadCard = memo(function LoadCard({
     setRequestedPickupTime('');
     setRequestedDropDate('');
     setRequestedDropTime('');
+    setBidNotes('');
   };
 
   const handleBidSubmit = async () => {
@@ -642,6 +743,7 @@ const LoadCard = memo(function LoadCard({
           requestedPickupTime: requestedPickupTime || undefined,
           requestedDropDate: requestedDropDate || undefined,
           requestedDropTime: requestedDropTime || undefined,
+          notes: bidNotes.trim() || undefined,
         }).unwrap();
         toast.success('Bid updated!');
       } else {
@@ -651,6 +753,7 @@ const LoadCard = memo(function LoadCard({
           requestedPickupTime: requestedPickupTime || undefined,
           requestedDropDate: requestedDropDate || undefined,
           requestedDropTime: requestedDropTime || undefined,
+          notes: bidNotes.trim() || undefined,
         }).unwrap();
         toast.success('Request submitted!');
       }
@@ -750,6 +853,16 @@ const LoadCard = memo(function LoadCard({
               </div>
             )}
           </div>
+          {isCarrier && (
+            <button
+              onClick={e => { e.stopPropagation(); isSaved ? removeSaved(load.id) : addSaved(load.id); }}
+              disabled={isSaving || isRemoving}
+              title={isSaved ? 'Remove from saved' : 'Save load'}
+              className="flex-shrink-0 p-1 self-start text-muted-foreground hover:text-amber-500 transition-colors disabled:opacity-50"
+            >
+              <Bookmark className={`size-4 transition-colors ${isSaved ? 'fill-amber-500 text-amber-500' : ''}`} />
+            </button>
+          )}
           <div className="flex-shrink-0 p-1 self-start">
             <ChevronDown className={`size-4 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
           </div>
@@ -796,6 +909,16 @@ const LoadCard = memo(function LoadCard({
                 </div>
               )}
             </div>
+            {isCarrier && (
+              <button
+                onClick={e => { e.stopPropagation(); isSaved ? removeSaved(load.id) : addSaved(load.id); }}
+                disabled={isSaving || isRemoving}
+                title={isSaved ? 'Remove from saved' : 'Save load'}
+                className="flex-shrink-0 p-1 self-start text-muted-foreground hover:text-amber-500 transition-colors disabled:opacity-50"
+              >
+                <Bookmark className={`size-4 transition-colors ${isSaved ? 'fill-amber-500 text-amber-500' : ''}`} />
+              </button>
+            )}
             <div className="flex-shrink-0 p-1 self-start">
               <ChevronDown className={`size-4 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
             </div>
@@ -980,6 +1103,17 @@ const LoadCard = memo(function LoadCard({
                         onChange={e => setRequestedDropTime(e.target.value)}
                         className="h-8 text-xs" />
                     </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground block mb-1">Notes (optional)</label>
+                    <textarea
+                      value={bidNotes}
+                      onChange={e => setBidNotes(e.target.value)}
+                      placeholder="Any questions, special requests, or details for the broker…"
+                      maxLength={500}
+                      rows={2}
+                      className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                    />
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleBidSubmit} disabled={isBidding || isUpdating}

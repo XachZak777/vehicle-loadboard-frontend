@@ -1,3 +1,4 @@
+import { MapBackground } from '../components/MapBackground';
 import { useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { Navbar } from '../components/Navbar';
@@ -313,7 +314,8 @@ export function CompanyProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto space-y-5">

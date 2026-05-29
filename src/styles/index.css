@@ -8,6 +8,11 @@ button {
   cursor: pointer;
 }
 
+.grecaptcha-badge {
+  visibility: hidden;
+}
+
+
 /* Prevent browser autofill from overriding dark-mode input backgrounds */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,

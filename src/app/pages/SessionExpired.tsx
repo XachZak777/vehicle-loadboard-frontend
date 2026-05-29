@@ -1,3 +1,4 @@
+import { MapBackground } from '../components/MapBackground';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { ShieldAlert, Mail, CheckCircle, Loader2 } from 'lucide-react';
@@ -62,7 +63,8 @@ export function SessionExpired() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <AuthNavbar showLogin={false} />
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">
         <div className="w-full max-w-md">

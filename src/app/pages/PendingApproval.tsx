@@ -1,3 +1,4 @@
+import { MapBackground } from '../components/MapBackground';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Clock, LogOut, Mail, RefreshCw, ShieldCheck } from 'lucide-react';
@@ -51,7 +52,8 @@ export function PendingApproval() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <AuthNavbar />
 
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">

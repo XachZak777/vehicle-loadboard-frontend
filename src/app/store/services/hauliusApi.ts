@@ -81,6 +81,7 @@ export type RegisterDealerPayload = {
   dealerLicenseNumber?: string;
   auctionAccessNumber?: string;
   howDidYouHear?: string;
+  captchaToken?: string;
 };
 
 export type AdditionalVehicle = {
@@ -122,6 +123,7 @@ export type CreateLoadPayload = {
   trailerType?: string;
   vehicleAdditionalInfo?: string;
   description?: string;
+  paymentNotes?: string;
   weight?: number;
   price?: number;
   pickupDate?: string;
@@ -166,6 +168,7 @@ export type LoadDto = {
   vin?: string;
   trailerType?: string;
   description?: string;
+  paymentNotes?: string;
   weight?: number;
   price?: number;
   distance?: number;
@@ -243,6 +246,7 @@ export type BidPayload = {
   requestedPickupTime?: string;
   requestedDropDate?: string;
   requestedDropTime?: string;
+  notes?: string;
 };
 
 export type UpdateBidPayload = {
@@ -252,6 +256,7 @@ export type UpdateBidPayload = {
   requestedPickupTime?: string;
   requestedDropDate?: string;
   requestedDropTime?: string;
+  notes?: string;
 };
 
 export type BidDto = {
@@ -267,10 +272,11 @@ export type BidDto = {
   requestedPickupTime?: string;
   requestedDropDate?: string;
   requestedDropTime?: string;
+  notes?: string;
 };
 
 export type CarrierBidWithLoadDto = {
-  bidId: string;
+  bidId: string | null;
   loadId: string;
   amount: number;
   bookNow: boolean;
@@ -297,6 +303,8 @@ export type CarrierBidWithLoadDto = {
   loadStatus?: string;
   brokerId?: string;
   orderId?: string;
+  notes?: string;
+  additionalVehicles?: AdditionalVehicle[];
 };
 
 export type BrokerProfile = {
@@ -381,8 +389,10 @@ export type CarrierPublicInfo = {
   companyName?: string;
   operatingStatus?: string;
   safetyRating?: string;
+  phyStreet?: string;
   phyCity?: string;
   phyState?: string;
+  phyZip?: string;
   totalPowerUnits?: number;
   phoneNumber?: string;
   ratingScore?: number | null;
@@ -395,11 +405,18 @@ export type BrokerPublicInfo = {
   legalName?: string;
   companyName?: string;
   operatingStatus?: string;
+  mailingAddress?: string;
   city?: string;
   state?: string;
+  zipCode?: string;
   phoneNumber?: string;
   email?: string;
   ratingScore?: number | null;
+  // Bond — company and agent contact only (policy/coverage/dates are private)
+  bondCompany?: string;
+  bondAgentFirstName?: string;
+  bondAgentLastName?: string;
+  bondAgentPhone?: string;
 };
 
 export type SubmitRatingPayload = {
@@ -556,12 +573,12 @@ const baseQueryWith401Intercept: BaseQueryFn<string | FetchArgs, unknown, FetchB
 export const hauliusApi = createApi({
   reducerPath: 'hauliusApi',
   baseQuery: baseQueryWith401Intercept,
-  tagTypes: ['Load', 'Bid', 'Profile', 'Rating', 'Document'],
+  tagTypes: ['Load', 'Bid', 'Profile', 'Rating', 'Document', 'NotificationCount'],
   endpoints: (builder) => ({
     // ── Auth ──────────────────────────────────────────────────────────────
     register: builder.mutation<
       AuthResponse,
-      { email: string; password: string; role: AuthRole }
+      { email: string; password: string; role: AuthRole; captchaToken?: string }
     >({
       query: (body) => ({ url: '/api/auth/register', method: 'POST', body }),
     }),
@@ -577,7 +594,7 @@ export const hauliusApi = createApi({
       }),
       invalidatesTags: ['Profile'],
     }),
-    loginUser: builder.mutation<LoginPendingResponse, { email: string; password: string }>({
+    loginUser: builder.mutation<LoginPendingResponse, { email: string; password: string; captchaToken?: string }>({
       query: (body) => ({ url: '/api/auth/login', method: 'POST', body }),
     }),
     logoutUser: builder.mutation<void, void>({
@@ -594,7 +611,7 @@ export const hauliusApi = createApi({
         body,
       }),
     }),
-    forgotPassword: builder.mutation<void, { email: string }>({
+    forgotPassword: builder.mutation<void, { email: string; captchaToken?: string }>({
       query: (body) => ({
         url: '/api/auth/forgot-password',
         method: 'POST',
@@ -669,6 +686,22 @@ export const hauliusApi = createApi({
       query: () => '/api/loads/carrier/preferred-loads',
       providesTags: ['Load'],
     }),
+    getSavedLoads: builder.query<LoadDto[], void>({
+      query: () => '/api/carriers/preferred-loads',
+      providesTags: ['Load', { type: 'Load', id: 'SAVED' }],
+    }),
+    getSavedLoadIds: builder.query<string[], void>({
+      query: () => '/api/carriers/preferred-loads/ids',
+      providesTags: [{ type: 'Load', id: 'SAVED_IDS' }],
+    }),
+    addSavedLoad: builder.mutation<void, string>({
+      query: (loadId) => ({ url: `/api/carriers/preferred-loads/${loadId}`, method: 'POST' }),
+      invalidatesTags: [{ type: 'Load', id: 'SAVED' }, { type: 'Load', id: 'SAVED_IDS' }],
+    }),
+    removeSavedLoad: builder.mutation<void, string>({
+      query: (loadId) => ({ url: `/api/carriers/preferred-loads/${loadId}`, method: 'DELETE' }),
+      invalidatesTags: [{ type: 'Load', id: 'SAVED' }, { type: 'Load', id: 'SAVED_IDS' }],
+    }),
     placeBid: builder.mutation<BidDto, BidPayload>({
       query: (body) => ({ url: '/api/loads/bid', method: 'POST', body }),
       invalidatesTags: (_result, _error, { loadId }) => [
@@ -683,6 +716,16 @@ export const hauliusApi = createApi({
     approveBid: builder.mutation<void, { loadId: string; bidId: string }>({
       query: ({ loadId, bidId }) => ({
         url: `/api/loads/${loadId}/approve/${bidId}`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_result, _error, { loadId }) => [
+        { type: 'Bid', id: loadId },
+        'Load',
+      ],
+    }),
+    rejectBid: builder.mutation<void, { loadId: string; bidId: string }>({
+      query: ({ loadId, bidId }) => ({
+        url: `/api/loads/${loadId}/reject/${bidId}`,
         method: 'POST',
       }),
       invalidatesTags: (_result, _error, { loadId }) => [
@@ -716,7 +759,7 @@ export const hauliusApi = createApi({
         url: `/api/loads/${loadId}/status`,
         method: 'PATCH',
       }),
-      invalidatesTags: ['Load', 'Bid'],
+      invalidatesTags: ['Load', 'Bid', 'NotificationCount'],
     }),
     // ── Admin — user management ───────────────────────────────────────────
     getAdminUsers: builder.query<AdminUserDto[], void>({
@@ -787,6 +830,18 @@ export const hauliusApi = createApi({
         url: `/api/admin/brokers/${id}/revoke`,
         method: 'POST',
       }),
+      invalidatesTags: ['Profile'],
+    }),
+    approveDealer: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/admin/dealers/${id}/approve`, method: 'POST' }),
+      invalidatesTags: ['Profile'],
+    }),
+    declineDealer: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/admin/dealers/${id}/decline`, method: 'POST' }),
+      invalidatesTags: ['Profile'],
+    }),
+    revokeDealer: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/admin/dealers/${id}/revoke`, method: 'POST' }),
       invalidatesTags: ['Profile'],
     }),
     deleteAdminBroker: builder.mutation<void, string>({
@@ -994,8 +1049,78 @@ export const hauliusApi = createApi({
       query: () => '/api/ratings/my-submitted-load-ids',
       providesTags: ['Rating'],
     }),
+
+    getAiUsage: builder.query<AiUsageResponse, void>({
+      query: () => '/api/ai/usage',
+    }),
+
+    aiChat: builder.mutation<AiChatResponse, AiChatRequest>({
+      query: (body) => ({ url: '/api/ai/chat', method: 'POST', body }),
+    }),
+
+    getNotificationCount: builder.query<NotificationCountResponse, void>({
+      query: () => '/api/notifications/count',
+      providesTags: ['NotificationCount'],
+    }),
+
+    rejectAssignedLoad: builder.mutation<void, string>({
+      query: (loadId) => ({ url: `/api/loads/${loadId}/carrier/reject`, method: 'POST' }),
+      invalidatesTags: ['Bid', 'Load', 'NotificationCount'],
+    }),
   }),
 });
+
+export type AiChatRequest = {
+  message: string;
+  conversationId?: string;
+  metadata?: {
+    timestamp?: string;
+    userRole?: string;
+    equipmentType?: string;
+  };
+};
+
+export type AiUsageResponse = {
+  messagesUsed: number;
+  messagesLimit: number;
+  limitReached: boolean;
+  resetAt: string;
+};
+
+export type NotificationCountResponse = {
+  pendingBids: number;
+  loadsNeedingAction: number;
+  newAssignments: number;
+  total: number;
+};
+
+export type AiChatResponse = {
+  success: boolean;
+  conversationId?: string;
+  response?: {
+    messageId: string;
+    content: string;
+    timestamp: string;
+    relatedLoadIds: string[];
+    confidence: number;
+  };
+  metadata?: {
+    processingTimeMs: number;
+    loadsQueried: number;
+    loadsMatched: number;
+    aiModel: string;
+    messagesUsed: number;
+    messagesLimit: number;
+    resetAt: string;
+  };
+  error?: {
+    code: string;
+    message: string;
+    details?: string;
+    timestamp?: string;
+    resetAt?: string;
+  };
+};
 
 export const {
   useRegisterMutation,
@@ -1021,9 +1146,14 @@ export const {
   useGetBidsForLoadQuery,
   useGetMyCarrierBidsQuery,
   useGetPreferredLineLoadsQuery,
+  useGetSavedLoadsQuery,
+  useGetSavedLoadIdsQuery,
+  useAddSavedLoadMutation,
+  useRemoveSavedLoadMutation,
   usePlaceBidMutation,
   useUpdateBidMutation,
   useApproveBidMutation,
+  useRejectBidMutation,
   useCancelBookingMutation,
   useAutoAssignCarrierMutation,
   useGetLoadQuery,
@@ -1062,6 +1192,9 @@ export const {
   useDeclineBrokerMutation,
   useRevokeBrokerMutation,
   useDeleteAdminBrokerMutation,
+  useApproveDealerMutation,
+  useDeclineDealerMutation,
+  useRevokeDealerMutation,
   useAdminUpdateCarrierProfileMutation,
   useAdminUpdateBrokerProfileMutation,
   useAdminUploadCarrierDocumentMutation,
@@ -1075,4 +1208,8 @@ export const {
   useGetMyCarrierDocumentsQuery,
   useDeleteBrokerDocumentMutation,
   useDeleteCarrierDocumentMutation,
+  useAiChatMutation,
+  useGetAiUsageQuery,
+  useGetNotificationCountQuery,
+  useRejectAssignedLoadMutation,
 } = hauliusApi;

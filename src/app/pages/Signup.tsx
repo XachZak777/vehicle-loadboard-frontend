@@ -1,3 +1,4 @@
+import { MapBackground } from '../components/MapBackground';
 import { Link } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -7,7 +8,8 @@ import { APP_NAME } from '../constants';
 
 export function Signup() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <AuthNavbar subtitle="Choose Your Account Type" showLogin={true} />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex items-center justify-center min-h-[calc(100vh-64px)]">

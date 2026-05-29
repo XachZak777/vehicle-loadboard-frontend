@@ -120,9 +120,19 @@ export function RequestedLoads() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                          {load.year} {load.make} {load.model}
-                        </CardTitle>
+                        {load.vehicles && load.vehicles.length > 1 ? (
+                          <div>
+                            {load.vehicles.map((v, i) => (
+                              <p key={i} className={i === 0 ? 'text-xl font-bold text-gray-900 dark:text-gray-100' : 'text-sm text-muted-foreground'}>
+                                {v.year} {v.make} {v.model}
+                              </p>
+                            ))}
+                          </div>
+                        ) : (
+                          <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                            {load.year} {load.make} {load.model}
+                          </CardTitle>
+                        )}
                         {load.orderId && (
                           <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             Order ID: <span className="font-mono font-semibold">{load.orderId}</span>

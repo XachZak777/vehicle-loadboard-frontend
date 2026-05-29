@@ -1,3 +1,4 @@
+import { MapBackground } from '../components/MapBackground';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { ArrowLeft, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
@@ -25,7 +26,8 @@ export function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background map-background-detailed flex items-center justify-center p-4">
+      <MapBackground />
         <div className="w-full max-w-md text-center space-y-4">
           <AlertCircle className="size-12 text-red-500 mx-auto" />
           <p className="text-lg font-semibold">Invalid reset link</p>
@@ -69,7 +71,8 @@ export function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <AuthNavbar showLogin={true} />
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">
       <div className="w-full max-w-md">

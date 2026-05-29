@@ -1,3 +1,4 @@
+import { MapBackground } from '../components/MapBackground';
 import { Link, useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -40,7 +41,8 @@ export function Welcome() {
   const postTo    = user ? '/post-load' : '/login';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       {/* Navigation Bar */}
       <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -66,6 +68,9 @@ export function Welcome() {
               >
                 How It Works
               </a>
+              <Link to="/faq" className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors">FAQ</Link>
+              <Link to="/resources" className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors">Resources</Link>
+              <Link to="/contact" className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors">Help Center</Link>
               <ThemeToggle />
               {user ? (
                 <Button
@@ -120,6 +125,27 @@ export function Welcome() {
               >
                 How It Works
               </a>
+              <Link
+                to="/faq"
+                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                FAQ
+              </Link>
+              <Link
+                to="/resources"
+                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Resources
+              </Link>
+              <Link
+                to="/contact"
+                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Help Center
+              </Link>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm text-muted-foreground">Theme</span>
                 <ThemeToggle />
@@ -180,7 +206,7 @@ export function Welcome() {
                 Professional Vehicle<br />Transport Network
               </h2>
               <p className="text-lg text-foreground/90 mb-8 leading-relaxed max-w-lg">
-                Connect with verified carriers and brokers nationwide. Streamline your vehicle transport operations with real-time load tracking and secure transactions.
+                Connect with verified carriers and brokers nationwide. Streamline your vehicle transport operations with direct communication and nationwide load coverage.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Link to={browseTo} className="w-full sm:w-auto">
@@ -206,14 +232,12 @@ export function Welcome() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { icon: MapPin,      title: 'Nationwide Coverage',    desc: 'Access loads from coast to coast with real-time availability updates' },
               { icon: Shield,      title: 'FMCSA Verified',         desc: 'All carriers verified through FMCSA database for compliance' },
               { icon: DollarSign,  title: 'Transparent Pricing',    desc: 'Clear pricing with no hidden fees or surprise charges' },
-              { icon: Clock,       title: 'Real-Time Tracking',     desc: 'Track every load from pickup to delivery with status updates' },
               { icon: Users,       title: 'Direct Communication',   desc: 'Connect directly with carriers and brokers through the platform' },
-              { icon: CheckCircle, title: 'Secure Payments',        desc: 'Protected transactions with automated payment processing' },
             ].map(({ icon: Icon, title, desc }) => (
               <Card key={title} className="border border-border hover:border-amber-500 transition-all hover:shadow-md">
                 <CardHeader className="px-5 pt-5 pb-5 gap-3">
@@ -244,7 +268,7 @@ export function Welcome() {
             {[
               { n: '1', title: 'Create Account',      desc: 'Complete carrier verification and email confirmation' },
               { n: '2', title: 'Find or Post Loads',  desc: 'Browse available loads or post vehicle transport requests' },
-              { n: '3', title: 'Connect & Ship',      desc: 'Coordinate pickup, track delivery, and process payment' },
+              { n: '3', title: 'Connect & Ship',      desc: 'Coordinate directly with your carrier and manage pickup and delivery' },
             ].map(({ n, title, desc }) => (
               <div key={n} className="text-center">
                 <div className="bg-amber-500 text-white rounded-full size-14 flex items-center justify-center text-xl font-bold mx-auto mb-5 shadow-lg">
@@ -304,6 +328,22 @@ export function Welcome() {
               <p className="text-sm text-muted-foreground">
                 Professional vehicle transport marketplace connecting carriers and brokers nationwide.
               </p>
+              <div className="flex items-center gap-2 mt-4">
+                <span className="text-xs text-muted-foreground">Follow us:</span>
+                <a
+                  href="https://www.instagram.com/haul1us"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Haulius on Instagram"
+                  className="text-muted-foreground hover:text-pink-500 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="size-4">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <circle cx="12" cy="12" r="4" />
+                    <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+                  </svg>
+                </a>
+              </div>
             </div>
             <div>
               <h4 className="font-semibold mb-3 text-sm">Company</h4>
