@@ -1,6 +1,6 @@
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { Eye, FileText, Truck, Building2 } from 'lucide-react';
+import { Eye, FileText, Truck, Building2, Store } from 'lucide-react';
 import type { AdminUserDto } from '../../store/services/hauliusApi';
 import { colors } from '../../styles/colors';
 
@@ -13,9 +13,11 @@ function ApprovalBadge({ approved, declined }: { approved: boolean; declined: bo
 }
 
 function RoleBadge({ role }: { role: string }) {
-  return role === 'CARRIER'
-    ? <Badge variant="outline" className="text-muted-foreground border-border"><Truck className="size-3 mr-1" />Carrier</Badge>
-    : <Badge variant="outline" className="text-muted-foreground border-border"><Building2 className="size-3 mr-1" />Broker</Badge>;
+  if (role === 'CARRIER')
+    return <Badge variant="outline" className="text-muted-foreground border-border"><Truck className="size-3 mr-1" />Carrier</Badge>;
+  if (role === 'DEALER')
+    return <Badge variant="outline" className="text-muted-foreground border-border"><Store className="size-3 mr-1" />Dealer</Badge>;
+  return <Badge variant="outline" className="text-muted-foreground border-border"><Building2 className="size-3 mr-1" />Broker</Badge>;
 }
 
 interface Props {
