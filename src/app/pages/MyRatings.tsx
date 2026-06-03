@@ -54,7 +54,7 @@ export function MyRatings() {
 
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold">My Ratings</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold">My Ratings</h1>
           <p className="text-muted-foreground mt-1">Your performance and reputation overview</p>
         </div>
 

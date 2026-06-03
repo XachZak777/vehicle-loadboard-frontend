@@ -202,7 +202,7 @@ export function Welcome() {
           <div className="grid lg:grid-cols-2 gap-10 xl:gap-16 items-center">
             {/* Left: copy + CTAs */}
             <div className="flex flex-col items-start">
-              <h2 className="text-4xl lg:text-5xl font-bold text-foreground mb-5 leading-tight">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-5 leading-tight">
                 Professional Vehicle<br />Transport Network
               </h2>
               <p className="text-lg text-foreground/90 mb-8 leading-relaxed max-w-lg">
@@ -226,7 +226,7 @@ export function Welcome() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <Badge className="mb-3 bg-amber-500 text-white border-0">Features</Badge>
-            <h3 className="text-3xl font-bold mb-3">Industry-Leading Platform</h3>
+            <h3 className="text-xl sm:text-3xl font-bold mb-3">Industry-Leading Platform</h3>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Everything you need to manage vehicle transportation efficiently
             </p>
@@ -258,7 +258,7 @@ export function Welcome() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <Badge className="mb-3 bg-amber-500 text-white border-0">Process</Badge>
-            <h3 className="text-3xl font-bold mb-3">How It Works</h3>
+            <h3 className="text-xl sm:text-3xl font-bold mb-3">How It Works</h3>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Get started in three simple steps
             </p>
@@ -285,7 +285,7 @@ export function Welcome() {
       {/* CTA Section */}
       <section className="py-16 bg-background border-y border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h3 className="text-3xl lg:text-4xl font-bold mb-4">
+          <h3 className="text-xl sm:text-3xl lg:text-4xl font-bold mb-4">
             Ready to Get Started?
           </h3>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">

@@ -156,10 +156,10 @@ export function AdminDashboard() {
             <tr className="bg-muted/50 text-muted-foreground text-left">
               <th className="py-3 px-4 font-medium">Email</th>
               <th className="py-3 px-4 font-medium">Role</th>
-              <th className="py-3 px-4 font-medium">Company</th>
+              <th className="py-3 px-4 font-medium hidden sm:table-cell">Company</th>
               <th className="py-3 px-4 font-medium">Status</th>
-              <th className="py-3 px-4 font-medium">Docs</th>
-              <th className="py-3 px-4 font-medium">Registered</th>
+              <th className="py-3 px-4 font-medium hidden md:table-cell">Docs</th>
+              <th className="py-3 px-4 font-medium hidden md:table-cell">Registered</th>
               <th className="py-3 px-4 font-medium"></th>
             </tr>
           </thead>
@@ -180,7 +180,7 @@ export function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+            <h1 className="text-2xl sm:text-4xl font-bold">Admin Dashboard</h1>
             <p className="text-muted-foreground mt-1">Review registrations, approve or decline users</p>
           </div>
           <Button variant="outline" size="sm" onClick={refetchAll_}>
@@ -216,7 +216,7 @@ export function AdminDashboard() {
           </div>
         ) : (
           <Tabs defaultValue="pending">
-            <TabsList className="mb-4">
+            <TabsList className="mb-4 flex-wrap h-auto gap-1">
               <TabsTrigger value="pending">
                 Pending
                 <Badge className="ml-2 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">

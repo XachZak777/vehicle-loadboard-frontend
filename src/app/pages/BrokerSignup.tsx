@@ -146,17 +146,15 @@ export function BrokerSignup() {
         token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved,
       }));
 
-      try {
-        await updateProfile({
-          companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
-          phoneNumber: formData.phoneNumber, taxIdType: formData.taxIdType, taxId: formData.taxId,
-          mailingAddress: formData.mailingAddress, city: formData.city, state: formData.state, zipCode: formData.zipCode,
-          bondCompany: formData.bondCompany || undefined, bondPolicyNumber: formData.bondPolicyNumber || undefined,
-          bondCoverage: formData.bondCoverage || undefined, bondEffectiveDate: formData.bondEffectiveDate || undefined,
-          bondAgentFirstName: formData.bondAgentFirstName || undefined, bondAgentLastName: formData.bondAgentLastName || undefined,
-          bondAgentEmail: formData.bondAgentEmail || undefined, bondAgentPhone: formData.bondAgentPhone || undefined,
-        }).unwrap();
-      } catch { toast.warning('Profile data will be saved once your email is verified.'); }
+      await updateProfile({
+        companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
+        phoneNumber: formData.phoneNumber, taxIdType: formData.taxIdType, taxId: formData.taxId,
+        mailingAddress: formData.mailingAddress, city: formData.city, state: formData.state, zipCode: formData.zipCode,
+        bondCompany: formData.bondCompany || undefined, bondPolicyNumber: formData.bondPolicyNumber || undefined,
+        bondCoverage: formData.bondCoverage || undefined, bondEffectiveDate: formData.bondEffectiveDate || undefined,
+        bondAgentFirstName: formData.bondAgentFirstName || undefined, bondAgentLastName: formData.bondAgentLastName || undefined,
+        bondAgentEmail: formData.bondAgentEmail || undefined, bondAgentPhone: formData.bondAgentPhone || undefined,
+      }).unwrap();
 
       for (const [file, upload, msg] of [
         [w9File, uploadW9, 'W9 upload will be available once your email is verified.'],

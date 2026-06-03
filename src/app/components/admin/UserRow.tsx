@@ -26,17 +26,17 @@ interface Props {
 export function UserRow({ user, onView }: Props) {
   return (
     <tr className="border-b border-border hover:bg-muted/40 transition-colors">
-      <td className="py-3 px-4 text-sm font-medium">{user.email}</td>
+      <td className="py-3 px-4 text-sm font-medium max-w-[160px] truncate">{user.email}</td>
       <td className="py-3 px-4"><RoleBadge role={user.role} /></td>
-      <td className="py-3 px-4 text-sm text-muted-foreground">{user.companyName || '—'}</td>
+      <td className="py-3 px-4 text-sm text-muted-foreground hidden sm:table-cell">{user.companyName || '—'}</td>
       <td className="py-3 px-4"><ApprovalBadge approved={user.adminApproved} declined={user.declined} /></td>
-      <td className="py-3 px-4 text-sm text-muted-foreground">
+      <td className="py-3 px-4 text-sm text-muted-foreground hidden md:table-cell">
         {user.documents.length > 0
           ? <span className="flex items-center gap-1"><FileText className="size-3" />{user.documents.length}</span>
           : <span className="text-xs">none</span>
         }
       </td>
-      <td className="py-3 px-4 text-sm text-muted-foreground">
+      <td className="py-3 px-4 text-sm text-muted-foreground hidden md:table-cell">
         {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}
       </td>
       <td className="py-3 px-4">

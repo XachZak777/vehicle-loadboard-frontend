@@ -31,7 +31,7 @@ export function PrivacyPolicy() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-card border border-border rounded-lg p-8 md:p-12">
-          <h1 className="text-4xl font-bold mb-4">Privacy Policy</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-4">Privacy Policy</h1>
           <p className="text-muted-foreground mb-8">Last Updated: April 13, 2026</p>
 
           <div className="space-y-8 text-foreground">

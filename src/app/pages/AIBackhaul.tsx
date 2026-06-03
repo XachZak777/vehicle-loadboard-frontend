@@ -82,7 +82,7 @@ export function AIBackhaul() {
               <MapPin className="size-8 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold">Backhaul Recommendations</h1>
+              <h1 className="text-2xl sm:text-4xl font-bold">Backhaul Recommendations</h1>
               <p className="text-muted-foreground">Eliminate empty miles with smart return load suggestions</p>
             </div>
           </div>

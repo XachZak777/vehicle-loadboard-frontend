@@ -419,7 +419,7 @@ export function CompanyProfile() {
                     <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Insurance Company</Label>
                     <Input value={insCoInput} onChange={e => setInsCoInput(e.target.value)} placeholder="e.g. Progressive Commercial" className="h-8 text-sm mt-1" />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Cargo Coverage ($)</Label>
                       <Input type="number" value={cargoInput} onChange={e => setCargoInput(e.target.value)} placeholder="100000" className="h-8 text-sm mt-1" />

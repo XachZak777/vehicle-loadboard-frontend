@@ -20,7 +20,7 @@ import { CityMapModal } from '../components/CityMapModal';
 import { MapBackground } from '../components/MapBackground';
 import {
   MapPin, DollarSign, Clock, CheckCircle, Loader2, Package,
-  ArrowRight, Calendar, Building2, TrendingUp, Truck, FileText, Pencil,
+  Calendar, Building2, TrendingUp, Truck, FileText, Pencil,
   PackageCheck, PackageOpen, BadgeCheck, Star, Hash, XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -209,52 +209,45 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
               const pickupUrl = pickupQ ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pickupQ + ', USA')}` : null;
               const dropUrl = dropQ ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dropQ + ', USA')}` : null;
               return (
-                <div className="p-4 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border-2 border-amber-200/50 dark:border-amber-800/50">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="size-5 text-amber-600 dark:text-amber-500 mt-1 flex-shrink-0" />
-                        <div>
-                          <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Pickup</div>
-                          {pickupUrl ? (
-                            <a href={pickupUrl} target="_blank" rel="noopener noreferrer"
-                              className="font-semibold text-gray-900 dark:text-gray-100 hover:underline hover:text-amber-600 transition-colors">
-                              {pickupQ}
-                            </a>
-                          ) : (
-                            <div className="font-semibold text-gray-900 dark:text-gray-100">{pickupQ}</div>
-                          )}
-                          {bid.pickupDate && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                              <Calendar className="size-3 text-amber-600" />
-                              {fmtDate(bid.pickupDate)}
-                            </div>
-                          )}
+                <div className="p-4 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border-2 border-amber-200/50 dark:border-amber-800/50 space-y-2">
+                  <div className="flex items-start gap-2 min-w-0">
+                    <MapPin className="size-4 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Pickup</div>
+                      {pickupUrl ? (
+                        <a href={pickupUrl} target="_blank" rel="noopener noreferrer"
+                          className="font-semibold text-gray-900 dark:text-gray-100 hover:underline hover:text-amber-600 transition-colors break-words">
+                          {pickupQ}
+                        </a>
+                      ) : (
+                        <div className="font-semibold text-gray-900 dark:text-gray-100 break-words">{pickupQ}</div>
+                      )}
+                      {bid.pickupDate && (
+                        <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                          <Calendar className="size-3 text-amber-600" />
+                          {fmtDate(bid.pickupDate)}
                         </div>
-                      </div>
+                      )}
                     </div>
-                    <ArrowRight className="size-6 text-amber-600 dark:text-amber-500 flex-shrink-0" />
-                    <div className="flex-1">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="size-5 text-amber-600 dark:text-amber-500 mt-1 flex-shrink-0" />
-                        <div>
-                          <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Delivery</div>
-                          {dropUrl ? (
-                            <a href={dropUrl} target="_blank" rel="noopener noreferrer"
-                              className="font-semibold text-gray-900 dark:text-gray-100 hover:underline hover:text-amber-600 transition-colors">
-                              {dropQ}
-                            </a>
-                          ) : (
-                            <div className="font-semibold text-gray-900 dark:text-gray-100">{dropQ}</div>
-                          )}
-                          {bid.deliveryDate && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                              <Calendar className="size-3 text-amber-600" />
-                              {fmtDate(bid.deliveryDate)}
-                            </div>
-                          )}
+                  </div>
+                  <div className="flex items-start gap-2 min-w-0">
+                    <MapPin className="size-4 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Delivery</div>
+                      {dropUrl ? (
+                        <a href={dropUrl} target="_blank" rel="noopener noreferrer"
+                          className="font-semibold text-gray-900 dark:text-gray-100 hover:underline hover:text-amber-600 transition-colors break-words">
+                          {dropQ}
+                        </a>
+                      ) : (
+                        <div className="font-semibold text-gray-900 dark:text-gray-100 break-words">{dropQ}</div>
+                      )}
+                      {bid.deliveryDate && (
+                        <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                          <Calendar className="size-3 text-amber-600" />
+                          {fmtDate(bid.deliveryDate)}
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -262,47 +255,44 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
             })()
           ) : (
             /* Gray route for pending/rejected — clickable city map */
-            <div className="p-3 bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600">
-              <div className="flex items-center gap-2">
+            <div className="p-3 bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 space-y-1.5">
+              <div className="flex items-center gap-2 min-w-0">
                 <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  {bid.pickupCity ? (
-                    <button
-                      onClick={() => setCityMap({ city: bid.pickupCity!, state: bid.pickupState ?? '', label: `Pickup — ${[bid.pickupCity, bid.pickupState].filter(Boolean).join(', ')}` })}
-                      className="font-semibold text-gray-900 dark:text-gray-100 truncate hover:underline decoration-gray-400 underline-offset-2 text-left"
-                    >
-                      {[bid.pickupCity, bid.pickupState, bid.pickupZip].filter(Boolean).join(', ')}
-                    </button>
-                  ) : (
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 truncate">—</span>
-                  )}
-                  {bid.pickupDate && (
-                    <span className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
-                      <Calendar className="size-3 text-amber-600" />
-                      {fmtDate(bid.pickupDate)}
-                    </span>
-                  )}
-                </div>
-                <ArrowRight className="size-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mx-1" />
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  {bid.dropCity ? (
-                    <button
-                      onClick={() => setCityMap({ city: bid.dropCity!, state: bid.dropState ?? '', label: `Delivery — ${[bid.dropCity, bid.dropState].filter(Boolean).join(', ')}` })}
-                      className="font-semibold text-gray-900 dark:text-gray-100 truncate hover:underline decoration-gray-400 underline-offset-2 text-left"
-                    >
-                      {[bid.dropCity, bid.dropState, bid.dropZip].filter(Boolean).join(', ')}
-                    </button>
-                  ) : (
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 truncate">—</span>
-                  )}
-                  {bid.deliveryDate && (
-                    <span className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
-                      <Calendar className="size-3 text-amber-600" />
-                      {fmtDate(bid.deliveryDate)}
-                    </span>
-                  )}
-                </div>
+                {bid.pickupCity ? (
+                  <button
+                    onClick={() => setCityMap({ city: bid.pickupCity!, state: bid.pickupState ?? '', label: `Pickup — ${[bid.pickupCity, bid.pickupState].filter(Boolean).join(', ')}` })}
+                    className="font-semibold text-gray-900 dark:text-gray-100 truncate hover:underline decoration-gray-400 underline-offset-2 text-left flex-1"
+                  >
+                    {[bid.pickupCity, bid.pickupState, bid.pickupZip].filter(Boolean).join(', ')}
+                  </button>
+                ) : (
+                  <span className="font-semibold text-gray-900 dark:text-gray-100 flex-1">—</span>
+                )}
+                {bid.pickupDate && (
+                  <span className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
+                    <Calendar className="size-3 text-amber-600" />
+                    {fmtDate(bid.pickupDate)}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 min-w-0">
                 <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+                {bid.dropCity ? (
+                  <button
+                    onClick={() => setCityMap({ city: bid.dropCity!, state: bid.dropState ?? '', label: `Delivery — ${[bid.dropCity, bid.dropState].filter(Boolean).join(', ')}` })}
+                    className="font-semibold text-gray-900 dark:text-gray-100 truncate hover:underline decoration-gray-400 underline-offset-2 text-left flex-1"
+                  >
+                    {[bid.dropCity, bid.dropState, bid.dropZip].filter(Boolean).join(', ')}
+                  </button>
+                ) : (
+                  <span className="font-semibold text-gray-900 dark:text-gray-100 flex-1">—</span>
+                )}
+                {bid.deliveryDate && (
+                  <span className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
+                    <Calendar className="size-3 text-amber-600" />
+                    {fmtDate(bid.deliveryDate)}
+                  </span>
+                )}
               </div>
             </div>
           )
@@ -554,17 +544,21 @@ function PreferredLoadCard({ load }: { load: LoadDto }) {
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-sm">
-          <MapPin className="size-4 text-muted-foreground shrink-0" />
-          <span className="font-medium text-foreground">
-            {[load.pickupCity, load.pickupState, load.pickupZip].filter(Boolean).join(', ')}
-          </span>
-          {pickupDateStr && <span className="text-muted-foreground text-xs">· {pickupDateStr}</span>}
-          <ArrowRight className="size-4 text-muted-foreground shrink-0 mx-0.5" />
-          <span className="font-medium text-foreground">
-            {[load.dropCity, load.dropState, load.dropZip].filter(Boolean).join(', ')}
-          </span>
-          {deliveryDateStr && <span className="text-muted-foreground text-xs">· {deliveryDateStr}</span>}
+        <div className="space-y-1 text-sm">
+          <div className="flex items-center gap-2 min-w-0">
+            <MapPin className="size-4 text-muted-foreground shrink-0" />
+            <span className="font-medium text-foreground truncate flex-1">
+              {[load.pickupCity, load.pickupState, load.pickupZip].filter(Boolean).join(', ')}
+            </span>
+            {pickupDateStr && <span className="text-muted-foreground text-xs shrink-0">· {pickupDateStr}</span>}
+          </div>
+          <div className="flex items-center gap-2 min-w-0">
+            <MapPin className="size-4 text-muted-foreground shrink-0" />
+            <span className="font-medium text-foreground truncate flex-1">
+              {[load.dropCity, load.dropState, load.dropZip].filter(Boolean).join(', ')}
+            </span>
+            {deliveryDateStr && <span className="text-muted-foreground text-xs shrink-0">· {deliveryDateStr}</span>}
+          </div>
         </div>
 
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -616,7 +610,7 @@ export function CarrierLoadsPage() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">{config.title}</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100">{config.title}</h1>
           <p className="text-muted-foreground mt-1">{config.description}</p>
         </div>
 

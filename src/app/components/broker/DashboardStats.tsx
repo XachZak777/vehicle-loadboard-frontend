@@ -25,7 +25,7 @@ export function DashboardStats({ loads, openLoads, assignedLoads }: Props) {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
       {stats.map(({ label, value, icon: Icon }) => (
         <Card key={label} className="border border-border">
           <CardContent className="pt-5 pb-5">

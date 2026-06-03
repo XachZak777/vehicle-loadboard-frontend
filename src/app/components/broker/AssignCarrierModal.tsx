@@ -4,7 +4,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Separator } from '../ui/separator';
 import {
-  Search, MapPin, ArrowRight, Loader2, Truck, ShieldCheck,
+  Search, MapPin, Loader2, Truck, ShieldCheck,
   Star, CheckCircle, AlertCircle, Users, Pencil, RotateCcw,
 } from 'lucide-react';
 import { Checkbox } from '../ui/checkbox';
@@ -254,11 +254,15 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
             <div className="p-3 bg-muted/40 rounded-lg">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Load</p>
               <p className="font-semibold text-sm">{vehicleTitle}</p>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
-                <MapPin className="size-3.5 flex-shrink-0" />
-                <span>{load.pickupCity}, {load.pickupState}</span>
-                <ArrowRight className="size-3.5" />
-                <span>{load.dropCity}, {load.dropState}</span>
+              <div className="flex flex-col gap-0.5 text-sm text-muted-foreground mt-1">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <MapPin className="size-3.5 flex-shrink-0" />
+                  <span className="truncate">{load.pickupCity}, {load.pickupState}</span>
+                </div>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <MapPin className="size-3.5 flex-shrink-0" />
+                  <span className="truncate">{load.dropCity}, {load.dropState}</span>
+                </div>
               </div>
               {load.price != null && (
                 <p className="text-xs text-muted-foreground mt-1">

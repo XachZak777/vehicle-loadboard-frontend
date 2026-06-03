@@ -150,18 +150,17 @@ export function CarrierSignup() {
         token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved,
       }));
 
-      try {
-        await updateProfile({
-          companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
-          phoneNumber: formData.phoneNumber, insuranceCompany: formData.insuranceCompany,
-          cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : undefined,
-          liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : undefined,
-          taxIdType: formData.taxIdType, taxId: formData.taxId,
-          mailingAddress: formData.mailingAddress, city: formData.city,
-          state: formData.state, zipCode: formData.zipCode,
-          preferredLines: preferredLines.length > 0 ? JSON.stringify(preferredLines) : undefined,
-        }).unwrap();
-      } catch { toast.warning('Profile data will be saved once your email is verified.'); }
+      await updateProfile({
+        companyName: formData.companyName, dbaName: formData.dbaName || undefined,
+        dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
+        phoneNumber: formData.phoneNumber, insuranceCompany: formData.insuranceCompany,
+        cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : undefined,
+        liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : undefined,
+        taxIdType: formData.taxIdType, taxId: formData.taxId,
+        mailingAddress: formData.mailingAddress, city: formData.city,
+        state: formData.state, zipCode: formData.zipCode,
+        preferredLines: preferredLines.length > 0 ? JSON.stringify(preferredLines) : undefined,
+      }).unwrap();
 
       for (const [file, upload, msg] of [
         [w9File, uploadW9, 'W9 upload will be available once your email is verified.'],

@@ -103,7 +103,7 @@ export function FAQ() {
         {/* Header */}
         <div className="mb-10 text-center">
           <Badge className="mb-3 bg-amber-500 text-white border-0">FAQ</Badge>
-          <h1 className="text-3xl font-bold mb-3">Frequently Asked Questions</h1>
+          <h1 className="text-xl sm:text-3xl font-bold mb-3">Frequently Asked Questions</h1>
           <p className="text-muted-foreground text-base max-w-xl mx-auto">
             Find answers to the most common questions about using Haulius as a carrier, broker, or dealer.
           </p>

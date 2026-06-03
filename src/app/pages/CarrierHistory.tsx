@@ -120,13 +120,12 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
           {getStatusBadge(bid.bidStatus)}
         </div>
         {(bid.pickupCity || bid.dropCity) && (
-          <div className="flex items-center gap-2 mt-2 p-2.5 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200/50 dark:border-amber-800/50">
-            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <div className="mt-2 p-2.5 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200/50 dark:border-amber-800/50 space-y-1">
+            <div className="flex items-center gap-1.5 min-w-0">
               <MapPin className="size-3.5 text-amber-600 dark:text-amber-500 flex-shrink-0" />
               <span className="text-xs font-medium truncate">{bid.pickupCity}, {bid.pickupState}</span>
             </div>
-            <span className="text-amber-500 font-bold flex-shrink-0">→</span>
-            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0">
               <MapPin className="size-3.5 text-amber-600 dark:text-amber-500 flex-shrink-0" />
               <span className="text-xs font-medium truncate">{bid.dropCity}, {bid.dropState}</span>
             </div>
@@ -287,11 +286,11 @@ export function CarrierHistory() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-2">My Load History</h1>
+        <h1 className="text-2xl sm:text-4xl font-bold mb-2">My Load History</h1>
         {user?.email && <p className="text-muted-foreground mb-8">{user.email}</p>}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <Card className="border-2 border-gray-200 dark:border-gray-700">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -340,7 +339,7 @@ export function CarrierHistory() {
 
         {/* Tabs */}
         <Tabs defaultValue="all" className="space-y-4">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value="all">All Bids ({bids.length})</TabsTrigger>
             <TabsTrigger value="approved">Approved ({approvedBids.length})</TabsTrigger>
             <TabsTrigger value="pending">Pending ({pendingBids.length})</TabsTrigger>

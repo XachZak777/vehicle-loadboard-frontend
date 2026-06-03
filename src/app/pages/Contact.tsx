@@ -72,7 +72,7 @@ export function Contact() {
           <div className="bg-amber-500 p-4 rounded-2xl w-fit mx-auto mb-6">
             <Mail className="size-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-4">Contact Us</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Have a question, suggestion, or need support? We'd love to hear from you. Our team typically responds within one business day.
           </p>

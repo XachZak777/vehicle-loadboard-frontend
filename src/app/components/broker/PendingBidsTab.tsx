@@ -16,7 +16,6 @@ import {
   Check,
   Calendar,
   Truck,
-  ArrowRight,
   ChevronRight,
   Loader2,
   Users,
@@ -176,11 +175,15 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
                           ))}
                         </div>
                       )}
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>{load.pickupCity}, {load.pickupState}</span>
-                        <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>{load.dropCity}, {load.dropState}</span>
+                      <div className="flex flex-col gap-0.5 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="truncate">{load.pickupCity}, {load.pickupState}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="truncate">{load.dropCity}, {load.dropState}</span>
+                        </div>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2 flex-shrink-0">
@@ -370,11 +373,15 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
                     ))}
                   </div>
                 )}
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
-                  <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span>{pendingApproval.load.pickupCity}, {pendingApproval.load.pickupState}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                  <span>{pendingApproval.load.dropCity}, {pendingApproval.load.dropState}</span>
+                <div className="flex flex-col gap-0.5 text-sm text-muted-foreground mt-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="truncate">{pendingApproval.load.pickupCity}, {pendingApproval.load.pickupState}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="truncate">{pendingApproval.load.dropCity}, {pendingApproval.load.dropState}</span>
+                  </div>
                 </div>
               </div>
 

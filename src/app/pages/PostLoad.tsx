@@ -383,7 +383,7 @@ export function PostLoad() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-4xl font-bold">{cloneFrom ? 'Clone Load' : 'Post a Load'}</h1>
+              <h1 className="text-2xl sm:text-4xl font-bold">{cloneFrom ? 'Clone Load' : 'Post a Load'}</h1>
               <p className="text-muted-foreground">
                 {cloneFrom
                   ? 'Review and edit the cloned details before posting'

@@ -94,7 +94,7 @@ export function AIRouteOptimizer() {
               <Route className="size-8 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold">Multi-Load Route Optimizer</h1>
+              <h1 className="text-2xl sm:text-4xl font-bold">Multi-Load Route Optimizer</h1>
               <p className="text-muted-foreground">Find the most efficient sequence to minimize deadhead miles</p>
             </div>
           </div>

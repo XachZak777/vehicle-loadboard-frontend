@@ -926,17 +926,17 @@ const LoadCard = memo(function LoadCard({
 
           {/* Row 2: full-width lane */}
           <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 overflow-hidden">
               <div className="flex items-start gap-1">
                 <MapPin className="size-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
                 {pickupExact ? (
-                  <span className="text-sm text-muted-foreground break-words">{pickupExact}</span>
+                  <span className="text-sm text-muted-foreground truncate">{pickupExact}</span>
                 ) : load.pickupCity ? (
                   <button
                     onClick={e => { e.stopPropagation(); setCityMap({ city: load.pickupCity!, state: load.pickupState!, label: `Pickup — ${pickupLoc}` }); }}
-                    className="text-sm text-muted-foreground hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left"
+                    className="text-sm text-muted-foreground hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left min-w-0 overflow-hidden"
                   >
-                    <span className="block whitespace-nowrap">{pickupLoc}</span>
+                    <span className="block truncate">{pickupLoc}</span>
                     {load.pickupZip && <span className="block text-xs">{load.pickupZip}</span>}
                   </button>
                 ) : (
@@ -946,17 +946,17 @@ const LoadCard = memo(function LoadCard({
               {pickupDateStr && <p className="text-xs text-muted-foreground pl-4">{pickupDateStr}</p>}
             </div>
             <span className="text-amber-500 font-bold flex-shrink-0 pt-0.5">→</span>
-            <div className="min-w-0 flex-1 text-right">
+            <div className="min-w-0 flex-1 overflow-hidden text-right">
               <div className="flex items-start gap-1 flex-row-reverse">
                 <MapPin className="size-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
                 {dropExact ? (
-                  <span className="text-sm text-muted-foreground break-words">{dropExact}</span>
+                  <span className="text-sm text-muted-foreground truncate">{dropExact}</span>
                 ) : load.dropCity ? (
                   <button
                     onClick={e => { e.stopPropagation(); setCityMap({ city: load.dropCity!, state: load.dropState!, label: `Delivery — ${dropLoc}` }); }}
-                    className="text-sm text-muted-foreground hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-right"
+                    className="text-sm text-muted-foreground hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-right min-w-0 overflow-hidden"
                   >
-                    <span className="block whitespace-nowrap">{dropLoc}</span>
+                    <span className="block truncate">{dropLoc}</span>
                     {load.dropZip && <span className="block text-xs">{load.dropZip}</span>}
                   </button>
                 ) : (

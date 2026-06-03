@@ -35,7 +35,7 @@ export function AboutUs() {
       {/* Hero */}
       <div className="bg-amber-500/10 border-b border-border py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl font-bold mb-4">About {APP_NAME}</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-4">About {APP_NAME}</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             We're building the most trusted vehicle transportation marketplace, connecting verified carriers and brokers across the United States.
           </p>

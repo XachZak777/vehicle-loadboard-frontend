@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useAppSelector } from '../store/hooks';
 import { useGetMyBrokerProfileQuery, useGetMyCarrierProfileQuery, useGetNotificationCountQuery } from '../store/services/hauliusApi';
@@ -8,7 +8,7 @@ import { BrandLogo } from './BrandLogo';
 import {
   LayoutDashboard, Building2, LogOut, Plus, FileText,
   Star, Settings, ChevronDown, Menu, X, Search, History, Truck, Package,
-  HelpCircle, MessageCircle, BookOpen, Phone, Bookmark,
+  HelpCircle, MessageCircle, BookOpen, Phone,
 } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { useInactivityLogout } from '../hooks/useInactivityLogout';
@@ -27,6 +27,11 @@ export function Navbar() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Close mobile menu whenever the route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const handleSearch = () => {
     const q = searchQuery.trim();
@@ -82,7 +87,7 @@ export function Navbar() {
           <Link to="/loads" className="flex-shrink-0 hover:opacity-80 transition-opacity">
             <BrandLogo
               alt="Haulius"
-              className="h-6 lg:h-8 w-auto"
+              className="h-8 lg:h-10 w-auto"
             />
           </Link>
 
@@ -307,7 +312,7 @@ export function Navbar() {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="lg:hidden flex items-center gap-2">
+          <div className="lg:hidden flex items-center gap-1">
             <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -315,9 +320,38 @@ export function Navbar() {
           </div>
         </div>
 
+        {/* Backdrop — closes mobile menu when tapping outside */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 top-16 z-40 lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-border py-4 space-y-2">
+          <div className="relative z-50 lg:hidden border-t border-border py-4 space-y-2 max-h-[calc(100dvh-4rem)] overflow-y-auto">
+            {/* Mobile search */}
+            <div className="flex rounded-md border border-border bg-muted/40 overflow-hidden focus-within:ring-1 focus-within:ring-amber-500 focus-within:border-amber-500 mb-2">
+              <Search className="ml-2.5 self-center size-4 text-muted-foreground flex-shrink-0 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search companies..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { handleSearch(); setMobileMenuOpen(false); } }}
+                className="flex-1 h-9 px-2 text-sm bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+              {searchQuery.trim().length >= 2 && (
+                <button
+                  onClick={() => { handleSearch(); setMobileMenuOpen(false); }}
+                  className={`px-2.5 h-9 text-xs font-medium ${colors.accentTextStrong} hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors flex-shrink-0`}
+                >
+                  Go
+                </button>
+              )}
+            </div>
+
             <Link to="/loads" onClick={() => setMobileMenuOpen(false)}>
               <Button variant="ghost" size="sm"
                 className={`w-full justify-start ${isActive('/loads') ? 'font-semibold text-foreground' : ''}`}>
@@ -384,12 +418,7 @@ export function Navbar() {
                     <Package className="h-4 w-4" /> Offers
                   </Button>
                 </Link>
-                <Link to="/carrier/preferred" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="ghost" size="sm"
-                    className={`w-full justify-start gap-2 ${isActive('/carrier/preferred') ? 'font-semibold text-foreground' : ''}`}>
-                    <Bookmark className="h-4 w-4" /> Preferred Loads
-                  </Button>
-                </Link>
+
                 <Link to="/carrier/company" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
                     <Building2 className="h-4 w-4" /> My Company

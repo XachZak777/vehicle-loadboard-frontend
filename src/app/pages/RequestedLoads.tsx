@@ -13,7 +13,6 @@ import {
   Calendar,
   Building2,
   Package,
-  ArrowRight,
   X,
   Clock
 } from 'lucide-react';
@@ -85,7 +84,7 @@ export function RequestedLoads() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Requested Loads</h1>
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Requested Loads</h1>
           <p className="text-muted-foreground">
             View and manage your load requests
           </p>
@@ -145,33 +144,28 @@ export function RequestedLoads() {
 
                   <CardContent>
                     {/* Route Display */}
-                    <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-none border-2 border-gray-300 dark:border-gray-600">
-                      <div className="flex items-center gap-2">
+                    <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-none border-2 border-gray-300 dark:border-gray-600 space-y-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
                         <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">{load.pickupCity}, {load.pickupState}</div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
-                            <Calendar className="size-3 text-amber-600" />
-                            <span className="whitespace-nowrap">{new Date(load.pickupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                          </div>
-                        </div>
-
-                        <ArrowRight className="size-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mx-1" />
-
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">{load.deliveryCity}, {load.deliveryState}</div>
-                          <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
-                            <Calendar className="size-3 text-amber-600" />
-                            <span className="whitespace-nowrap">{new Date(load.deliveryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                          </div>
-                        </div>
+                        <span className="font-semibold text-gray-900 dark:text-gray-100 truncate flex-1">{load.pickupCity}, {load.pickupState}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
+                          <Calendar className="size-3 text-amber-600" />
+                          {new Date(load.pickupDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 min-w-0">
                         <MapPin className="size-4 text-amber-600 dark:text-amber-500 flex-shrink-0" />
+                        <span className="font-semibold text-gray-900 dark:text-gray-100 truncate flex-1">{load.deliveryCity}, {load.deliveryState}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
+                          <Calendar className="size-3 text-amber-600" />
+                          {new Date(load.deliveryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
                       </div>
                     </div>
 
                     {/* Details Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="text-sm text-gray-600 dark:text-gray-400">Load Price:</span>
                         <span className="font-bold text-lg text-amber-600 dark:text-amber-500">${load.price.toLocaleString()}</span>
                         <span className="text-xs text-gray-500 dark:text-gray-400">({load.distance} mi • ${perMileRate}/mi)</span>

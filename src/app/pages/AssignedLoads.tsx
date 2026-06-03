@@ -15,7 +15,6 @@ import {
   Building2,
   User,
   Package,
-  ArrowRight,
   Clock
 } from 'lucide-react';
 import { calcPricePerMile } from '../utils/phone';
@@ -108,7 +107,7 @@ export function AssignedLoads() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Assigned Loads</h1>
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Assigned Loads</h1>
           <p className="text-muted-foreground">
             {user?.role === 'carrier'
               ? 'View and manage loads assigned to you'
@@ -194,57 +193,46 @@ export function AssignedLoads() {
 
                   <CardContent>
                     {/* Route Display */}
-                    <div className="mb-4 p-4 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 rounded-none border-2 border-amber-200/50 dark:border-amber-800/50">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-start gap-2">
-                            <MapPin className="size-5 text-amber-600 dark:text-amber-500 mt-1 flex-shrink-0" />
-                            <div>
-                              <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Pickup</div>
-                              {load.pickupCity ? (
-                                <a
-                                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${load.pickupCity}, ${load.pickupState}, USA`)}`}
-                                  target="_blank" rel="noopener noreferrer"
-                                  className="font-semibold text-gray-900 dark:text-gray-100 hover:underline hover:text-amber-600 transition-colors"
-                                >
-                                  {load.pickupCity}, {load.pickupState}
-                                </a>
-                              ) : (
-                                <div className="font-semibold text-gray-900 dark:text-gray-100">—</div>
-                              )}
-                              <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                                <Calendar className="size-3 text-amber-600 dark:text-amber-500" />
-                                {new Date(load.pickupDate).toLocaleDateString()}
-                              </div>
-                            </div>
+                    <div className="mb-4 p-4 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 rounded-none border-2 border-amber-200/50 dark:border-amber-800/50 space-y-2">
+                      <div className="flex items-start gap-2 min-w-0">
+                        <MapPin className="size-4 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Pickup</div>
+                          {load.pickupCity ? (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${load.pickupCity}, ${load.pickupState}, USA`)}`}
+                              target="_blank" rel="noopener noreferrer"
+                              className="font-semibold text-gray-900 dark:text-gray-100 hover:underline hover:text-amber-600 transition-colors truncate block"
+                            >
+                              {load.pickupCity}, {load.pickupState}
+                            </a>
+                          ) : (
+                            <div className="font-semibold text-gray-900 dark:text-gray-100">—</div>
+                          )}
+                          <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                            <Calendar className="size-3 text-amber-600 dark:text-amber-500" />
+                            {new Date(load.pickupDate).toLocaleDateString()}
                           </div>
                         </div>
-
-                        <div className="flex-shrink-0 text-amber-600 dark:text-amber-500">
-                          <ArrowRight className="size-6" />
-                        </div>
-
-                        <div className="flex-1">
-                          <div className="flex items-start gap-2">
-                            <MapPin className="size-5 text-amber-600 dark:text-amber-500 mt-1 flex-shrink-0" />
-                            <div>
-                              <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Delivery</div>
-                              {load.deliveryCity ? (
-                                <a
-                                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${load.deliveryCity}, ${load.deliveryState}, USA`)}`}
-                                  target="_blank" rel="noopener noreferrer"
-                                  className="font-semibold text-gray-900 dark:text-gray-100 hover:underline hover:text-amber-600 transition-colors"
-                                >
-                                  {load.deliveryCity}, {load.deliveryState}
-                                </a>
-                              ) : (
-                                <div className="font-semibold text-gray-900 dark:text-gray-100">—</div>
-                              )}
-                              <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
-                                <Calendar className="size-3 text-amber-600 dark:text-amber-500" />
-                                {new Date(load.deliveryDate).toLocaleDateString()}
-                              </div>
-                            </div>
+                      </div>
+                      <div className="flex items-start gap-2 min-w-0">
+                        <MapPin className="size-4 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <div className="font-medium text-xs text-amber-700 dark:text-amber-400">Delivery</div>
+                          {load.deliveryCity ? (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${load.deliveryCity}, ${load.deliveryState}, USA`)}`}
+                              target="_blank" rel="noopener noreferrer"
+                              className="font-semibold text-gray-900 dark:text-gray-100 hover:underline hover:text-amber-600 transition-colors truncate block"
+                            >
+                              {load.deliveryCity}, {load.deliveryState}
+                            </a>
+                          ) : (
+                            <div className="font-semibold text-gray-900 dark:text-gray-100">—</div>
+                          )}
+                          <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                            <Calendar className="size-3 text-amber-600 dark:text-amber-500" />
+                            {new Date(load.deliveryDate).toLocaleDateString()}
                           </div>
                         </div>
                       </div>

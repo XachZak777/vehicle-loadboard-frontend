@@ -34,6 +34,7 @@ export type MeResponse = {
 
 export type ProfileUpdatePayload = {
   companyName?: string;
+  dbaName?: string;
   dotNumber?: string;
   mcNumber?: string;
   phoneNumber?: string;

@@ -86,7 +86,7 @@ export function AIPricing() {
               <DollarSign className="size-8 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold">Dynamic Price Suggestions</h1>
+              <h1 className="text-2xl sm:text-4xl font-bold">Dynamic Price Suggestions</h1>
               <p className="text-muted-foreground">AI-powered pricing based on market analysis</p>
             </div>
           </div>
@@ -106,7 +106,7 @@ export function AIPricing() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label>Pickup City</Label>
                       <Input
@@ -128,7 +128,7 @@ export function AIPricing() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label>Delivery City</Label>
                       <Input
@@ -235,7 +235,7 @@ export function AIPricing() {
                 <Card className="border-2 border-green-500/30 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
                   <CardHeader>
                     <CardTitle className="text-green-700 dark:text-green-400">Recommended Price</CardTitle>
-                    <div className="text-5xl font-bold text-green-600 dark:text-green-400">
+                    <div className="text-3xl sm:text-5xl font-bold text-green-600 dark:text-green-400">
                       ${suggestion.recommendedPrice?.toLocaleString() || '0'}
                     </div>
                     <CardDescription>

@@ -392,7 +392,7 @@ export function EditLoad() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold">Edit Load</h1>
+              <h1 className="text-xl sm:text-3xl font-bold">Edit Load</h1>
               {routeLabel && (
                 <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
                   <MapPin className="size-3.5 text-amber-500" />

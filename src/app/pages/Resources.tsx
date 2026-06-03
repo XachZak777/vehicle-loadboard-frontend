@@ -58,7 +58,7 @@ export function Resources() {
         {/* Header */}
         <div className="mb-10 text-center">
           <Badge className="mb-3 bg-amber-500 text-white border-0">Resources</Badge>
-          <h1 className="text-3xl font-bold mb-3">Resources & Guides</h1>
+          <h1 className="text-xl sm:text-3xl font-bold mb-3">Resources & Guides</h1>
           <p className="text-muted-foreground text-base max-w-xl mx-auto">
             Everything you need to navigate vehicle transport.
           </p>

@@ -131,7 +131,7 @@ export function BrokerDashboard() {
       <Navbar />
 
       <div className='container mx-auto px-4 py-8'>
-        <h1 className='text-4xl font-bold mb-2'>Broker Dashboard</h1>
+        <h1 className='text-2xl sm:text-4xl font-bold mb-2'>Broker Dashboard</h1>
         {user?.email && (
           <p className='text-muted-foreground mb-8'>{user.email}</p>
         )}
@@ -143,7 +143,7 @@ export function BrokerDashboard() {
         />
 
         <Tabs defaultValue='myloads' className='space-y-4'>
-          <TabsList>
+          <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value='myloads'>All Loads ({loads.length})</TabsTrigger>
             <TabsTrigger value='active'>Active ({activeLoads.length})</TabsTrigger>
             <TabsTrigger value='completed'>Completed ({completedLoads.length})</TabsTrigger>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Truck, MapPin, X, Star, CheckCircle, ArrowRight, Eye, Hash } from 'lucide-react';
+import { Truck, MapPin, X, Star, CheckCircle, Eye, Hash } from 'lucide-react';
 import { CarrierInfoInline } from './CarrierInfoInline';
 import { RateModal } from '../RateModal';
 import { useGetCarrierPublicInfoQuery, useGetMySubmittedLoadIdsQuery, useGetBidsForLoadQuery } from '../../store/services/hauliusApi';
@@ -84,29 +84,26 @@ function AssignedLoadCard({
           const pickupUrl = pickupQ ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pickupQ + ', USA')}` : null;
           const dropUrl = dropQ ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dropQ + ', USA')}` : null;
           return (
-            <div className="p-3 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200/50 dark:border-amber-800/50">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <MapPin className={`size-4 ${colors.accentTextStrong} dark:${colors.accentText} flex-shrink-0`} />
-                  {pickupUrl ? (
-                    <a href={pickupUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline hover:text-amber-600 transition-colors">
-                      {load.pickupCity}, {load.pickupState}
-                    </a>
-                  ) : (
-                    <span className="text-sm font-medium truncate">{load.pickupCity}, {load.pickupState}</span>
-                  )}
-                </div>
-                <ArrowRight className={`size-4 ${colors.accentText} flex-shrink-0`} />
-                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <MapPin className={`size-4 ${colors.accentTextStrong} dark:${colors.accentText} flex-shrink-0`} />
-                  {dropUrl ? (
-                    <a href={dropUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline hover:text-amber-600 transition-colors">
-                      {load.dropCity}, {load.dropState}
-                    </a>
-                  ) : (
-                    <span className="text-sm font-medium truncate">{load.dropCity}, {load.dropState}</span>
-                  )}
-                </div>
+            <div className="p-3 bg-gradient-to-r from-amber-50/40 to-orange-50/40 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200/50 dark:border-amber-800/50 space-y-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <MapPin className={`size-4 ${colors.accentTextStrong} dark:${colors.accentText} flex-shrink-0`} />
+                {pickupUrl ? (
+                  <a href={pickupUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline hover:text-amber-600 transition-colors">
+                    {load.pickupCity}, {load.pickupState}
+                  </a>
+                ) : (
+                  <span className="text-sm font-medium truncate">{load.pickupCity}, {load.pickupState}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <MapPin className={`size-4 ${colors.accentTextStrong} dark:${colors.accentText} flex-shrink-0`} />
+                {dropUrl ? (
+                  <a href={dropUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate hover:underline hover:text-amber-600 transition-colors">
+                    {load.dropCity}, {load.dropState}
+                  </a>
+                ) : (
+                  <span className="text-sm font-medium truncate">{load.dropCity}, {load.dropState}</span>
+                )}
               </div>
             </div>
           );

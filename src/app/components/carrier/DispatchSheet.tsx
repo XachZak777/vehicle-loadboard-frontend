@@ -1,8 +1,7 @@
 import { useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
-import { useGetLoadQuery, useGetBrokerPublicInfoQuery } from '../../store/services/hauliusApi';
+import { useGetLoadQuery, useGetBrokerPublicInfoQuery, useGetMyCarrierProfileQuery } from '../../store/services/hauliusApi';
 import type { CarrierBidWithLoadDto } from '../../store/services/hauliusApi';
 import { Printer, FileText, Loader2 } from 'lucide-react';
 import { formatPhone, formatPaymentLabel } from '../../utils/phone';
@@ -33,8 +32,9 @@ export function DispatchSheet({ bid, open, onClose }: Props) {
   const { data: broker, isLoading: brokerLoading } = useGetBrokerPublicInfoQuery(bid.brokerId!, {
     skip: !open || !bid.brokerId,
   });
+  const { data: carrier, isLoading: carrierLoading } = useGetMyCarrierProfileQuery(undefined, { skip: !open });
   const printRef = useRef<HTMLDivElement>(null);
-  const isLoading = loadLoading || brokerLoading;
+  const isLoading = loadLoading || brokerLoading || carrierLoading;
 
   const handlePrint = () => {
     const content = printRef.current;
@@ -69,11 +69,6 @@ export function DispatchSheet({ bid, open, onClose }: Props) {
             .sub-vehicle:last-child { margin-bottom: 0; }
             .sub-vehicle-title { font-size: 12px; font-weight: 600; color: ${printColors.text}; margin-bottom: 4px; }
             .sub-vehicle-detail { font-size: 11px; color: ${printColors.textMuted}; }
-            hr { border: none; border-top: 1px solid ${printColors.borderLight}; margin: 22px 0; }
-            .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
-            .sig-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: ${printColors.textSubtle}; margin-bottom: 8px; }
-            .sig-box { border: 1px solid ${printColors.signatureBorder}; border-radius: 4px; height: 52px; }
-            .sig-sub { font-size: 11px; color: ${printColors.textSubtle}; margin-top: 6px; }
             .footer { margin-top: 32px; padding-top: 14px; border-top: 2px solid ${printColors.accent}; display: flex; justify-content: space-between; font-size: 11px; color: ${printColors.textSubtle}; }
           </style>
         </head>
@@ -141,6 +136,19 @@ export function DispatchSheet({ bid, open, onClose }: Props) {
                   )}
                 </div>
               </div>
+
+              {/* Carrier */}
+              <Section title="Carrier Information">
+                <Row label="Company" value={carrier?.companyName || carrier?.legalName || '—'} />
+                {carrier?.mcNumber && <Row label="MC Number" value={carrier.mcNumber} mono />}
+                {carrier?.dotNumber && <Row label="DOT Number" value={carrier.dotNumber} mono />}
+                {carrier?.phoneNumber && <Row label="Phone" value={formatPhone(carrier.phoneNumber)} />}
+                {(carrier?.phyCity || carrier?.phyState) && (
+                  <Row label="Location" value={[carrier.phyCity, carrier.phyState].filter(Boolean).join(', ')} />
+                )}
+                {carrier?.operatingStatus && <Row label="Status" value={carrier.operatingStatus} />}
+                {carrier?.safetyRating && <Row label="Safety Rating" value={carrier.safetyRating} />}
+              </Section>
 
               {/* Broker / Shipper */}
               <Section title="Broker / Shipper">
@@ -246,22 +254,6 @@ export function DispatchSheet({ bid, open, onClose }: Props) {
                   <div className="px-3 py-2.5 text-sm text-foreground">{load.description}</div>
                 </Section>
               )}
-
-              <Separator className="my-5" />
-
-              {/* Signatures */}
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Carrier Signature</p>
-                  <div className="h-14 border border-border rounded" />
-                  <p className="text-xs text-muted-foreground mt-1.5">Printed name &amp; date</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Broker / Shipper Signature</p>
-                  <div className="h-14 border border-border rounded" />
-                  <p className="text-xs text-muted-foreground mt-1.5">Printed name &amp; date</p>
-                </div>
-              </div>
 
               <div className="mt-6 pt-4 border-t border-border flex justify-between text-xs text-muted-foreground">
                 <span>LoadBoard · Dispatch Sheet</span>
