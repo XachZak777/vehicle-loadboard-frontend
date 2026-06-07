@@ -114,7 +114,7 @@ export const router = createBrowserRouter([
       {
         path: '/broker/company',
         element: (
-          <ProtectedRoute allowedRoles={['broker', 'dealer']}>
+          <ProtectedRoute allowedRoles={['broker', 'dealer']} skipApprovalCheck>
             <CompanyProfile />
           </ProtectedRoute>
         ),
@@ -170,7 +170,7 @@ export const router = createBrowserRouter([
       {
         path: '/carrier/company',
         element: (
-          <ProtectedRoute allowedRoles={['carrier']}>
+          <ProtectedRoute allowedRoles={['carrier']} skipApprovalCheck>
             <CompanyProfile />
           </ProtectedRoute>
         ),

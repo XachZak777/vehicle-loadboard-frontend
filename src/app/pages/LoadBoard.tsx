@@ -13,7 +13,7 @@ import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Button } from '../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../components/ui/sheet';
-import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star, SlidersHorizontal, X, Bookmark } from 'lucide-react';
+import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star, SlidersHorizontal, X, Bookmark, ArrowUp } from 'lucide-react';
 import { useGetSavedLoadsQuery } from '../store/services/hauliusApi';
 import { formatPhone, formatPaymentLabel, calcPricePerMile } from '../utils/phone';
 import { MapBackground } from '../components/MapBackground';
@@ -109,6 +109,13 @@ export function LoadBoard() {
   const [sortBy, setSortBy] = useState('newest');
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
+
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 300);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -296,33 +303,35 @@ export function LoadBoard() {
 
             <div className="flex gap-6">
               {/* ── Desktop filter sidebar ── */}
-              <aside
-                className="hidden sm:block flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-out self-start sticky top-20"
-                style={{ width: filtersOpen ? 272 : 0 }}
-              >
-                <div
-                  className="w-[272px] transition-transform duration-300 ease-out"
-                  style={{ transform: filtersOpen ? 'translateX(0)' : 'translateX(-100%)' }}
+              <div className="hidden sm:block flex-shrink-0 self-start sticky top-16">
+                <aside
+                  className="overflow-hidden transition-[width] duration-300 ease-out"
+                  style={{ width: filtersOpen ? 272 : 0 }}
                 >
-                  <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
-                    <h2 className="text-base font-bold text-foreground mb-4">Filters</h2>
-                    <FilterPanel
-                      sortBy={sortBy} setSortBy={setSortBy}
-                      searchTerm={searchTerm} setSearchTerm={setSearchTerm}
-                      pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
-                      pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
-                      deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
-                      deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
-                      vehicleType={vehicleType} setVehicleType={setVehicleType}
-                      trailerType={trailerType} setTrailerType={setTrailerType}
-                      condition={condition} setCondition={setCondition}
-                      minPrice={minPrice} setMinPrice={setMinPrice}
-                      minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
-                      clearFilters={clearFilters}
-                    />
+                  <div
+                    className="w-[272px] transition-transform duration-300 ease-out"
+                    style={{ transform: filtersOpen ? 'translateX(0)' : 'translateX(-100%)' }}
+                  >
+                    <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+                      <h2 className="text-base font-bold text-foreground mb-4">Filters</h2>
+                      <FilterPanel
+                        sortBy={sortBy} setSortBy={setSortBy}
+                        searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+                        pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
+                        pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
+                        deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
+                        deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
+                        vehicleType={vehicleType} setVehicleType={setVehicleType}
+                        trailerType={trailerType} setTrailerType={setTrailerType}
+                        condition={condition} setCondition={setCondition}
+                        minPrice={minPrice} setMinPrice={setMinPrice}
+                        minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
+                        clearFilters={clearFilters}
+                      />
+                    </div>
                   </div>
-                </div>
-              </aside>
+                </aside>
+              </div>
 
               {/* ── Load list ── */}
               <div className="flex-1 min-w-0">
@@ -497,6 +506,16 @@ export function LoadBoard() {
           </>
         )}
       </div>
+
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="!fixed bottom-6 right-6 !z-40 flex items-center justify-center size-10 rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-lg transition-all duration-200"
+          aria-label="Back to top"
+        >
+          <ArrowUp className="size-5" />
+        </button>
+      )}
     </div>
   );
 }

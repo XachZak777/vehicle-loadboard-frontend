@@ -3,6 +3,7 @@ import {
   useGetMyCarrierBidsQuery,
   useGetLoadQuery,
   useGetBrokerPublicInfoQuery,
+  useGetMyCarrierProfileQuery,
 } from '../store/services/hauliusApi';
 import { Button } from '../components/ui/button';
 import { Printer, ArrowLeft, Loader2, FileText } from 'lucide-react';
@@ -76,8 +77,9 @@ export function DispatchSheetPage() {
   const { data: broker, isLoading: brokerLoading } = useGetBrokerPublicInfoQuery(bid?.brokerId ?? '', {
     skip: !bid?.brokerId,
   });
+  const { data: carrier, isLoading: carrierLoading } = useGetMyCarrierProfileQuery();
 
-  const isLoading = bidsLoading || loadLoading || brokerLoading;
+  const isLoading = bidsLoading || loadLoading || brokerLoading || carrierLoading;
 
   const handlePrint = () => window.print();
 
@@ -166,17 +168,31 @@ export function DispatchSheetPage() {
 
         {/* 2-column: Broker (left) | Vehicle + Payment stacked (right) */}
         <div className="ds-grid grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-          <Section title="Broker / Shipper">
-            <Row label="Company" value={brokerName} />
-            {broker?.mcNumber && <Row label="MC Number" value={broker.mcNumber} mono />}
-            {broker?.dotNumber && <Row label="DOT Number" value={broker.dotNumber} mono />}
-            {broker?.phoneNumber && <Row label="Phone" value={formatPhone(broker.phoneNumber)} />}
-            {broker?.email && <Row label="Email" value={broker.email} />}
-            {(broker?.city || broker?.state) && (
-              <Row label="Location" value={[broker.city, broker.state].filter(Boolean).join(', ')} />
-            )}
-            {broker?.operatingStatus && <Row label="Status" value={broker.operatingStatus} />}
-          </Section>
+          <div className="flex flex-col gap-2">
+            <Section title="Broker / Shipper">
+              <Row label="Company" value={brokerName} />
+              {broker?.mcNumber && <Row label="MC" value={broker.mcNumber} mono />}
+              {broker?.dotNumber && <Row label="DOT" value={broker.dotNumber} mono />}
+              {broker?.phoneNumber && <Row label="Phone" value={formatPhone(broker.phoneNumber)} />}
+              {broker?.email && <Row label="Email" value={broker.email} />}
+              {(broker?.city || broker?.state) && (
+                <Row label="Location" value={[broker.city, broker.state].filter(Boolean).join(', ')} />
+              )}
+              {broker?.operatingStatus && <Row label="Status" value={broker.operatingStatus} />}
+            </Section>
+
+            <Section title="Carrier">
+              <Row label="Company" value={carrier?.legalName || carrier?.companyName || '—'} />
+              {carrier?.mcNumber && <Row label="MC" value={carrier.mcNumber} mono />}
+              {carrier?.dotNumber && <Row label="DOT" value={carrier.dotNumber} mono />}
+              {carrier?.phoneNumber && <Row label="Phone" value={formatPhone(carrier.phoneNumber)} />}
+              {carrier?.email && <Row label="Email" value={carrier.email} />}
+              {(carrier?.city || carrier?.state) && (
+                <Row label="Location" value={[carrier.city, carrier.state].filter(Boolean).join(', ')} />
+              )}
+              {carrier?.operatingStatus && <Row label="Status" value={carrier.operatingStatus} />}
+            </Section>
+          </div>
 
           <div className="flex flex-col gap-2">
             <Section title={`Vehicles (${totalVehicles})`}>
@@ -291,22 +307,6 @@ export function DispatchSheetPage() {
           </div>
         )}
 
-        {/* Signatures */}
-        <div className="ds-sigs mt-2 pt-2 border-t-2 border-gray-200">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-1">Carrier Signature</p>
-              <div className="h-8 border border-gray-300 rounded" />
-              <p className="text-[10px] text-gray-400 mt-0.5">Printed name &amp; date</p>
-            </div>
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-1">Broker / Shipper Signature</p>
-              <div className="h-8 border border-gray-300 rounded" />
-              <p className="text-[10px] text-gray-400 mt-0.5">Printed name &amp; date</p>
-            </div>
-          </div>
-        </div>
-
         <div className="mt-2 pt-1 border-t border-amber-400 flex justify-between text-[10px] text-gray-400">
           <span>LoadBoard · Dispatch Sheet</span>
           <span>Load ID: {load.id.slice(0, 8).toUpperCase()}</span>
@@ -365,11 +365,6 @@ export function DispatchSheetPage() {
             padding-bottom: 3px !important;
           }
 
-          /* Signatures */
-          .ds-sigs {
-            margin-top: 4px !important;
-            padding-top: 3px !important;
-          }
         }
       `}</style>
     </div>

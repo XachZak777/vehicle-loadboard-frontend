@@ -1,7 +1,7 @@
 import { MapBackground } from '../components/MapBackground';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Clock, LogOut, Mail, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Clock, LogOut, Mail, RefreshCw, ShieldCheck, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLogout } from '../hooks/useLogout';
 import { Button } from '../components/ui/button';
@@ -117,6 +117,14 @@ export function PendingApproval() {
                 ? <><RefreshCw className="size-4 mr-2 animate-spin" />Checking…</>
                 : <><RefreshCw className="size-4 mr-2" />Check Approval Status</>
               }
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => navigate(user?.role === 'carrier' ? '/carrier/company' : '/broker/company')}
+            >
+              <UserCog className="size-4 mr-2" />
+              Complete Your Profile
             </Button>
             <Button variant="outline" className="w-full" onClick={handleLogout}>
               <LogOut className="size-4 mr-2" />

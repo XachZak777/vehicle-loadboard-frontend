@@ -80,7 +80,8 @@ export function Navbar() {
     'Broker';
 
   return (
-    <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
+    <>
+    <nav className="bg-card border-b border-border !fixed top-0 left-0 right-0 !z-50 backdrop-blur-sm bg-card/95">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 gap-4 relative">
           {/* Logo */}
@@ -104,7 +105,7 @@ export function Navbar() {
             </Link>
 
             {(isBrokerOrDealer) && (
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
@@ -144,7 +145,7 @@ export function Navbar() {
             )}
 
             {isCarrier && (
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
@@ -207,7 +208,7 @@ export function Navbar() {
               </Link>
             )}
 
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
                   <HelpCircle className="h-4 w-4" />
@@ -265,7 +266,7 @@ export function Navbar() {
           <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
             <ThemeToggle />
 
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1.5 font-medium">
                   <span>{displayName}</span>
@@ -478,5 +479,7 @@ export function Navbar() {
         )}
       </div>
     </nav>
+    <div className="h-16" />
+    </>
   );
 }

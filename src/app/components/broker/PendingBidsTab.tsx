@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
@@ -141,9 +141,9 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
             if (pendingBids.length === 0) return null;
 
             return (
-              <Card className="overflow-hidden">
+              <div className="border-2 border-gray-200 dark:border-gray-700 bg-card overflow-hidden">
                 {/* Load header */}
-                <CardHeader className="bg-muted/40 pb-3">
+                <div className="bg-muted/40 px-6 pt-5 pb-4 border-b border-border">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       {load.orderId && (
@@ -207,9 +207,9 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
                       </div>
                     </div>
                   </div>
-                </CardHeader>
+                </div>
 
-                <CardContent className="p-0">
+                <div>
                   <div className="px-4 py-2 border-b bg-muted/20">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       {pendingBids.length} Pending {pendingBids.length === 1 ? 'Bid' : 'Bids'}
@@ -310,8 +310,8 @@ export function PendingBidsTab({ openLoads, getStatusBadge, onApproveBid, action
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             );
           }}
         </LoadWithBidsLoader>

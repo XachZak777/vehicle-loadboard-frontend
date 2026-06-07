@@ -340,7 +340,7 @@ export function CarrierHistory() {
         {/* Tabs */}
         <Tabs defaultValue="all" className="space-y-4">
           <TabsList className="flex-wrap h-auto gap-1">
-            <TabsTrigger value="all">All Bids ({bids.length})</TabsTrigger>
+            <TabsTrigger value="all">All Loads ({bids.length})</TabsTrigger>
             <TabsTrigger value="approved">Approved ({approvedBids.length})</TabsTrigger>
             <TabsTrigger value="pending">Pending ({pendingBids.length})</TabsTrigger>
           </TabsList>

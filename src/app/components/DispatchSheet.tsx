@@ -389,7 +389,7 @@ export function DispatchSheet({ load, brokerInfo, carrierInfo, showSensitiveInfo
 
       {/* Footer */}
       <div className="px-6 py-3 border-t border-border bg-muted/30 flex items-center justify-between text-xs text-muted-foreground">
-        <span>HauliUS — Vehicle Transport Load Board</span>
+        <span>Haulius — Vehicle Transport Load Board</span>
         {load.createdAt && (
           <span>Posted {new Date(load.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
         )}

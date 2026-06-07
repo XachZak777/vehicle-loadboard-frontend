@@ -96,7 +96,7 @@ function CompanyPageContent({
       </Button>
 
       {/* Header */}
-      <Card className="border-2 border-amber-200 dark:border-amber-800/60 bg-gradient-to-br from-amber-50/40 to-orange-50/20 dark:from-amber-950/20 dark:to-transparent">
+      <Card className="border-2 border-amber-200 dark:border-amber-800/60 bg-gradient-to-br from-amber-50/40 to-orange-50/20 dark:from-amber-950/20 dark:to-transparent rounded-none">
         <CardContent className="p-6">
           <div className="flex items-start gap-4">
             <div className="size-14 bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
@@ -144,14 +144,14 @@ function CompanyPageContent({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
         {/* Company Info */}
         <div className="space-y-5">
-          <Card className="border-2 border-gray-200 dark:border-gray-700">
+          <Card className="border-2 border-gray-200 dark:border-gray-700 gap-0 rounded-none">
             <CardHeader className="border-b border-border pb-3 pt-4 px-5">
               <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Company Info</CardTitle>
             </CardHeader>
-            <CardContent className="px-5 py-3">
+            <CardContent className="px-5 !py-3">
               <InfoItem icon={Shield} label="DOT Number" value={info?.dotNumber} />
               <InfoItem icon={Shield} label="MC Number" value={info?.mcNumber} />
               {carrierInfo?.safetyRating && (
@@ -188,11 +188,11 @@ function CompanyPageContent({
 
           {/* Bond Information — brokers only */}
           {brokerInfo && (brokerInfo.bondCompany || brokerInfo.bondAgentFirstName || brokerInfo.bondAgentLastName || brokerInfo.bondAgentPhone) && (
-            <Card className="border-2 border-gray-200 dark:border-gray-700">
+            <Card className="border-2 border-gray-200 dark:border-gray-700 gap-0 rounded-none">
               <CardHeader className="border-b border-border pb-3 pt-4 px-5">
                 <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Bond Information</CardTitle>
               </CardHeader>
-              <CardContent className="px-5 py-3">
+              <CardContent className="px-5 !py-3">
                 {brokerInfo.bondCompany && (
                   <InfoItem icon={FileCheck} label="Bond Company" value={brokerInfo.bondCompany} />
                 )}
@@ -217,11 +217,11 @@ function CompanyPageContent({
         </div>
 
         {/* Rating Summary */}
-        <Card className="border-2 border-amber-200 dark:border-amber-800/60">
+        <Card className="border-2 border-amber-200 dark:border-amber-800/60 gap-0 rounded-none">
           <CardHeader className="border-b border-border pb-3 pt-4 px-5">
             <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Rating Overview</CardTitle>
           </CardHeader>
-          <CardContent className="px-5 py-4 space-y-4">
+          <CardContent className="px-5 !py-4 space-y-4">
             {total === 0 ? (
               <div className="flex flex-col items-center py-6 text-center gap-2">
                 <div className="size-14 rounded-full bg-muted flex items-center justify-center">
@@ -233,7 +233,7 @@ function CompanyPageContent({
             ) : (
               <>
                 {/* Score hero */}
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50/40 dark:from-amber-950/30 dark:to-transparent border border-amber-100 dark:border-amber-900/40">
+                <div className="flex items-center gap-4 p-4 bg-gradient-to-br from-amber-50 to-orange-50/40 dark:from-amber-950/30 dark:to-transparent border border-amber-100 dark:border-amber-900/40">
                   <div className="flex-shrink-0 text-center">
                     <div className={`text-4xl font-bold ${score >= 80 ? 'text-amber-600' : score >= 50 ? 'text-foreground' : 'text-orange-500'}`}>
                       {score}%
@@ -242,14 +242,14 @@ function CompanyPageContent({
                       {score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score >= 40 ? 'Fair' : 'Needs Improvement'}
                     </div>
                   </div>
-                  <div className="flex-1 space-y-2">
+                  <div className="flex-1 min-w-0 space-y-2">
                     <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-700 ${score >= 80 ? 'bg-amber-400' : score >= 50 ? 'bg-amber-300' : 'bg-orange-400'}`}
                         style={{ width: `${score}%` }}
                       />
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-x-3 gap-y-1">
                       <span className="flex items-center gap-1.5 text-xs">
                         <span className="inline-flex size-5 rounded-full bg-amber-100 dark:bg-amber-900/40 items-center justify-center">
                           <ThumbsUp className="size-2.5 text-amber-600" />
@@ -276,7 +276,7 @@ function CompanyPageContent({
                       const pct = stat.total > 0 ? Math.round((stat.count / stat.total) * 100) : 0;
                       return (
                         <div key={stat.tag} className="flex items-center gap-3">
-                          <span className="text-xs text-muted-foreground w-40 flex-shrink-0 truncate">{TAG_LABELS[stat.tag] ?? stat.tag}</span>
+                          <span className="text-xs text-muted-foreground w-32 flex-shrink-0 truncate">{TAG_LABELS[stat.tag] ?? stat.tag}</span>
                           <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                             <div className="h-full bg-amber-400 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
                           </div>
@@ -294,41 +294,39 @@ function CompanyPageContent({
 
       {/* Reviews */}
       {ratingList.length > 0 && (
-        <Card className="border-2 border-gray-200 dark:border-gray-700">
+        <Card className="border-2 border-gray-200 dark:border-gray-700 gap-0 rounded-none">
           <CardHeader className="border-b border-border pb-3 pt-4 px-5">
             <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Recent Reviews ({ratingList.length})
             </CardTitle>
           </CardHeader>
-          <CardContent className="px-5 py-4 space-y-3">
+          <CardContent className="!p-0">
             {ratingList.map((r) => (
-              <div key={r.id} className="p-4 border-2 border-gray-100 dark:border-gray-800 hover:border-amber-200 dark:hover:border-amber-800 transition-colors">
-                <div className="flex items-start gap-3">
-                  <div className={`mt-0.5 p-2 flex-shrink-0 ${r.type === 'positive' ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                    {r.type === 'positive'
-                      ? <ThumbsUp className="size-3.5 text-amber-600" />
-                      : <ThumbsDown className="size-3.5 text-gray-500" />}
+              <div key={r.id} className="flex items-start gap-3 px-5 py-4 border-b border-border last:border-0">
+                <div className={`mt-0.5 p-2 flex-shrink-0 ${r.type === 'positive' ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                  {r.type === 'positive'
+                    ? <ThumbsUp className="size-3.5 text-amber-600" />
+                    : <ThumbsDown className="size-3.5 text-gray-500" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <p className="text-sm font-semibold">{r.fromName || 'Anonymous'}</p>
+                    <span className="text-xs text-muted-foreground">{fmtDate(r.createdAt)}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <p className="text-sm font-semibold">{r.fromName || 'Anonymous'}</p>
-                      <span className="text-xs text-muted-foreground">{fmtDate(r.createdAt)}</span>
+                  {r.fromRole && <p className="text-xs text-muted-foreground mt-0.5">{r.fromRole}</p>}
+                  {r.loadTitle && <p className="text-xs text-muted-foreground mt-1">Load: {r.loadTitle}</p>}
+                  {r.comment && (
+                    <p className="text-sm bg-muted px-3 py-2 mt-2">"{r.comment}"</p>
+                  )}
+                  {r.tags && r.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {r.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {TAG_LABELS[tag] ?? tag}
+                        </Badge>
+                      ))}
                     </div>
-                    {r.fromRole && <p className="text-xs text-muted-foreground mt-0.5">{r.fromRole}</p>}
-                    {r.loadTitle && <p className="text-xs text-muted-foreground mt-1">Load: {r.loadTitle}</p>}
-                    {r.comment && (
-                      <p className="text-sm bg-muted px-3 py-2 mt-2">"{r.comment}"</p>
-                    )}
-                    {r.tags && r.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {r.tags.map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
-                            {TAG_LABELS[tag] ?? tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             ))}
