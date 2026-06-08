@@ -8,8 +8,6 @@ import { Input } from '../components/ui/input';
 import { MessageSquare, Send, Loader2, ArrowLeft, Bot, User } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router';
-import { projectId, publicAnonKey } from '../../../utils/supabase/info';
-import { useAuth } from '../context/AuthContext';
 
 interface Message {
   id: string;
@@ -75,7 +73,6 @@ function renderContent(text: string): ReactNode {
 
 export function AIChatSupport() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -107,21 +104,19 @@ export function AIChatSupport() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-bd25f179/ai-chat-support`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`
-          },
-          body: JSON.stringify({
-            message: userMessage.content,
-            history: messages.slice(-10),
-            userId: user?.id
-          })
-        }
-      );
+      const apiBase = ((import.meta as any).env?.VITE_API_BASE_URL as string || '').replace(/\/$/, '');
+      const response = await fetch(`${apiBase}/api/ai/support`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          message: userMessage.content,
+          history: messages
+            .filter(m => m.id !== '1')
+            .slice(-10)
+            .map(m => ({ role: m.role, content: m.content }))
+        })
+      });
 
       if (!response.ok) throw new Error('Failed to get response');
       const data = await response.json();

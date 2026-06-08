@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -11,6 +12,72 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+}
+
+function formatInline(text: string): ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/).map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**'))
+      return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+    if (part.startsWith('*') && part.endsWith('*'))
+      return <em key={i}>{part.slice(1, -1)}</em>;
+    return part;
+  });
+}
+
+function renderContent(text: string): ReactNode {
+  const lines = text.split('\n');
+  const elements: ReactNode[] = [];
+
+  lines.forEach((line, i) => {
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      elements.push(<div key={i} className="h-1" />);
+      return;
+    }
+
+    // Horizontal divider
+    if (/^-{3,}$/.test(trimmed)) {
+      elements.push(<hr key={i} className="border-border my-1" />);
+      return;
+    }
+
+    // Heading (###, ##, #)
+    const headingMatch = trimmed.match(/^#{1,3}\s+(.+)/);
+    if (headingMatch) {
+      elements.push(
+        <p key={i} className="font-semibold mt-1.5 mb-0.5">{formatInline(headingMatch[1])}</p>
+      );
+      return;
+    }
+
+    // Bullet list item
+    if (/^[-•*]\s/.test(trimmed)) {
+      elements.push(
+        <div key={i} className="flex items-start gap-1.5 pl-1">
+          <span className="mt-[5px] size-1 rounded-full bg-current flex-shrink-0 opacity-60" />
+          <span>{formatInline(trimmed.replace(/^[-•*]\s/, ''))}</span>
+        </div>
+      );
+      return;
+    }
+
+    // Numbered list item
+    const numMatch = trimmed.match(/^(\d+)[.)]\s+(.+)/);
+    if (numMatch) {
+      elements.push(
+        <div key={i} className="flex items-start gap-1.5 pl-1">
+          <span className="flex-shrink-0 font-semibold opacity-70">{numMatch[1]}.</span>
+          <span>{formatInline(numMatch[2])}</span>
+        </div>
+      );
+      return;
+    }
+
+    elements.push(<p key={i}>{formatInline(trimmed)}</p>);
+  });
+
+  return <div className="space-y-0.5 text-xs leading-snug">{elements}</div>;
 }
 
 function formatResetTime(resetAt: string): string {
@@ -212,7 +279,9 @@ export function AIAssistant() {
                       ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-tr-sm'
                       : 'bg-muted text-foreground rounded-tl-sm'
                   }`}>
-                    <p className="whitespace-pre-wrap">{message.content}</p>
+                    {message.role === 'user'
+                      ? <p className="whitespace-pre-wrap text-xs">{message.content}</p>
+                      : renderContent(message.content)}
                     <p className={`text-[9px] mt-1 ${message.role === 'user' ? 'text-white/60' : 'text-muted-foreground'}`}>
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>

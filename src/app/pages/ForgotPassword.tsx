@@ -1,8 +1,6 @@
 import { MapBackground } from '../components/MapBackground';
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import { useShowRecaptchaBadge } from '../hooks/useShowRecaptchaBadge';
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -15,16 +13,13 @@ import { isBusinessEmail } from '../utils/validation';
 export function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const { executeRecaptcha } = useGoogleReCaptcha();
-  useShowRecaptchaBadge();
   const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isBusinessEmail(email.trim())) return;
     try {
-      const captchaToken = executeRecaptcha ? await executeRecaptcha('forgot_password') : undefined;
-      await forgotPassword({ email: email.trim(), captchaToken }).unwrap();
+      await forgotPassword({ email: email.trim() }).unwrap();
     } catch {
       // Intentionally ignored — always show the same message (anti-enumeration)
     } finally {

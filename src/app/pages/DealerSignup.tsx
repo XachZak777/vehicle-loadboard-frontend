@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import { useShowRecaptchaBadge } from '../hooks/useShowRecaptchaBadge';
 import { toast } from 'sonner';
 import { useAppDispatch } from '../store/hooks';
 import { setCredentials } from '../store/slices/authSlice';
@@ -53,8 +51,6 @@ const HOW_DID_YOU_HEAR = [
 export function DealerSignup() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { executeRecaptcha } = useGoogleReCaptcha();
-  useShowRecaptchaBadge();
   const [registerDealer] = useRegisterDealerMutation();
   const [uploadDealerLicense] = useUploadDealerLicenseMutation();
   const [uploadDealerCorporatePaperwork] = useUploadDealerCorporatePaperworkMutation();
@@ -147,7 +143,6 @@ export function DealerSignup() {
     setIsLoading(true);
 
     try {
-      const captchaToken = executeRecaptcha ? await executeRecaptcha('dealer_register') : undefined;
       const res = await registerDealer({
         email: formData.email.trim(),
         password: formData.password,
@@ -163,7 +158,6 @@ export function DealerSignup() {
         dealerLicenseNumber: formData.dealerLicenseNumber || undefined,
         auctionAccessNumber: formData.auctionAccessNumber || undefined,
         howDidYouHear: formData.howDidYouHear || undefined,
-        captchaToken,
       }).unwrap();
 
       const userProfile: UserProfile = {

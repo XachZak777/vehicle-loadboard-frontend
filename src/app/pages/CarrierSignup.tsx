@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import { useShowRecaptchaBadge } from '../hooks/useShowRecaptchaBadge';
 import { toast } from 'sonner';
 import { useAppDispatch } from '../store/hooks';
 import { setCredentials } from '../store/slices/authSlice';
@@ -39,8 +37,6 @@ const STEPS = [
 export function CarrierSignup() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { executeRecaptcha } = useGoogleReCaptcha();
-  useShowRecaptchaBadge();
   const [register] = useRegisterMutation();
   const [updateProfile] = useUpdateCarrierProfileMutation();
   const [uploadW9] = useUploadCarrierW9Mutation();
@@ -143,8 +139,7 @@ export function CarrierSignup() {
     setFieldErrors({});
     setIsLoading(true);
     try {
-      const captchaToken = executeRecaptcha ? await executeRecaptcha('carrier_register') : undefined;
-      const res = await register({ email: formData.email.trim(), password: formData.password, role: 'CARRIER', captchaToken }).unwrap();
+      const res = await register({ email: formData.email.trim(), password: formData.password, role: 'CARRIER' }).unwrap();
       dispatch(setCredentials({
         user: { id: res.userId, role: 'carrier', email: res.email, createdAt: new Date().toISOString() },
         token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved,

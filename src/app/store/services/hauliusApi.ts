@@ -82,7 +82,6 @@ export type RegisterDealerPayload = {
   dealerLicenseNumber?: string;
   auctionAccessNumber?: string;
   howDidYouHear?: string;
-  captchaToken?: string;
 };
 
 export type AdditionalVehicle = {
@@ -579,7 +578,7 @@ export const hauliusApi = createApi({
     // ── Auth ──────────────────────────────────────────────────────────────
     register: builder.mutation<
       AuthResponse,
-      { email: string; password: string; role: AuthRole; captchaToken?: string }
+      { email: string; password: string; role: AuthRole }
     >({
       query: (body) => ({ url: '/api/auth/register', method: 'POST', body }),
     }),
@@ -595,7 +594,7 @@ export const hauliusApi = createApi({
       }),
       invalidatesTags: ['Profile'],
     }),
-    loginUser: builder.mutation<LoginPendingResponse, { email: string; password: string; captchaToken?: string }>({
+    loginUser: builder.mutation<LoginPendingResponse, { email: string; password: string }>({
       query: (body) => ({ url: '/api/auth/login', method: 'POST', body }),
     }),
     logoutUser: builder.mutation<void, void>({
@@ -612,7 +611,7 @@ export const hauliusApi = createApi({
         body,
       }),
     }),
-    forgotPassword: builder.mutation<void, { email: string; captchaToken?: string }>({
+    forgotPassword: builder.mutation<void, { email: string }>({
       query: (body) => ({
         url: '/api/auth/forgot-password',
         method: 'POST',

@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import { useShowRecaptchaBadge } from '../hooks/useShowRecaptchaBadge';
 import { toast } from 'sonner';
 import { useAppDispatch } from '../store/hooks';
 import { setCredentials } from '../store/slices/authSlice';
@@ -37,8 +35,6 @@ const STEPS = [
 export function BrokerSignup() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { executeRecaptcha } = useGoogleReCaptcha();
-  useShowRecaptchaBadge();
   const [register] = useRegisterMutation();
   const [updateProfile] = useUpdateBrokerProfileMutation();
   const [uploadW9] = useUploadBrokerW9Mutation();
@@ -139,8 +135,7 @@ export function BrokerSignup() {
     setFieldErrors({});
     setIsLoading(true);
     try {
-      const captchaToken = executeRecaptcha ? await executeRecaptcha('broker_register') : undefined;
-      const res = await register({ email: formData.email.trim(), password: formData.password, role: 'BROKER', captchaToken }).unwrap();
+      const res = await register({ email: formData.email.trim(), password: formData.password, role: 'BROKER' }).unwrap();
       dispatch(setCredentials({
         user: { id: res.userId, role: 'broker', email: res.email, createdAt: new Date().toISOString() },
         token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved,

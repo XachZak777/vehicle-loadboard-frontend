@@ -1,8 +1,6 @@
 import { MapBackground } from '../components/MapBackground';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
-import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import { useShowRecaptchaBadge } from '../hooks/useShowRecaptchaBadge';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout, setCredentials } from '../store/slices/authSlice';
 import { hauliusApi, useLoginUserMutation, useLogoutUserMutation } from '../store/services/hauliusApi';
@@ -22,8 +20,6 @@ export function Login() {
   const location = useLocation();
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
-  const { executeRecaptcha } = useGoogleReCaptcha();
-  useShowRecaptchaBadge();
   const [loginUser] = useLoginUserMutation();
   const [logoutUser] = useLogoutUserMutation();
   const [email, setEmail] = useState('');
@@ -71,8 +67,7 @@ export function Login() {
     }
 
     try {
-      const captchaToken = executeRecaptcha ? await executeRecaptcha('login') : undefined;
-      const res = await loginUser({ email: email.trim(), password, captchaToken }).unwrap();
+      const res = await loginUser({ email: email.trim(), password }).unwrap();
 
       // Admin users get a token directly — no email code step
       if (res.token && res.role?.toLowerCase() === 'admin') {
