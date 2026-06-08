@@ -15,31 +15,43 @@ interface Message {
 }
 
 function formatInline(text: string): ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/).map((part, i) => {
+  return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/).map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**'))
       return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
     if (part.startsWith('*') && part.endsWith('*'))
       return <em key={i}>{part.slice(1, -1)}</em>;
+    if (part.startsWith('`') && part.endsWith('`'))
+      return <span key={i} className="font-mono">{part.slice(1, -1)}</span>;
     return part;
   });
+}
+
+const TABLE_SEP = /^\|[-:\s|]+\|$/;
+const TABLE_ROW = /^\|(.+)\|$/;
+
+function parseTableCells(row: string): string[] {
+  return row.split('|').map(c => c.trim()).filter(Boolean);
 }
 
 function renderContent(text: string): ReactNode {
   const lines = text.split('\n');
   const elements: ReactNode[] = [];
+  let i = 0;
 
-  lines.forEach((line, i) => {
-    const trimmed = line.trim();
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
 
     if (!trimmed) {
       elements.push(<div key={i} className="h-1" />);
-      return;
+      i++;
+      continue;
     }
 
     // Horizontal divider
     if (/^-{3,}$/.test(trimmed)) {
       elements.push(<hr key={i} className="border-border my-1" />);
-      return;
+      i++;
+      continue;
     }
 
     // Heading (###, ##, #)
@@ -48,7 +60,65 @@ function renderContent(text: string): ReactNode {
       elements.push(
         <p key={i} className="font-semibold mt-1.5 mb-0.5">{formatInline(headingMatch[1])}</p>
       );
-      return;
+      i++;
+      continue;
+    }
+
+    // Blockquote (> text) — render as a subtle note
+    if (/^>\s?/.test(trimmed)) {
+      const content = trimmed.replace(/^>\s?/, '');
+      elements.push(
+        <div key={i} className="border-l-2 border-amber-400 pl-2 py-0.5 text-muted-foreground text-[11px]">
+          {formatInline(content)}
+        </div>
+      );
+      i++;
+      continue;
+    }
+
+    // Markdown table — collect all consecutive table lines
+    if (TABLE_ROW.test(trimmed)) {
+      const tableLines: string[] = [];
+      while (i < lines.length && TABLE_ROW.test(lines[i].trim())) {
+        tableLines.push(lines[i].trim());
+        i++;
+      }
+      // Filter out separator rows (|---|---|)
+      const dataRows = tableLines.filter(l => !TABLE_SEP.test(l));
+      if (dataRows.length === 0) continue;
+
+      const firstCells = parseTableCells(dataRows[0]);
+      const isKeyValue = firstCells.length === 2;
+
+      if (isKeyValue) {
+        // Skip generic header row (e.g. "Detail | Info")
+        const headerIsGeneric = /detail|info|field|value|key/i.test(firstCells.join(' '));
+        const rows = headerIsGeneric ? dataRows.slice(1) : dataRows;
+        elements.push(
+          <div key={`tbl-${i}`} className="space-y-0.5 my-1">
+            {rows.map((row, ri) => {
+              const cells = parseTableCells(row);
+              if (cells.length < 2) return null;
+              return (
+                <div key={ri} className="flex gap-1.5 flex-wrap">
+                  <span className="font-semibold flex-shrink-0">{formatInline(cells[0])}:</span>
+                  <span>{formatInline(cells[1])}</span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      } else {
+        // Multi-column — render rows as lines
+        elements.push(
+          <div key={`tbl-${i}`} className="space-y-0.5 my-1">
+            {dataRows.map((row, ri) => (
+              <p key={ri}>{parseTableCells(row).map(formatInline).reduce<ReactNode[]>((a, c, ci) => [...a, ci > 0 ? ' · ' : '', ...c], [])}</p>
+            ))}
+          </div>
+        );
+      }
+      continue;
     }
 
     // Bullet list item
@@ -59,7 +129,8 @@ function renderContent(text: string): ReactNode {
           <span>{formatInline(trimmed.replace(/^[-•*]\s/, ''))}</span>
         </div>
       );
-      return;
+      i++;
+      continue;
     }
 
     // Numbered list item
@@ -71,11 +142,13 @@ function renderContent(text: string): ReactNode {
           <span>{formatInline(numMatch[2])}</span>
         </div>
       );
-      return;
+      i++;
+      continue;
     }
 
     elements.push(<p key={i}>{formatInline(trimmed)}</p>);
-  });
+    i++;
+  }
 
   return <div className="space-y-0.5 text-xs leading-snug">{elements}</div>;
 }
