@@ -284,7 +284,7 @@ export function AIAssistant() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 left-6 z-50 bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 hover:shadow-amber-500/50 animate-pulse"
+        className="fixed bottom-6 left-6 z-50 print:hidden bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 hover:shadow-amber-500/50 animate-pulse"
         title="Open AI Assistant"
       >
         <MessageSquare className="size-6" />
@@ -294,7 +294,7 @@ export function AIAssistant() {
 
   return (
     /* Mobile: full-width panel anchored to bottom. Desktop: floating 360px widget */
-    <div className="fixed bottom-0 left-0 right-0 sm:bottom-4 sm:left-4 sm:right-auto z-50 sm:w-[360px] h-[55vh] sm:h-[500px] animate-in slide-in-from-bottom-4 fade-in duration-300">
+    <div className="fixed bottom-0 left-0 right-0 sm:bottom-4 sm:left-4 sm:right-auto z-50 print:hidden sm:w-[360px] h-[55vh] sm:h-[500px] animate-in slide-in-from-bottom-4 fade-in duration-300">
       <Card className="h-full flex flex-col shadow-2xl border-0 overflow-hidden rounded-t-xl sm:rounded-xl bg-white dark:bg-gray-900 gap-0">
 
         {/* Header */}

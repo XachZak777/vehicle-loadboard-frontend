@@ -1,36 +1,15 @@
 import { MapBackground } from '../components/MapBackground';
 import { Link } from 'react-router';
 import { Button } from '../components/ui/button';
-import { ArrowLeft, Shield, Users, Globe, Award } from 'lucide-react';
-import { ThemeToggle } from '../components/ThemeToggle';
+import { Shield, Users, Globe, Award } from 'lucide-react';
+import { Navbar } from '../components/Navbar';
 import { APP_NAME } from '../constants';
 
 export function AboutUs() {
   return (
     <div className="min-h-screen bg-background map-background-detailed">
       <MapBackground />
-      {/* Navigation Bar */}
-      <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-3">
-              <div>
-                <h1 className="text-lg font-bold">{APP_NAME}</h1>
-                <p className="text-xs text-muted-foreground">Vehicle Transport Network</p>
-              </div>
-            </Link>
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              <Link to="/">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <ArrowLeft className="size-4" />
-                  Back to Home
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero */}
       <div className="bg-amber-500/10 border-b border-border py-16">

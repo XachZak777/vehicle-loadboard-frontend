@@ -146,80 +146,80 @@ function CompanyPageContent({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
         {/* Company Info */}
-        <div className="space-y-5">
+        <Card className="border-2 border-gray-200 dark:border-gray-700 gap-0 rounded-none">
+          <CardHeader className="border-b border-border pb-3 pt-4 px-5">
+            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Company Info</CardTitle>
+          </CardHeader>
+          <CardContent className="px-5 !py-3">
+            <InfoItem icon={Shield} label="DOT Number" value={info?.dotNumber} />
+            <InfoItem icon={Shield} label="MC Number" value={info?.mcNumber} />
+            {carrierInfo?.safetyRating && (
+              <InfoItem icon={Shield} label="Safety Rating" value={carrierInfo.safetyRating} />
+            )}
+            {carrierInfo?.totalPowerUnits != null && (
+              <InfoItem icon={Truck} label="Power Units" value={String(carrierInfo.totalPowerUnits)} />
+            )}
+            <InfoItem
+              icon={Phone}
+              label="Phone"
+              value={info?.phoneNumber ? formatPhone(info.phoneNumber) : null}
+              href={info?.phoneNumber ? `tel:${info.phoneNumber}` : undefined}
+            />
+            {brokerInfo?.email && (
+              <InfoItem
+                icon={Mail}
+                label="Email"
+                value={brokerInfo.email}
+                href={`mailto:${brokerInfo.email}`}
+              />
+            )}
+            {street && <InfoItem icon={MapPin} label="Street" value={street} />}
+            {(city || state || zip) && (
+              <InfoItem
+                icon={MapPin}
+                label="City / State"
+                value={[city, state, zip].filter(Boolean).join(', ')}
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Bond Information — brokers only */}
+        {brokerInfo && (brokerInfo.bondCompany || brokerInfo.bondAgentFirstName || brokerInfo.bondAgentLastName || brokerInfo.bondAgentPhone) && (
           <Card className="border-2 border-gray-200 dark:border-gray-700 gap-0 rounded-none">
             <CardHeader className="border-b border-border pb-3 pt-4 px-5">
-              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Company Info</CardTitle>
+              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Bond Information</CardTitle>
             </CardHeader>
             <CardContent className="px-5 !py-3">
-              <InfoItem icon={Shield} label="DOT Number" value={info?.dotNumber} />
-              <InfoItem icon={Shield} label="MC Number" value={info?.mcNumber} />
-              {carrierInfo?.safetyRating && (
-                <InfoItem icon={Shield} label="Safety Rating" value={carrierInfo.safetyRating} />
+              {brokerInfo.bondCompany && (
+                <InfoItem icon={FileCheck} label="Bond Company" value={brokerInfo.bondCompany} />
               )}
-              {carrierInfo?.totalPowerUnits != null && (
-                <InfoItem icon={Truck} label="Power Units" value={String(carrierInfo.totalPowerUnits)} />
-              )}
-              <InfoItem
-                icon={Phone}
-                label="Phone"
-                value={info?.phoneNumber ? formatPhone(info.phoneNumber) : null}
-                href={info?.phoneNumber ? `tel:${info.phoneNumber}` : undefined}
-              />
-              {brokerInfo?.email && (
+              {(brokerInfo.bondAgentFirstName || brokerInfo.bondAgentLastName) && (
                 <InfoItem
-                  icon={Mail}
-                  label="Email"
-                  value={brokerInfo.email}
-                  href={`mailto:${brokerInfo.email}`}
+                  icon={FileCheck}
+                  label="Agent Name"
+                  value={[brokerInfo.bondAgentFirstName, brokerInfo.bondAgentLastName].filter(Boolean).join(' ')}
                 />
               )}
-              {/* Full address */}
-              {street && <InfoItem icon={MapPin} label="Street" value={street} />}
-              {(city || state || zip) && (
+              {brokerInfo.bondAgentPhone && (
                 <InfoItem
-                  icon={MapPin}
-                  label="City / State"
-                  value={[city, state, zip].filter(Boolean).join(', ')}
+                  icon={Phone}
+                  label="Agent Phone"
+                  value={formatPhone(brokerInfo.bondAgentPhone)}
+                  href={`tel:${brokerInfo.bondAgentPhone}`}
                 />
               )}
             </CardContent>
           </Card>
+        )}
+      </div>
 
-          {/* Bond Information — brokers only */}
-          {brokerInfo && (brokerInfo.bondCompany || brokerInfo.bondAgentFirstName || brokerInfo.bondAgentLastName || brokerInfo.bondAgentPhone) && (
-            <Card className="border-2 border-gray-200 dark:border-gray-700 gap-0 rounded-none">
-              <CardHeader className="border-b border-border pb-3 pt-4 px-5">
-                <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Bond Information</CardTitle>
-              </CardHeader>
-              <CardContent className="px-5 !py-3">
-                {brokerInfo.bondCompany && (
-                  <InfoItem icon={FileCheck} label="Bond Company" value={brokerInfo.bondCompany} />
-                )}
-                {(brokerInfo.bondAgentFirstName || brokerInfo.bondAgentLastName) && (
-                  <InfoItem
-                    icon={FileCheck}
-                    label="Agent Name"
-                    value={[brokerInfo.bondAgentFirstName, brokerInfo.bondAgentLastName].filter(Boolean).join(' ')}
-                  />
-                )}
-                {brokerInfo.bondAgentPhone && (
-                  <InfoItem
-                    icon={Phone}
-                    label="Agent Phone"
-                    value={formatPhone(brokerInfo.bondAgentPhone)}
-                    href={`tel:${brokerInfo.bondAgentPhone}`}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Rating Summary */}
-        <Card className="border-2 border-amber-200 dark:border-amber-800/60 gap-0 rounded-none">
+      {/* Ratings & Reviews — full width */}
+      <Card className="border-2 border-amber-200 dark:border-amber-800/60 gap-0 rounded-none">
           <CardHeader className="border-b border-border pb-3 pt-4 px-5">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Rating Overview</CardTitle>
+            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Ratings &amp; Reviews{total > 0 && <span className="ml-1.5 font-normal text-muted-foreground/70">({total})</span>}
+            </CardTitle>
           </CardHeader>
           <CardContent className="px-5 !py-4 space-y-4">
             {total === 0 ? (
@@ -286,60 +286,45 @@ function CompanyPageContent({
                     })}
                   </div>
                 )}
+
+                {ratingList.length > 0 && (
+                  <div className="-mx-5 border-t border-border">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground px-5 pt-4 pb-2">Reviews</p>
+                    {ratingList.map((r) => (
+                      <div key={r.id} className="flex items-start gap-3 px-5 py-4 border-b border-border last:border-0">
+                        <div className={`mt-0.5 p-2 flex-shrink-0 ${r.type === 'positive' ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                          {r.type === 'positive'
+                            ? <ThumbsUp className="size-3.5 text-amber-600" />
+                            : <ThumbsDown className="size-3.5 text-gray-500" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <p className="text-sm font-semibold">{r.fromName || 'Anonymous'}</p>
+                            <span className="text-xs text-muted-foreground">{fmtDate(r.createdAt)}</span>
+                          </div>
+                          {r.fromRole && <p className="text-xs text-muted-foreground mt-0.5">{r.fromRole}</p>}
+                          {r.loadTitle && <p className="text-xs text-muted-foreground mt-1">Load: {r.loadTitle}</p>}
+                          {r.comment && (
+                            <p className="text-sm bg-muted px-3 py-2 mt-2">"{r.comment}"</p>
+                          )}
+                          {r.tags && r.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-2">
+                              {r.tags.map((tag) => (
+                                <Badge key={tag} variant="secondary" className="text-xs">
+                                  {TAG_LABELS[tag] ?? tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </CardContent>
         </Card>
-      </div>
-
-      {/* Reviews */}
-      {ratingList.length > 0 && (
-        <Card className="border-2 border-gray-200 dark:border-gray-700 gap-0 rounded-none">
-          <CardHeader className="border-b border-border pb-3 pt-4 px-5">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Recent Reviews ({ratingList.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="!p-0">
-            {ratingList.map((r) => (
-              <div key={r.id} className="flex items-start gap-3 px-5 py-4 border-b border-border last:border-0">
-                <div className={`mt-0.5 p-2 flex-shrink-0 ${r.type === 'positive' ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                  {r.type === 'positive'
-                    ? <ThumbsUp className="size-3.5 text-amber-600" />
-                    : <ThumbsDown className="size-3.5 text-gray-500" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <p className="text-sm font-semibold">{r.fromName || 'Anonymous'}</p>
-                    <span className="text-xs text-muted-foreground">{fmtDate(r.createdAt)}</span>
-                  </div>
-                  {r.fromRole && <p className="text-xs text-muted-foreground mt-0.5">{r.fromRole}</p>}
-                  {r.loadTitle && <p className="text-xs text-muted-foreground mt-1">Load: {r.loadTitle}</p>}
-                  {r.comment && (
-                    <p className="text-sm bg-muted px-3 py-2 mt-2">"{r.comment}"</p>
-                  )}
-                  {r.tags && r.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {r.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {TAG_LABELS[tag] ?? tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {ratingList.length === 0 && total === 0 && (
-        <div className="py-10 text-center text-muted-foreground">
-          <Star className="size-10 mx-auto mb-3 opacity-20" />
-          <p className="font-medium">No reviews yet</p>
-        </div>
-      )}
     </div>
   );
 }

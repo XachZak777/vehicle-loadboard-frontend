@@ -6,7 +6,7 @@ import { useLogout } from '../hooks/useLogout';
 import { Button } from './ui/button';
 import { BrandLogo } from './BrandLogo';
 import {
-  LayoutDashboard, Building2, LogOut, Plus, FileText,
+  LayoutDashboard, Building2, LogOut, Plus,
   Star, Settings, ChevronDown, Menu, X, Search, History, Truck, Package,
   HelpCircle, MessageCircle, BookOpen, Phone,
 } from 'lucide-react';
@@ -178,12 +178,6 @@ export function Navbar() {
                           {notifCount > 9 ? '9+' : notifCount}
                         </span>
                       )}
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
-                    <Link to="/carrier/requested" className="flex items-center gap-3 w-full">
-                      <FileText className="h-5 w-5 flex-shrink-0" />
-                      <span className="text-base">Requested Loads</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild className="px-4 py-3 cursor-pointer">
@@ -405,12 +399,6 @@ export function Navbar() {
                         {notifCount > 9 ? '9+' : notifCount}
                       </span>
                     )}
-                  </Button>
-                </Link>
-                <Link to="/carrier/requested" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="ghost" size="sm"
-                    className={`w-full justify-start gap-2 ${isActive('/carrier/requested') ? 'font-semibold text-foreground' : ''}`}>
-                    <FileText className="h-4 w-4" /> Requested Loads
                   </Button>
                 </Link>
                 <Link to="/carrier/offers" onClick={() => setMobileMenuOpen(false)}>

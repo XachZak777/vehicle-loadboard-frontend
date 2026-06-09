@@ -91,8 +91,13 @@ export function LoadBoard() {
   const { data: savedLoadIds = [] } = useGetSavedLoadIdsQuery(undefined, { skip: !isCarrier });
   const myCarrierId = myCarrierProfile?.id;
 
-  const [activeTab, setActiveTab] = useState<'all' | 'saved'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'saved' | 'requested'>('all');
   const { data: savedLoads = [] } = useGetSavedLoadsQuery(undefined, { skip: !isCarrier });
+
+  const requestedLoads = useMemo(
+    () => loads.filter(l => myCarrierBids.some(b => b.bidStatus === 'PENDING' && b.loadId === l.id)),
+    [loads, myCarrierBids]
+  );
 
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -108,7 +113,7 @@ export function LoadBoard() {
   const [minPricePerMile, setMinPricePerMile] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 20;
+  const [pageSize, setPageSize] = useState(20);
 
   const [showScrollTop, setShowScrollTop] = useState(false);
   useEffect(() => {
@@ -230,11 +235,14 @@ export function LoadBoard() {
     return result;
   }, [loads, searchTerm, pickupLocation, deliveryLocation, vehicleType, trailerType, condition, minPrice, minPricePerMile, sortBy]);
 
-  useEffect(() => { setPage(1); }, [filteredLoads]);
+  useEffect(() => { setPage(1); }, [filteredLoads, activeTab]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredLoads.length / PAGE_SIZE));
+  const activeTabLoads = activeTab === 'saved' ? savedLoads
+    : activeTab === 'requested' ? requestedLoads
+    : filteredLoads;
+  const totalPages = Math.max(1, Math.ceil(activeTabLoads.length / pageSize));
   const safePage = Math.min(page, totalPages);
-  const pagedLoads = filteredLoads.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pagedLoads = activeTabLoads.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const fetchError = isError ? ((error as any)?.message || 'Failed to load data.') : '';
 
@@ -312,8 +320,9 @@ export function LoadBoard() {
                     className="w-[272px] transition-transform duration-300 ease-out"
                     style={{ transform: filtersOpen ? 'translateX(0)' : 'translateX(-100%)' }}
                   >
-                    <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
-                      <h2 className="text-base font-bold text-foreground mb-4">Filters</h2>
+                    <div className="rounded-xl border border-border/60 bg-card shadow-sm flex flex-col" style={{ maxHeight: 'calc(100vh - 4rem - 3.75rem)' }}>
+                      <h2 className="text-base font-bold text-foreground p-4 pb-3 flex-shrink-0 border-b border-border/50">Filters</h2>
+                      <div className="overflow-y-auto p-4 pt-3 flex-1 scrollbar-thin">
                       <FilterPanel
                         sortBy={sortBy} setSortBy={setSortBy}
                         searchTerm={searchTerm} setSearchTerm={setSearchTerm}
@@ -328,6 +337,7 @@ export function LoadBoard() {
                         minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
                         clearFilters={clearFilters}
                       />
+                      </div>
                     </div>
                   </div>
                 </aside>
@@ -356,47 +366,66 @@ export function LoadBoard() {
                         </span>
                       )}
                     </button>
+                    <button
+                      onClick={() => setActiveTab('requested')}
+                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'requested' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                      <CheckCircle className={`size-3.5 ${activeTab === 'requested' ? 'text-amber-500' : ''}`} />
+                      Requested
+                      {requestedLoads.length > 0 && (
+                        <span className="inline-flex items-center justify-center size-4 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">
+                          {requestedLoads.length}
+                        </span>
+                      )}
+                    </button>
                   </div>
                 )}
 
                 {/* Toolbar */}
-                <div className={`flex items-center gap-3 mb-4 ${activeTab === 'saved' ? 'hidden' : ''}`}>
-                  {/* Mobile: filter button */}
-                  <button
-                    onClick={() => setMobileFiltersOpen(true)}
-                    className="sm:hidden inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-background hover:bg-muted transition-colors text-sm text-foreground shadow-sm"
-                  >
-                    <SlidersHorizontal className="size-4 text-amber-500" />
-                    Filters
-                    {activeFilterCount > 0 && (
-                      <span className="inline-flex items-center justify-center size-5 rounded-full bg-amber-500 text-white text-xs font-bold">
-                        {activeFilterCount}
-                      </span>
-                    )}
-                  </button>
+                <div className="flex items-center gap-2 mb-4">
+                  {/* Filter controls — all tab only */}
+                  {activeTab === 'all' && (
+                    <>
+                      <button
+                        onClick={() => setMobileFiltersOpen(true)}
+                        className="sm:hidden inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-background hover:bg-muted transition-colors text-sm text-foreground shadow-sm"
+                      >
+                        <SlidersHorizontal className="size-4 text-amber-500" />
+                        Filters
+                        {activeFilterCount > 0 && (
+                          <span className="inline-flex items-center justify-center size-5 rounded-full bg-amber-500 text-white text-xs font-bold">
+                            {activeFilterCount}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setFiltersOpen(v => !v)}
+                        title={filtersOpen ? 'Hide filters' : 'Show filters'}
+                        className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-sm text-muted-foreground"
+                      >
+                        <SlidersHorizontal className="size-4" />
+                        {filtersOpen ? <ChevronLeft className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                        {!filtersOpen && activeFilterCount > 0 && (
+                          <span className="inline-flex items-center justify-center size-5 rounded-full bg-amber-500 text-white text-xs font-bold">
+                            {activeFilterCount}
+                          </span>
+                        )}
+                      </button>
+                    </>
+                  )}
 
-                  {/* Desktop: sidebar toggle */}
-                  <button
-                    onClick={() => setFiltersOpen(v => !v)}
-                    title={filtersOpen ? 'Hide filters' : 'Show filters'}
-                    className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-sm text-muted-foreground"
-                  >
-                    <SlidersHorizontal className="size-4" />
-                    {filtersOpen ? <ChevronLeft className="size-3.5" /> : <ChevronRight className="size-3.5" />}
-                    {!filtersOpen && activeFilterCount > 0 && (
-                      <span className="inline-flex items-center justify-center size-5 rounded-full bg-amber-500 text-white text-xs font-bold">
-                        {activeFilterCount}
-                      </span>
-                    )}
-                  </button>
-
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-amber-600">{filteredLoads.length}</span>{' '}
-                    available load{filteredLoads.length !== 1 ? 's' : ''}
+                  <p className="text-sm text-muted-foreground whitespace-nowrap">
+                    <span className="font-semibold text-amber-600">{activeTabLoads.length}</span>
+                    <span className="sm:hidden"> loads</span>
+                    <span className="hidden sm:inline">
+                      {activeTab === 'all'
+                        ? ` available load${filteredLoads.length !== 1 ? 's' : ''}`
+                        : ` load${activeTabLoads.length !== 1 ? 's' : ''}`}
+                    </span>
                   </p>
 
-                  <div className="ml-auto flex items-center gap-3">
-                    {activeFilterCount > 0 && (
+                  <div className="ml-auto flex items-center gap-2">
+                    {activeTab === 'all' && activeFilterCount > 0 && (
                       <button onClick={clearFilters} className="hidden sm:inline-flex items-center gap-1 text-xs text-amber-600 hover:underline">
                         <X className="size-3" />
                         Clear all filters
@@ -405,100 +434,101 @@ export function LoadBoard() {
                     <button
                       onClick={() => refetch()}
                       disabled={isFetching}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-sm text-foreground disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-sm text-foreground disabled:opacity-50"
                     >
                       <Loader2 className={`size-4 ${isFetching ? 'animate-spin text-amber-500' : 'text-muted-foreground'}`} />
-                      Refresh
+                      <span className="hidden sm:inline">Refresh</span>
                     </button>
+                    <Select value={String(pageSize)} onValueChange={v => { setPageSize(Number(v)); setPage(1); }}>
+                      <SelectTrigger className="h-8 w-[5.5rem]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {[10, 20, 50, 100].map(n => (
+                          <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
-                {activeTab === 'saved' ? (
-                  <div className="space-y-3">
-                    {savedLoads.length === 0 ? (
-                      <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
-                        <Bookmark className="size-10 mx-auto mb-3 text-muted-foreground opacity-30" />
-                        <h3 className="text-base font-semibold mb-1">No saved loads</h3>
-                        <p className="text-sm text-muted-foreground">Bookmark loads from the All Loads tab to save them here.</p>
-                      </div>
-                    ) : (
-                      savedLoads.map(load => (
-                        <LoadCard
-                          key={load.id}
-                          load={load}
-                          myCarrierId={myCarrierId}
-                          existingBid={myCarrierBids.find(b => b.loadId === load.id)}
-                          isSaved={true}
-                        />
-                      ))
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {pagedLoads.map(load => (
-                      <LoadCard
-                        key={load.id}
-                        load={load}
-                        myCarrierId={myCarrierId}
-                        existingBid={myCarrierBids.find(b => b.loadId === load.id)}
-                        isSaved={savedLoadIds.includes(load.id)}
-                      />
-                    ))}
+                <div className="space-y-3">
+                  {activeTab === 'saved' && pagedLoads.length === 0 && (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
+                      <Bookmark className="size-10 mx-auto mb-3 text-muted-foreground opacity-30" />
+                      <h3 className="text-base font-semibold mb-1">No saved loads</h3>
+                      <p className="text-sm text-muted-foreground">Bookmark loads from the All Loads tab to save them here.</p>
+                    </div>
+                  )}
+                  {activeTab === 'requested' && pagedLoads.length === 0 && (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
+                      <CheckCircle className="size-10 mx-auto mb-3 text-muted-foreground opacity-30" />
+                      <h3 className="text-base font-semibold mb-1">No pending requests</h3>
+                      <p className="text-sm text-muted-foreground">Loads you've requested will appear here.</p>
+                    </div>
+                  )}
+                  {activeTab === 'all' && filteredLoads.length === 0 && (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
+                      <h3 className="text-lg font-semibold text-foreground mb-2">No loads found</h3>
+                      <p className="text-muted-foreground mb-4">Try adjusting your filters to find available loads.</p>
+                      <Button onClick={clearFilters} className="bg-amber-500 hover:bg-amber-600 text-white">
+                        Clear Filters
+                      </Button>
+                    </div>
+                  )}
+                  {pagedLoads.map(load => (
+                    <LoadCard
+                      key={load.id}
+                      load={load}
+                      myCarrierId={myCarrierId}
+                      existingBid={myCarrierBids.find(b => b.loadId === load.id)}
+                      isSaved={activeTab === 'saved' ? true : savedLoadIds.includes(load.id)}
+                    />
+                  ))}
+                </div>
 
-                    {filteredLoads.length === 0 && (
-                      <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
-                        <h3 className="text-lg font-semibold text-foreground mb-2">No loads found</h3>
-                        <p className="text-muted-foreground mb-4">Try adjusting your filters to find available loads.</p>
-                        <Button onClick={clearFilters} className="bg-amber-500 hover:bg-amber-600 text-white">
-                          Clear Filters
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {activeTabLoads.length > 0 && totalPages > 1 && (
+                  <div className="flex justify-center pt-4 pb-2">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={safePage === 1}
+                        className="px-3 py-1.5 rounded-md border border-border text-sm text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Previous
+                      </button>
 
-                {activeTab === 'all' && totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-1 pt-4 pb-2">
-                    <button
-                      onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      disabled={safePage === 1}
-                      className="px-3 py-1.5 rounded-md border border-border text-sm text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Previous
-                    </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                        .reduce<(number | '…')[]>((acc, p, idx, arr) => {
+                          if (idx > 0 && typeof arr[idx - 1] === 'number' && (p as number) - (arr[idx - 1] as number) > 1) acc.push('…');
+                          acc.push(p);
+                          return acc;
+                        }, [])
+                        .map((p, idx) =>
+                          p === '…' ? (
+                            <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground text-sm">…</span>
+                          ) : (
+                            <button
+                              key={p}
+                              onClick={() => { setPage(p as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                              className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
+                                safePage === p
+                                  ? 'bg-amber-500 border-amber-500 text-white font-semibold'
+                                  : 'border-border text-muted-foreground hover:bg-muted'
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          )
+                        )}
 
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
-                      .reduce<(number | '…')[]>((acc, p, idx, arr) => {
-                        if (idx > 0 && typeof arr[idx - 1] === 'number' && (p as number) - (arr[idx - 1] as number) > 1) acc.push('…');
-                        acc.push(p);
-                        return acc;
-                      }, [])
-                      .map((p, idx) =>
-                        p === '…' ? (
-                          <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground text-sm">…</span>
-                        ) : (
-                          <button
-                            key={p}
-                            onClick={() => { setPage(p as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                            className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
-                              safePage === p
-                                ? 'bg-amber-500 border-amber-500 text-white font-semibold'
-                                : 'border-border text-muted-foreground hover:bg-muted'
-                            }`}
-                          >
-                            {p}
-                          </button>
-                        )
-                      )}
-
-                    <button
-                      onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      disabled={safePage === totalPages}
-                      className="px-3 py-1.5 rounded-md border border-border text-sm text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Next
-                    </button>
+                      <button
+                        onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={safePage === totalPages}
+                        className="px-3 py-1.5 rounded-md border border-border text-sm text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Next
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -887,44 +917,22 @@ const LoadCard = memo(function LoadCard({
           </div>
         </div>
 
-        {/* ── Mobile layout (< sm): two rows ── */}
-        <div className="flex flex-col gap-2 sm:hidden">
-          {/* Row 1: title + price + chevron */}
+        {/* ── Mobile layout (< sm): stacked rows ── */}
+        <div className="flex flex-col gap-1.5 sm:hidden">
+          {/* Row 1: title + price + actions */}
           <div className="flex items-start gap-2">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                <span className="text-base font-semibold text-foreground">{vehicleTitle}</span>
-                {isMulti && (
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                    {vehicleCount} Vehicles
-                  </span>
-                )}
-                {load.trailerType === 'enclosed' && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                    Enclosed Trailer
-                  </span>
-                )}
-                {hasPendingBid && (
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
-                    <CheckCircle className="size-3" />
-                    Requested
-                  </span>
-                )}
-                {allConditions.map((c, i) => <ConditionIcon key={i} condition={c} />)}
-              </div>
-              {isMulti && vehicleListText && (
-                <p className="text-xs text-muted-foreground">{vehicleListText}</p>
-              )}
+              <span className="text-sm font-semibold text-foreground leading-snug">{vehicleTitle}</span>
             </div>
             <div className="flex-shrink-0 text-right">
               {load.price != null && (
-                <div className="text-lg font-bold text-foreground leading-tight">
+                <div className="text-base font-bold text-foreground leading-tight">
                   ${load.price.toLocaleString()}
                 </div>
               )}
               {ppm != null && load.distance != null && (
                 <div className="text-xs text-muted-foreground whitespace-nowrap">
-                  {load.distance.toLocaleString()} mi • ${ppm.toFixed(2)}/mi
+                  {load.distance.toLocaleString()} mi · ${ppm.toFixed(2)}/mi
                 </div>
               )}
             </div>
@@ -943,44 +951,70 @@ const LoadCard = memo(function LoadCard({
             </div>
           </div>
 
-          {/* Row 2: full-width lane */}
-          <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1 overflow-hidden">
-              <div className="flex items-start gap-1">
-                <MapPin className="size-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+          {/* Row 2: chips */}
+          {(isMulti || load.trailerType === 'enclosed' || hasPendingBid) && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {isMulti && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                  {vehicleCount} Vehicles
+                </span>
+              )}
+              {load.trailerType === 'enclosed' && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                  Enclosed Trailer
+                </span>
+              )}
+              {hasPendingBid && (
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+                  <CheckCircle className="size-3" />
+                  Requested
+                </span>
+              )}
+              {allConditions.map((c, i) => <ConditionIcon key={i} condition={c} />)}
+            </div>
+          )}
+
+          {/* Row 3: vehicle list */}
+          {isMulti && vehicleListText && (
+            <p className="text-xs text-muted-foreground">{vehicleListText}</p>
+          )}
+
+          {/* Row 4: full-width lane */}
+          <div className="flex items-center gap-2 mt-0.5">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <MapPin className="size-3 text-amber-500 flex-shrink-0" />
                 {pickupExact ? (
-                  <span className="text-sm text-muted-foreground truncate">{pickupExact}</span>
+                  <span className="text-xs text-muted-foreground truncate">{pickupExact}</span>
                 ) : load.pickupCity ? (
                   <button
                     onClick={e => { e.stopPropagation(); setCityMap({ city: load.pickupCity!, state: load.pickupState!, label: `Pickup — ${pickupLoc}` }); }}
-                    className="text-sm text-muted-foreground hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left min-w-0 overflow-hidden"
+                    className="text-xs text-muted-foreground hover:underline underline-offset-2 cursor-pointer text-left truncate"
                   >
-                    <span className="block truncate">{pickupLoc}</span>
-                    {load.pickupZip && <span className="block text-xs">{load.pickupZip}</span>}
+                    {pickupLocFull || '—'}
                   </button>
                 ) : (
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-xs text-muted-foreground">—</span>
                 )}
               </div>
               {pickupDateStr && <p className="text-xs text-muted-foreground pl-4">{pickupDateStr}</p>}
             </div>
-            <span className="text-amber-500 font-bold flex-shrink-0 pt-0.5">→</span>
-            <div className="min-w-0 flex-1 overflow-hidden text-right">
-              <div className="flex items-start gap-1 flex-row-reverse">
-                <MapPin className="size-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <span className="text-amber-500 font-bold flex-shrink-0 text-sm">→</span>
+            <div className="min-w-0 flex-1 text-right">
+              <div className="flex items-center gap-1 justify-end">
                 {dropExact ? (
-                  <span className="text-sm text-muted-foreground truncate">{dropExact}</span>
+                  <span className="text-xs text-muted-foreground truncate">{dropExact}</span>
                 ) : load.dropCity ? (
                   <button
                     onClick={e => { e.stopPropagation(); setCityMap({ city: load.dropCity!, state: load.dropState!, label: `Delivery — ${dropLoc}` }); }}
-                    className="text-sm text-muted-foreground hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-right min-w-0 overflow-hidden"
+                    className="text-xs text-muted-foreground hover:underline underline-offset-2 cursor-pointer text-right truncate"
                   >
-                    <span className="block truncate">{dropLoc}</span>
-                    {load.dropZip && <span className="block text-xs">{load.dropZip}</span>}
+                    {dropLocFull || '—'}
                   </button>
                 ) : (
-                  <span className="text-sm text-muted-foreground">—</span>
+                  <span className="text-xs text-muted-foreground">—</span>
                 )}
+                <MapPin className="size-3 text-amber-500 flex-shrink-0" />
               </div>
               {deliveryDateStr && <p className="text-xs text-muted-foreground pr-4">{deliveryDateStr}</p>}
             </div>

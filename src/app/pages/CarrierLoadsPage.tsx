@@ -100,6 +100,7 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
   const [editPickupTime, setEditPickupTime] = useState('');
   const [editDropDate, setEditDropDate] = useState('');
   const [editDropTime, setEditDropTime] = useState('');
+  const [editNotes, setEditNotes] = useState('');
   const { data: submittedLoadIds } = useGetMySubmittedLoadIdsQuery();
   const { data: brokerInfo } = useGetBrokerPublicInfoQuery(bid.brokerId ?? '', { skip: !bid.brokerId });
   const brokerName = brokerInfo?.companyName || brokerInfo?.legalName || 'the broker';
@@ -110,6 +111,7 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
     setEditPickupTime(bid.requestedPickupTime ?? '');
     setEditDropDate(bid.requestedDropDate ?? '');
     setEditDropTime(bid.requestedDropTime ?? '');
+    setEditNotes(bid.notes ?? '');
     setShowEdit(true);
     setExpanded(true);
   };
@@ -128,6 +130,7 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
         requestedPickupTime: editPickupTime || undefined,
         requestedDropDate: editDropDate || undefined,
         requestedDropTime: editDropTime || undefined,
+        notes: editNotes.trim() || undefined,
       }).unwrap();
       toast.success('Bid updated!');
       setShowEdit(false);
@@ -469,6 +472,17 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
                   <label className="text-xs text-muted-foreground block mb-1">Drop Time</label>
                   <Input type="time" value={editDropTime} onChange={e => setEditDropTime(e.target.value)} className="h-8 text-xs" />
                 </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Notes (optional)</label>
+                <textarea
+                  value={editNotes}
+                  onChange={e => setEditNotes(e.target.value)}
+                  placeholder="Any questions, special requests, or details for the broker…"
+                  maxLength={500}
+                  rows={2}
+                  className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                />
               </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleUpdate} disabled={isUpdating}
