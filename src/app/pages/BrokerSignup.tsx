@@ -141,23 +141,33 @@ export function BrokerSignup() {
         token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved,
       }));
 
-      await updateProfile({
-        companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
-        phoneNumber: formData.phoneNumber, taxIdType: formData.taxIdType, taxId: formData.taxId,
-        mailingAddress: formData.mailingAddress, city: formData.city, state: formData.state, zipCode: formData.zipCode,
-        bondCompany: formData.bondCompany || undefined, bondPolicyNumber: formData.bondPolicyNumber || undefined,
-        bondCoverage: formData.bondCoverage || undefined, bondEffectiveDate: formData.bondEffectiveDate || undefined,
-        bondAgentFirstName: formData.bondAgentFirstName || undefined, bondAgentLastName: formData.bondAgentLastName || undefined,
-        bondAgentEmail: formData.bondAgentEmail || undefined, bondAgentPhone: formData.bondAgentPhone || undefined,
-      }).unwrap();
+      // Profile save is non-fatal: if it fails the account exists and the user
+      // can complete their profile after logging in from the pending-approval page.
+      try {
+        await updateProfile({
+          companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
+          phoneNumber: formData.phoneNumber, taxIdType: formData.taxIdType, taxId: formData.taxId,
+          mailingAddress: formData.mailingAddress, city: formData.city, state: formData.state, zipCode: formData.zipCode,
+          bondCompany: formData.bondCompany || undefined, bondPolicyNumber: formData.bondPolicyNumber || undefined,
+          bondCoverage: formData.bondCoverage || undefined, bondEffectiveDate: formData.bondEffectiveDate || undefined,
+          bondAgentFirstName: formData.bondAgentFirstName || undefined, bondAgentLastName: formData.bondAgentLastName || undefined,
+          bondAgentEmail: formData.bondAgentEmail || undefined, bondAgentPhone: formData.bondAgentPhone || undefined,
+        }).unwrap();
+      } catch (profileErr: any) {
+        toast.warning(profileErr?.data?.message || 'Profile could not be saved. Log in to complete your profile.', {
+          description: 'Your account was created. You can finish your profile after logging in.',
+        });
+      }
 
-      for (const [file, upload, msg] of [
-        [w9File, uploadW9, 'W9 upload will be available once your email is verified.'],
-        [mcAuthorityFile, uploadMcAuthority, 'MC Authority upload will be available once your email is verified.'],
-      ] as [File | null, (fd: FormData) => any, string][]) {
+      for (const [file, upload] of [
+        [w9File, uploadW9],
+        [mcAuthorityFile, uploadMcAuthority],
+      ] as [File | null, (fd: FormData) => any][]) {
         if (file) {
           try { const fd = new FormData(); fd.append('file', file); await upload(fd).unwrap(); }
-          catch { toast.warning(msg); }
+          catch (uploadErr: any) {
+            toast.warning(uploadErr?.data?.message || 'Document upload failed. You can upload it from your profile.');
+          }
         }
       }
 

@@ -171,13 +171,15 @@ export function DealerSignup() {
       };
       dispatch(setCredentials({ user: userProfile, token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved }));
 
-      for (const [file, upload, msg] of [
-        [dealerLicenseFile, uploadDealerLicense, "Dealer's license upload will be available once your email is verified."],
-        [corporatePaperworkFile, uploadDealerCorporatePaperwork, 'Corporate paperwork upload will be available once your email is verified.'],
-      ] as [File | null, (fd: FormData) => any, string][]) {
+      for (const [file, upload] of [
+        [dealerLicenseFile, uploadDealerLicense],
+        [corporatePaperworkFile, uploadDealerCorporatePaperwork],
+      ] as [File | null, (fd: FormData) => any][]) {
         if (file) {
           try { const fd = new FormData(); fd.append('file', file); await upload(fd).unwrap(); }
-          catch { toast.warning(msg); }
+          catch (uploadErr: any) {
+            toast.warning(uploadErr?.data?.message || 'Document upload failed. You can upload it from your profile.');
+          }
         }
       }
 

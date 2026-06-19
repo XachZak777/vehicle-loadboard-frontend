@@ -1,7 +1,9 @@
 import { MapBackground } from '../components/MapBackground';
+import { Link } from 'react-router';
 import { Button } from '../components/ui/button';
-import { Mail, Phone } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
+import { APP_NAME } from '../constants';
 import { useState } from 'react';
 import { isBusinessEmail, businessEmailError, isValidName, buildErrors, type FieldErrors } from '../utils/validation';
 

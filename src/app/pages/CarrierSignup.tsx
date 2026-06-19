@@ -145,26 +145,36 @@ export function CarrierSignup() {
         token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved,
       }));
 
-      await updateProfile({
-        companyName: formData.companyName, dbaName: formData.dbaName || undefined,
-        dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
-        phoneNumber: formData.phoneNumber, insuranceCompany: formData.insuranceCompany,
-        cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : undefined,
-        liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : undefined,
-        taxIdType: formData.taxIdType, taxId: formData.taxId,
-        mailingAddress: formData.mailingAddress, city: formData.city,
-        state: formData.state, zipCode: formData.zipCode,
-        preferredLines: preferredLines.length > 0 ? JSON.stringify(preferredLines) : undefined,
-      }).unwrap();
+      // Profile save is non-fatal: if it fails the account exists and the user
+      // can complete their profile after logging in from the pending-approval page.
+      try {
+        await updateProfile({
+          companyName: formData.companyName, dbaName: formData.dbaName || undefined,
+          dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
+          phoneNumber: formData.phoneNumber, insuranceCompany: formData.insuranceCompany,
+          cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : undefined,
+          liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : undefined,
+          taxIdType: formData.taxIdType, taxId: formData.taxId,
+          mailingAddress: formData.mailingAddress, city: formData.city,
+          state: formData.state, zipCode: formData.zipCode,
+          preferredLines: preferredLines.length > 0 ? JSON.stringify(preferredLines) : undefined,
+        }).unwrap();
+      } catch (profileErr: any) {
+        toast.warning(profileErr?.data?.message || 'Profile could not be saved. Log in to complete your profile.', {
+          description: 'Your account was created. You can finish your profile after logging in.',
+        });
+      }
 
-      for (const [file, upload, msg] of [
-        [w9File, uploadW9, 'W9 upload will be available once your email is verified.'],
-        [insuranceFile, uploadInsurance, 'Insurance certificate upload will be available once your email is verified.'],
-        [mcAuthorityFile, uploadMcAuthority, 'MC Authority upload will be available once your email is verified.'],
-      ] as [File | null, (fd: FormData) => any, string][]) {
+      for (const [file, upload] of [
+        [w9File, uploadW9],
+        [insuranceFile, uploadInsurance],
+        [mcAuthorityFile, uploadMcAuthority],
+      ] as [File | null, (fd: FormData) => any][]) {
         if (file) {
           try { const fd = new FormData(); fd.append('file', file); await upload(fd).unwrap(); }
-          catch { toast.warning(msg); }
+          catch (uploadErr: any) {
+            toast.warning(uploadErr?.data?.message || 'Document upload failed. You can upload it from your profile.');
+          }
         }
       }
 
