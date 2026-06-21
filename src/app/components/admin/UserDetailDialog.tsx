@@ -16,11 +16,12 @@ import {
 } from 'lucide-react';
 import type {
   AdminUserDto, AdminDocumentDto,
-  AdminCarrierProfilePayload, AdminBrokerProfilePayload,
+  AdminCarrierProfilePayload, AdminBrokerProfilePayload, AdminDealerProfilePayload,
   PreferredLine,
 } from '../../store/services/hauliusApi';
 import {
   useAdminUpdateCarrierProfileMutation, useAdminUpdateBrokerProfileMutation,
+  useAdminUpdateDealerProfileMutation,
   useAdminUploadCarrierDocumentMutation, useAdminUploadBrokerDocumentMutation,
   useAdminUploadDealerDocumentMutation,
 } from '../../store/services/hauliusApi';
@@ -65,6 +66,11 @@ type EditForm = {
   bondAgentLastName: string;
   bondAgentEmail: string;
   bondAgentPhone: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  yearEstablished: string;
+  dealerLicenseNumber: string;
+  auctionAccessNumber: string;
 };
 
 function formFromUser(user: AdminUserDto): EditForm {
@@ -91,6 +97,11 @@ function formFromUser(user: AdminUserDto): EditForm {
     bondAgentLastName: user.bondAgentLastName ?? '',
     bondAgentEmail: user.bondAgentEmail ?? '',
     bondAgentPhone: user.bondAgentPhone ?? '',
+    ownerFirstName: user.ownerFirstName ?? '',
+    ownerLastName: user.ownerLastName ?? '',
+    yearEstablished: user.yearEstablished ?? '',
+    dealerLicenseNumber: user.dealerLicenseNumber ?? '',
+    auctionAccessNumber: user.auctionAccessNumber ?? '',
   };
 }
 
@@ -122,6 +133,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
 
   const [adminUpdateCarrier] = useAdminUpdateCarrierProfileMutation();
   const [adminUpdateBroker] = useAdminUpdateBrokerProfileMutation();
+  const [adminUpdateDealer] = useAdminUpdateDealerProfileMutation();
   const [adminUploadCarrierDoc] = useAdminUploadCarrierDocumentMutation();
   const [adminUploadBrokerDoc] = useAdminUploadBrokerDocumentMutation();
   const [adminUploadDealerDoc] = useAdminUploadDealerDocumentMutation();
@@ -145,7 +157,21 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
     setIsSaving(true);
     try {
       if (isDealer) {
-        toast.success('Dealer profile is updated via document upload.');
+        const body: AdminDealerProfilePayload = {
+          companyName: editForm.companyName || undefined,
+          ownerFirstName: editForm.ownerFirstName || undefined,
+          ownerLastName: editForm.ownerLastName || undefined,
+          businessPhone: editForm.phoneNumber || undefined,
+          companyAddress: editForm.mailingAddress || undefined,
+          city: editForm.city || undefined,
+          state: editForm.state || undefined,
+          zipCode: editForm.zipCode || undefined,
+          yearEstablished: editForm.yearEstablished || undefined,
+          dealerLicenseNumber: editForm.dealerLicenseNumber || undefined,
+          auctionAccessNumber: editForm.auctionAccessNumber || undefined,
+        };
+        await adminUpdateDealer({ id: user.profileId, body }).unwrap();
+        toast.success('Dealer profile updated successfully.');
         setIsEditing(false);
         setIsSaving(false);
         return;
@@ -308,10 +334,12 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
             <CardContent className="px-4 pb-4 space-y-2">
               {isEditing ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {field('Legal Company Name', <Input className="h-8 text-sm" value={editForm.companyName} onChange={e => set('companyName', e.target.value)} />)}
+                  {field('Company Name', <Input className="h-8 text-sm" value={editForm.companyName} onChange={e => set('companyName', e.target.value)} />)}
                   {isCarrier && field('DBA Name', <Input className="h-8 text-sm" value={editForm.dbaName} onChange={e => set('dbaName', e.target.value)} placeholder="Optional" />)}
-                  {field('DOT Number', <Input className="h-8 text-sm" value={editForm.dotNumber} onChange={e => set('dotNumber', sanitizeDigits(e.target.value))} inputMode="numeric" maxLength={8} />)}
-                  {field(isCarrier ? 'MC Number (Optional)' : 'MC Number', <Input className="h-8 text-sm" value={editForm.mcNumber} onChange={e => set('mcNumber', sanitizeDigits(e.target.value))} inputMode="numeric" maxLength={10} />)}
+                  {!isDealer && field('DOT Number', <Input className="h-8 text-sm" value={editForm.dotNumber} onChange={e => set('dotNumber', sanitizeDigits(e.target.value))} inputMode="numeric" maxLength={8} />)}
+                  {!isDealer && field(isCarrier ? 'MC Number (Optional)' : 'MC Number', <Input className="h-8 text-sm" value={editForm.mcNumber} onChange={e => set('mcNumber', sanitizeDigits(e.target.value))} inputMode="numeric" maxLength={10} />)}
+                  {isDealer && field('Owner First Name', <Input className="h-8 text-sm" value={editForm.ownerFirstName} onChange={e => set('ownerFirstName', e.target.value)} />)}
+                  {isDealer && field('Owner Last Name', <Input className="h-8 text-sm" value={editForm.ownerLastName} onChange={e => set('ownerLastName', e.target.value)} />)}
                   {field('Phone Number', <PhoneInput value={editForm.phoneNumber} onChange={v => set('phoneNumber', v)} />)}
                 </div>
               ) : (
@@ -368,14 +396,24 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
                   <Phone className={`size-4 ${colors.accentText}`} />Dealer Information
                 </CardTitle>
               </CardHeader>
-              <CardContent className="px-4 pb-4 space-y-0">
-                {infoRow('Owner', [user.ownerFirstName, user.ownerLastName].filter(Boolean).join(' ') || null)}
-                {infoRow('Year Established', user.yearEstablished)}
-                {infoRow('Dealer License #', user.dealerLicenseNumber)}
-                {infoRow('Auction Access #', user.auctionAccessNumber)}
-                {infoRow('How They Found Us', user.howDidYouHear)}
-                {!user.ownerFirstName && !user.yearEstablished && (
-                  <p className="text-sm text-muted-foreground py-1">No dealer information on file.</p>
+              <CardContent className="px-4 pb-4 space-y-2">
+                {isEditing ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {field('Year Established', <Input className="h-8 text-sm" value={editForm.yearEstablished} onChange={e => set('yearEstablished', e.target.value)} placeholder="2010" />)}
+                    {field('Dealer License #', <Input className="h-8 text-sm" value={editForm.dealerLicenseNumber} onChange={e => set('dealerLicenseNumber', e.target.value)} />)}
+                    {field('Auction Access #', <Input className="h-8 text-sm" value={editForm.auctionAccessNumber} onChange={e => set('auctionAccessNumber', e.target.value)} />)}
+                  </div>
+                ) : (
+                  <div className="space-y-0">
+                    {infoRow('Owner', [user.ownerFirstName, user.ownerLastName].filter(Boolean).join(' ') || null)}
+                    {infoRow('Year Established', user.yearEstablished)}
+                    {infoRow('Dealer License #', user.dealerLicenseNumber)}
+                    {infoRow('Auction Access #', user.auctionAccessNumber)}
+                    {infoRow('How They Found Us', user.howDidYouHear)}
+                    {!user.ownerFirstName && !user.yearEstablished && (
+                      <p className="text-sm text-muted-foreground py-1">No dealer information on file.</p>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -503,7 +541,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
           )}
 
           {/* ── Tax Information ─────────────────────────────────────────────── */}
-          <Card>
+          {!isDealer && <Card>
             <CardHeader className="py-3 px-4">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <FileText className={`size-4 ${colors.accentText}`} />Tax Information
@@ -533,7 +571,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
                 </div>
               )}
             </CardContent>
-          </Card>
+          </Card>}
 
           {/* ── Account Details ─────────────────────────────────────────────── */}
           <Card>

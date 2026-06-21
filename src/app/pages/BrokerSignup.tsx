@@ -4,8 +4,7 @@ import { toast } from 'sonner';
 import { useAppDispatch } from '../store/hooks';
 import { setCredentials } from '../store/slices/authSlice';
 import {
-  useRegisterMutation,
-  useUpdateBrokerProfileMutation,
+  useRegisterBrokerFullMutation,
   useUploadBrokerW9Mutation,
   useUploadBrokerMcAuthorityMutation,
 } from '../store/services/hauliusApi';
@@ -35,8 +34,7 @@ const STEPS = [
 export function BrokerSignup() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [register] = useRegisterMutation();
-  const [updateProfile] = useUpdateBrokerProfileMutation();
+  const [registerBrokerFull] = useRegisterBrokerFullMutation();
   const [uploadW9] = useUploadBrokerW9Mutation();
   const [uploadMcAuthority] = useUploadBrokerMcAuthorityMutation();
 
@@ -135,29 +133,33 @@ export function BrokerSignup() {
     setFieldErrors({});
     setIsLoading(true);
     try {
-      const res = await register({ email: formData.email.trim(), password: formData.password, role: 'BROKER' }).unwrap();
+      const res = await registerBrokerFull({
+        email: formData.email.trim(),
+        password: formData.password,
+        companyName: formData.companyName,
+        dotNumber: formData.dotNumber,
+        mcNumber: formData.mcNumber,
+        phoneNumber: formData.phoneNumber,
+        taxIdType: formData.taxIdType,
+        taxId: formData.taxId,
+        mailingAddress: formData.mailingAddress,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        bondCompany: formData.bondCompany || undefined,
+        bondPolicyNumber: formData.bondPolicyNumber || undefined,
+        bondCoverage: formData.bondCoverage || undefined,
+        bondEffectiveDate: formData.bondEffectiveDate || undefined,
+        bondAgentFirstName: formData.bondAgentFirstName || undefined,
+        bondAgentLastName: formData.bondAgentLastName || undefined,
+        bondAgentEmail: formData.bondAgentEmail || undefined,
+        bondAgentPhone: formData.bondAgentPhone || undefined,
+      }).unwrap();
+
       dispatch(setCredentials({
         user: { id: res.userId, role: 'broker', email: res.email, createdAt: new Date().toISOString() },
         token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved,
       }));
-
-      // Profile save is non-fatal: if it fails the account exists and the user
-      // can complete their profile after logging in from the pending-approval page.
-      try {
-        await updateProfile({
-          companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
-          phoneNumber: formData.phoneNumber, taxIdType: formData.taxIdType, taxId: formData.taxId,
-          mailingAddress: formData.mailingAddress, city: formData.city, state: formData.state, zipCode: formData.zipCode,
-          bondCompany: formData.bondCompany || undefined, bondPolicyNumber: formData.bondPolicyNumber || undefined,
-          bondCoverage: formData.bondCoverage || undefined, bondEffectiveDate: formData.bondEffectiveDate || undefined,
-          bondAgentFirstName: formData.bondAgentFirstName || undefined, bondAgentLastName: formData.bondAgentLastName || undefined,
-          bondAgentEmail: formData.bondAgentEmail || undefined, bondAgentPhone: formData.bondAgentPhone || undefined,
-        }).unwrap();
-      } catch (profileErr: any) {
-        toast.warning(profileErr?.data?.message || 'Profile could not be saved. Log in to complete your profile.', {
-          description: 'Your account was created. You can finish your profile after logging in.',
-        });
-      }
 
       for (const [file, upload] of [
         [w9File, uploadW9],

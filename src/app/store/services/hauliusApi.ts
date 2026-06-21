@@ -84,6 +84,49 @@ export type RegisterDealerPayload = {
   howDidYouHear?: string;
 };
 
+export type RegisterCarrierFullPayload = {
+  email: string;
+  password: string;
+  companyName: string;
+  dbaName?: string;
+  dotNumber: string;
+  mcNumber?: string;
+  phoneNumber: string;
+  insuranceCompany: string;
+  cargoInsurance: number;
+  liabilityInsurance: number;
+  taxIdType: string;
+  taxId: string;
+  mailingAddress: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  preferredLines?: string;
+};
+
+export type RegisterBrokerFullPayload = {
+  email: string;
+  password: string;
+  companyName: string;
+  dotNumber: string;
+  mcNumber: string;
+  phoneNumber: string;
+  taxIdType: string;
+  taxId: string;
+  mailingAddress: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  bondCompany?: string;
+  bondPolicyNumber?: string;
+  bondCoverage?: string;
+  bondEffectiveDate?: string;
+  bondAgentFirstName?: string;
+  bondAgentLastName?: string;
+  bondAgentEmail?: string;
+  bondAgentPhone?: string;
+};
+
 export type AdditionalVehicle = {
   vehicleMake: string;
   vehicleModel: string;
@@ -500,6 +543,21 @@ export type AdminBrokerProfilePayload = {
   bondAgentPhone?: string;
 };
 
+export type AdminDealerProfilePayload = {
+  companyName?: string;
+  ownerFirstName?: string;
+  ownerLastName?: string;
+  businessPhone?: string;
+  companyAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  yearEstablished?: string;
+  dealerLicenseNumber?: string;
+  auctionAccessNumber?: string;
+  howDidYouHear?: string;
+};
+
 export type AdminUserDto = {
   userId: string;
   email: string;
@@ -581,6 +639,12 @@ export const hauliusApi = createApi({
       { email: string; password: string; role: AuthRole }
     >({
       query: (body) => ({ url: '/api/auth/register', method: 'POST', body }),
+    }),
+    registerCarrierFull: builder.mutation<AuthResponse, RegisterCarrierFullPayload>({
+      query: (body) => ({ url: '/api/carriers/register', method: 'POST', body }),
+    }),
+    registerBrokerFull: builder.mutation<AuthResponse, RegisterBrokerFullPayload>({
+      query: (body) => ({ url: '/api/brokers/register', method: 'POST', body }),
     }),
     registerDealer: builder.mutation<AuthResponse, RegisterDealerPayload>({
       query: (body) => ({ url: '/api/dealers/register', method: 'POST', body }),
@@ -856,6 +920,10 @@ export const hauliusApi = createApi({
       query: ({ id, body }) => ({ url: `/api/admin/brokers/${id}/profile`, method: 'PATCH', body }),
       invalidatesTags: ['Profile'],
     }),
+    adminUpdateDealerProfile: builder.mutation<{ message: string }, { id: string; body: AdminDealerProfilePayload }>({
+      query: ({ id, body }) => ({ url: `/api/admin/dealers/${id}/profile`, method: 'PATCH', body }),
+      invalidatesTags: ['Profile'],
+    }),
     adminUploadCarrierDocument: builder.mutation<DocumentUploadResponse, { carrierId: string; type: 'w9' | 'insurance' | 'mc-authority'; file: FormData }>({
       query: ({ carrierId, type, file }) => ({
         url: `/api/admin/carriers/${carrierId}/documents/${type}`,
@@ -1124,6 +1192,8 @@ export type AiChatResponse = {
 
 export const {
   useRegisterMutation,
+  useRegisterCarrierFullMutation,
+  useRegisterBrokerFullMutation,
   useRegisterDealerMutation,
   useUploadDealerW9Mutation,
   useLoginUserMutation,
@@ -1197,6 +1267,7 @@ export const {
   useRevokeDealerMutation,
   useAdminUpdateCarrierProfileMutation,
   useAdminUpdateBrokerProfileMutation,
+  useAdminUpdateDealerProfileMutation,
   useAdminUploadCarrierDocumentMutation,
   useAdminUploadBrokerDocumentMutation,
   useAdminUploadDealerDocumentMutation,

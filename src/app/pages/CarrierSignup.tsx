@@ -4,8 +4,7 @@ import { toast } from 'sonner';
 import { useAppDispatch } from '../store/hooks';
 import { setCredentials } from '../store/slices/authSlice';
 import {
-  useRegisterMutation,
-  useUpdateCarrierProfileMutation,
+  useRegisterCarrierFullMutation,
   useUploadCarrierW9Mutation,
   useUploadCarrierInsuranceMutation,
   useUploadCarrierMcAuthorityMutation,
@@ -37,8 +36,7 @@ const STEPS = [
 export function CarrierSignup() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [register] = useRegisterMutation();
-  const [updateProfile] = useUpdateCarrierProfileMutation();
+  const [registerCarrierFull] = useRegisterCarrierFullMutation();
   const [uploadW9] = useUploadCarrierW9Mutation();
   const [uploadInsurance] = useUploadCarrierInsuranceMutation();
   const [uploadMcAuthority] = useUploadCarrierMcAuthorityMutation();
@@ -139,31 +137,30 @@ export function CarrierSignup() {
     setFieldErrors({});
     setIsLoading(true);
     try {
-      const res = await register({ email: formData.email.trim(), password: formData.password, role: 'CARRIER' }).unwrap();
+      const res = await registerCarrierFull({
+        email: formData.email.trim(),
+        password: formData.password,
+        companyName: formData.companyName,
+        dbaName: formData.dbaName || undefined,
+        dotNumber: formData.dotNumber,
+        mcNumber: formData.mcNumber || undefined,
+        phoneNumber: formData.phoneNumber,
+        insuranceCompany: formData.insuranceCompany,
+        cargoInsurance: parseFloat(formData.cargoInsurance),
+        liabilityInsurance: parseFloat(formData.liabilityInsurance),
+        taxIdType: formData.taxIdType,
+        taxId: formData.taxId,
+        mailingAddress: formData.mailingAddress,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        preferredLines: preferredLines.length > 0 ? JSON.stringify(preferredLines) : undefined,
+      }).unwrap();
+
       dispatch(setCredentials({
         user: { id: res.userId, role: 'carrier', email: res.email, createdAt: new Date().toISOString() },
         token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved,
       }));
-
-      // Profile save is non-fatal: if it fails the account exists and the user
-      // can complete their profile after logging in from the pending-approval page.
-      try {
-        await updateProfile({
-          companyName: formData.companyName, dbaName: formData.dbaName || undefined,
-          dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
-          phoneNumber: formData.phoneNumber, insuranceCompany: formData.insuranceCompany,
-          cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : undefined,
-          liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : undefined,
-          taxIdType: formData.taxIdType, taxId: formData.taxId,
-          mailingAddress: formData.mailingAddress, city: formData.city,
-          state: formData.state, zipCode: formData.zipCode,
-          preferredLines: preferredLines.length > 0 ? JSON.stringify(preferredLines) : undefined,
-        }).unwrap();
-      } catch (profileErr: any) {
-        toast.warning(profileErr?.data?.message || 'Profile could not be saved. Log in to complete your profile.', {
-          description: 'Your account was created. You can finish your profile after logging in.',
-        });
-      }
 
       for (const [file, upload] of [
         [w9File, uploadW9],
@@ -173,7 +170,7 @@ export function CarrierSignup() {
         if (file) {
           try { const fd = new FormData(); fd.append('file', file); await upload(fd).unwrap(); }
           catch (uploadErr: any) {
-            toast.warning(uploadErr?.data?.message || 'Document upload failed. You can upload it from your profile.');
+            toast.warning(uploadErr?.data?.message || 'Document upload failed. You can re-upload from your profile.');
           }
         }
       }
