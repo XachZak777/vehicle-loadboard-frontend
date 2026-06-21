@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import {
   useGetAdminUsersQuery,
@@ -55,6 +55,13 @@ export function AdminDashboard() {
   const [deleteTarget, setDeleteTarget]   = useState<AdminUserDto | null>(null);
   const [isActing, setIsActing]           = useState(false);
   const [isDeleting, setIsDeleting]       = useState(false);
+
+  // Keep selectedUser in sync with fresh data after any mutation triggers a refetch
+  useEffect(() => {
+    if (!selectedUser) return;
+    const updated = allUsers.find(u => u.userId === selectedUser.userId);
+    if (updated && updated !== selectedUser) setSelectedUser(updated);
+  }, [allUsers]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const carriers = allUsers.filter(u => u.role === 'CARRIER');
   const brokers  = allUsers.filter(u => u.role === 'BROKER');

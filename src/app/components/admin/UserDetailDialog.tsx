@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -40,7 +40,7 @@ function toAbsoluteUrl(url: string): string {
 function ApprovalBadge({ approved, declined }: { approved: boolean; declined: boolean }) {
   if (approved) return <Badge className={colors.accentChip}>Approved</Badge>;
   if (declined) return <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Rejected</Badge>;
-  return <Badge className={colors.accentChip}>Pending</Badge>;
+  return <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Pending</Badge>;
 }
 
 type EditForm = {
@@ -141,6 +141,14 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
   const isBroker = user.role === 'BROKER';
   const isCarrier = user.role === 'CARRIER';
   const isDealer = user.role === 'DEALER';
+
+  // When the parent refreshes user data after a mutation, sync editForm (skip during active editing)
+  useEffect(() => {
+    if (isEditing) return;
+    setEditForm(formFromUser(user));
+    try { setPreferredLinesEdit(user.preferredLines ? JSON.parse(user.preferredLines) : []); }
+    catch { setPreferredLinesEdit([]); }
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (field: keyof EditForm, value: string) =>
     setEditForm(prev => ({ ...prev, [field]: value }));
