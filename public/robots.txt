@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://haulius.com/sitemap.xml

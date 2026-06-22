@@ -2,6 +2,7 @@ import { Moon, Sun } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { toggleTheme } from '../store/slices/themeSlice';
 import { Button } from './ui/button';
+import { colors } from '../styles/colors';
 
 export function ThemeToggle() {
   const dispatch = useAppDispatch();
@@ -12,7 +13,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="icon"
       onClick={() => dispatch(toggleTheme())}
-      className={theme === 'dark' ? 'text-slate-300 hover:text-white hover:bg-slate-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}
+      className={theme === 'dark' ? `${colors.slateText} hover:text-white hover:bg-slate-700` : `${colors.textSecondary} hover:text-gray-900 ${colors.bgMuted}`}
     >
       {theme === 'dark' ? (
         <Sun className="size-5" />

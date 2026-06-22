@@ -95,7 +95,7 @@ export function PostLoad() {
       dropStreet: '', dropCity: '', dropState: '', dropZip: '',
       dropType: 'RESIDENCE', deliveryDate: '', deliveryTime: '',
       dropFacilityName: '', dropLocationContactName: '', dropLocationContactPhone: '',
-      price: '', paymentMethod: '', paymentTiming: '', description: '',
+      price: '', paymentMethod: '', paymentTiming: '', paymentNotes: '', description: '',
       contactName: '', contactPhone: '', contactEmail: '', orderId: '', additionalNotes: '',
     };
     return {
@@ -122,6 +122,7 @@ export function PostLoad() {
       price: cloneFrom.price != null ? String(cloneFrom.price) : '',
       paymentMethod: cloneFrom.paymentMethod || '',
       paymentTiming: cloneFrom.paymentTiming || '',
+      paymentNotes: cloneFrom.paymentNotes || '',
       description: cloneFrom.description || '',
       contactName: cloneFrom.contactName || '',
       contactPhone: cloneFrom.contactPhone || '',
@@ -200,6 +201,38 @@ export function PostLoad() {
     }
   };
 
+  const scrollToFirstError = (
+    newVehicleErrors: FieldErrors[],
+    errs: FieldErrors,
+    trailerErr: string,
+    consentOk: boolean,
+  ) => {
+    for (let i = 0; i < newVehicleErrors.length; i++) {
+      if (Object.keys(newVehicleErrors[i]).length > 0) {
+        document.getElementById(`vehicle-section-${i}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    }
+    if (trailerErr) {
+      document.getElementById('sharedTrailerType')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    const orderedFields = [
+      'pickupStreet', 'pickupCity', 'pickupState', 'pickupZip', 'pickupDate',
+      'dropStreet', 'dropCity', 'dropState', 'dropZip', 'deliveryDate',
+      'price', 'contactName', 'contactPhone', 'contactEmail', 'orderId',
+    ];
+    for (const f of orderedFields) {
+      if (errs[f]) {
+        document.getElementById(f)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+    }
+    if (!consentOk) {
+      document.getElementById('postConsent')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const currentYear = new Date().getFullYear();
@@ -228,6 +261,7 @@ export function PostLoad() {
       [!formData.pickupZip.trim(), 'pickupZip', 'Pickup ZIP code is required.'],
       [!!formData.pickupZip.trim() && !isValidZip(formData.pickupZip), 'pickupZip', 'ZIP code must be 5 digits.'],
       [!formData.pickupDate, 'pickupDate', 'Pickup date is required.'],
+      [!!formData.pickupDate && formData.pickupDate < new Date().toISOString().split('T')[0], 'pickupDate', 'Pickup date cannot be in the past.'],
       [!formData.dropStreet.trim(), 'dropStreet', 'Delivery street address is required.'],
       [!!formData.dropStreet.trim() && formData.dropStreet.trim().length < 5, 'dropStreet', 'Street address must be at least 5 characters.'],
       [!formData.dropCity.trim(), 'dropCity', 'Delivery city is required.'],
@@ -236,6 +270,8 @@ export function PostLoad() {
       [!formData.dropZip.trim(), 'dropZip', 'Delivery ZIP code is required.'],
       [!!formData.dropZip.trim() && !isValidZip(formData.dropZip), 'dropZip', 'ZIP code must be 5 digits.'],
       [!formData.deliveryDate, 'deliveryDate', 'Delivery date is required.'],
+      [!!formData.deliveryDate && formData.deliveryDate < new Date().toISOString().split('T')[0], 'deliveryDate', 'Delivery date cannot be in the past.'],
+      [!!formData.deliveryDate && !!formData.pickupDate && formData.deliveryDate < formData.pickupDate, 'deliveryDate', 'Delivery date cannot be earlier than pickup date.'],
       [!formData.price.trim(), 'price', 'Price is required.'],
       [!!formData.price.trim() && !isValidPrice(formData.price), 'price', 'Price must be between $1 and $999,999.'],
       [!formData.contactName.trim(), 'contactName', 'Contact name is required.'],
@@ -245,7 +281,8 @@ export function PostLoad() {
       [!formData.contactEmail.trim(), 'contactEmail', 'Email address is required.'],
       [!!formData.contactEmail.trim() && !isValidEmail(formData.contactEmail), 'contactEmail', 'Enter a valid email address.'],
       [!formData.orderId.trim(), 'orderId', 'Order ID is required.'],
-      [!!formData.description.trim() && formData.description.trim().length > 1000, 'description', 'Notes must be 1,000 characters or fewer.'],
+      [!!formData.paymentNotes.trim() && formData.paymentNotes.trim().length > 1000, 'paymentNotes', 'Payment notes must be 1,000 characters or fewer.'],
+      [!!formData.additionalNotes.trim() && formData.additionalNotes.trim().length > 1000, 'additionalNotes', 'Notes must be 1,000 characters or fewer.'],
     ]);
     setSharedErrors(errs);
 
@@ -256,6 +293,7 @@ export function PostLoad() {
     if (!consentChecked) setConsentError(true);
     if (hasVehicleErrors || Object.keys(errs).length || trailerErr || !consentChecked) {
       toast.error('Please fix the highlighted fields before submitting.');
+      scrollToFirstError(newVehicleErrors, errs, trailerErr, consentChecked);
       return;
     }
 
@@ -307,7 +345,8 @@ export function PostLoad() {
         pickupTime: formData.pickupTime,
         deliveryDate: formData.deliveryDate,
         deliveryTime: formData.deliveryTime,
-        description: formData.description || undefined,
+        paymentNotes: formData.paymentNotes.trim() || undefined,
+        description: formData.additionalNotes.trim() || undefined,
         contactName: formData.contactName || undefined,
         contactPhone: formData.contactPhone || undefined,
         contactEmail: formData.contactEmail || undefined,
@@ -344,7 +383,7 @@ export function PostLoad() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-4xl font-bold">{cloneFrom ? 'Clone Load' : 'Post a Load'}</h1>
+              <h1 className="text-2xl sm:text-4xl font-bold">{cloneFrom ? 'Clone Load' : 'Post a Load'}</h1>
               <p className="text-muted-foreground">
                 {cloneFrom
                   ? 'Review and edit the cloned details before posting'
@@ -366,7 +405,7 @@ export function PostLoad() {
           <form onSubmit={handleSubmit}>
             {/* Vehicles */}
             {vehicles.map((vehicle, index) => (
-              <div key={index} className="relative mb-2">
+              <div key={index} id={`vehicle-section-${index}`} className="relative mb-2">
                 {vehicles.length > 1 && (
                   <div className="flex items-center gap-2 mb-2">
                     <div className="flex-shrink-0 w-7 h-7 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">
@@ -447,13 +486,14 @@ export function PostLoad() {
               formData={{ street: formData.dropStreet, city: formData.dropCity, state: formData.dropState, zip: formData.dropZip, type: formData.dropType, date: formData.deliveryDate, time: formData.deliveryTime, facilityName: formData.dropFacilityName, locationContactName: formData.dropLocationContactName, locationContactPhone: formData.dropLocationContactPhone }}
               fieldErrors={sharedErrors}
               onChange={handleSharedInputChange}
+              minDate={formData.pickupDate || undefined}
             />
             <PricingNotesSection
               formData={{
                 price: formData.price,
                 paymentMethod: formData.paymentMethod,
                 paymentTiming: formData.paymentTiming,
-                description: formData.description,
+                paymentNotes: formData.paymentNotes,
               }}
               fieldErrors={sharedErrors}
               onChange={handleSharedInputChange}

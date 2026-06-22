@@ -7,39 +7,6 @@ import type { MyRatingsResponse } from '../store/services/hauliusApi';
 import { useAppSelector } from '../store/hooks';
 import { MapBackground } from '../components/MapBackground';
 
-// Set to true to preview with mock data (no backend needed)
-const USE_MOCK = false;
-
-const MOCK_DATA: MyRatingsResponse = {
-  positiveCount: 1,
-  negativeCount: 1,
-  tagStats: [
-    { tag: 'communication', count: 2, total: 2 },
-    { tag: 'payment', count: 2, total: 2 },
-    { tag: 'accuracy', count: 2, total: 2 },
-  ],
-  ratings: [
-    {
-      id: 'mock-1',
-      type: 'positive',
-      fromName: 'Swift Logistics LLC',
-      fromRole: 'Carrier',
-      loadTitle: '1900 2 3',
-      tags: ['communication', 'payment', 'accuracy'],
-      createdAt: '2026-05-10',
-    },
-    {
-      id: 'mock-2',
-      type: 'negative',
-      fromName: 'Swift Logistics LLC',
-      fromRole: 'Carrier',
-      loadTitle: '1900 1233 123',
-      tags: ['communication', 'payment', 'accuracy'],
-      comment: 'adslkasldkasdfk kasdkf laskdf laskdf lkasldf kasldf kalsdkf laskdf laksdf lka sdl fkasldf kalsdfk alskfla skf laksd flaksdlf aksld kald fkalsdkf laksdf lasdlf kasldf kalsdkf laskdf laksdflaksdlf kaldf kalsdkf ladksf laksdl f',
-      createdAt: '2026-05-10',
-    },
-  ],
-};
 
 const TAG_LABELS: Record<string, string> = {
   communication: 'Proper Communication',
@@ -63,14 +30,14 @@ function fmtDate(d?: string | null) {
 function tagBarColor(pct: number) {
   if (pct >= 80) return 'bg-amber-500';
   if (pct >= 50) return 'bg-amber-400';
-  return 'bg-gray-500';
+  return 'bg-amber-300';
 }
 
 export function MyRatings() {
   const user = useAppSelector((s) => s.auth.user);
-  const { data: apiData } = useGetMyRatingsQuery(undefined, { skip: !user || USE_MOCK });
+  const { data: apiData } = useGetMyRatingsQuery(undefined, { skip: !user });
 
-  const data = USE_MOCK ? MOCK_DATA : apiData;
+  const data = apiData;
 
   const positive = data?.positiveCount ?? 0;
   const negative = data?.negativeCount ?? 0;
@@ -87,7 +54,7 @@ export function MyRatings() {
 
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold">My Ratings</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold">My Ratings</h1>
           <p className="text-muted-foreground mt-1">Your performance and reputation overview</p>
         </div>
 
@@ -142,11 +109,7 @@ export function MyRatings() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {tagStats.map((stat) => {
                   const pct = stat.total > 0 ? Math.round((stat.count / stat.total) * 100) : 0;
-                  const cfg = stat.tag === 'communication'
-                    ? { border: 'border-2 border-amber-300 dark:border-amber-700', bg: 'bg-amber-50/20 dark:bg-amber-950/10', badgeCls: 'bg-amber-500 border-2 border-amber-600', valueCls: 'text-amber-600 dark:text-amber-500' }
-                    : stat.tag === 'payment'
-                      ? { border: 'border-2 border-amber-300 dark:border-amber-700', bg: 'bg-amber-50/20 dark:bg-amber-950/10', badgeCls: 'bg-amber-500 border-2 border-amber-600', valueCls: 'text-amber-600 dark:text-amber-500' }
-                      : { border: 'border-2 border-gray-300 dark:border-gray-700', bg: 'bg-gray-50/20 dark:bg-gray-950/10', badgeCls: 'bg-gray-500 border-2 border-gray-600', valueCls: 'text-gray-600 dark:text-gray-400' };
+                  const cfg = { border: 'border-2 border-amber-300 dark:border-amber-700', bg: 'bg-amber-50/20 dark:bg-amber-950/10', badgeCls: 'bg-amber-500 border-2 border-amber-600', valueCls: 'text-amber-600 dark:text-amber-500' };
                   const barColor = tagBarColor(pct);
                   return (
                     <div key={stat.tag} className={`p-5 ${cfg.border} ${cfg.bg}`}>

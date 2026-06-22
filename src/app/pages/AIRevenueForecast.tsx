@@ -10,6 +10,7 @@ import { projectId, publicAnonKey } from '../../../utils/supabase/info';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, LineChart } from 'recharts';
+import { chartColors } from '../../styles/theme';
 
 export function AIRevenueForecast() {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ export function AIRevenueForecast() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-background map-background-detailed">
       <MapBackground />
 
       <div className="relative z-10">
@@ -78,7 +79,7 @@ export function AIRevenueForecast() {
               <TrendingUp className="size-8 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold">Revenue Forecasting</h1>
+              <h1 className="text-2xl sm:text-4xl font-bold">Revenue Forecasting</h1>
               <p className="text-muted-foreground">AI-predicted earnings based on your patterns</p>
             </div>
           </div>
@@ -102,7 +103,7 @@ export function AIRevenueForecast() {
                       <DollarSign className="size-5" />
                       <CardTitle>Projected Monthly Revenue</CardTitle>
                     </div>
-                    <div className="text-4xl font-bold text-blue-700 dark:text-blue-300">
+                    <div className="text-2xl sm:text-4xl font-bold text-blue-700 dark:text-blue-300">
                       ${forecast.projectedMonthly?.toLocaleString() || '0'}
                     </div>
                     <CardDescription>
@@ -119,7 +120,7 @@ export function AIRevenueForecast() {
                       <TrendingUp className="size-5" />
                       <CardTitle>Growth Rate</CardTitle>
                     </div>
-                    <div className="text-4xl font-bold text-green-700 dark:text-green-300">
+                    <div className="text-2xl sm:text-4xl font-bold text-green-700 dark:text-green-300">
                       +{forecast.growthRate || '0'}%
                     </div>
                     <CardDescription>
@@ -136,7 +137,7 @@ export function AIRevenueForecast() {
                       <Target className="size-5" />
                       <CardTitle>Average Load Value</CardTitle>
                     </div>
-                    <div className="text-4xl font-bold text-purple-700 dark:text-purple-300">
+                    <div className="text-2xl sm:text-4xl font-bold text-purple-700 dark:text-purple-300">
                       ${forecast.avgLoadValue?.toLocaleString() || '0'}
                     </div>
                     <CardDescription>
@@ -164,7 +165,7 @@ export function AIRevenueForecast() {
                       <XAxis dataKey="month" />
                       <YAxis />
                       <Tooltip />
-                      <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} />
+                      <Line type="monotone" dataKey="revenue" stroke={chartColors.blue} strokeWidth={3} />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>

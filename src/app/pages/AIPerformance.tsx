@@ -53,7 +53,7 @@ export function AIPerformance() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-background map-background-detailed">
       <MapBackground />
 
       <div className="relative z-10">
@@ -80,7 +80,7 @@ export function AIPerformance() {
                 <BarChart3 className="size-8 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold">Performance Dashboard</h1>
+                <h1 className="text-2xl sm:text-4xl font-bold">Performance Dashboard</h1>
                 <p className="text-muted-foreground">AI-generated insights about your business</p>
               </div>
             </div>
@@ -121,7 +121,7 @@ export function AIPerformance() {
             </motion.div>
 
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                 <Card>
                   <CardHeader className="pb-3">

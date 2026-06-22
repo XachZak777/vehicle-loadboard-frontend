@@ -10,7 +10,7 @@ interface Props {
     price: string;
     paymentMethod: string;
     paymentTiming: string;
-    description: string;
+    paymentNotes: string;
   };
   fieldErrors: FieldErrors;
   onChange: (field: string, value: string) => void;
@@ -69,23 +69,22 @@ export function PricingNotesSection({ formData, fieldErrors, onChange }: Props) 
         </div>
 
         <div>
-          <Label htmlFor="description">Additional Notes</Label>
+          <Label htmlFor="paymentNotes">Payment Notes (Optional)</Label>
           <Textarea
-            id="description"
-            placeholder="Special instructions, requirements, etc."
+            id="paymentNotes"
+            placeholder="e.g., invoice required, quick-pay available, fuel surcharge included..."
             rows={3}
             maxLength={1000}
-            value={formData.description}
-            onChange={e => onChange('description', e.target.value)}
-            aria-invalid={!!fieldErrors.description}
+            value={formData.paymentNotes}
+            onChange={e => onChange('paymentNotes', e.target.value)}
+            aria-invalid={!!fieldErrors.paymentNotes}
           />
           <p className="text-xs text-muted-foreground mt-1 text-right">
-            {formData.description.length}/1000
+            {formData.paymentNotes.length}/1000
           </p>
-          {fieldErrors.description && (
-            <p className="text-xs text-destructive mt-1">{fieldErrors.description}</p>
-          )}
+          {fieldErrors.paymentNotes && <p className="text-xs text-destructive mt-1">{fieldErrors.paymentNotes}</p>}
         </div>
+
       </CardContent>
     </Card>
   );

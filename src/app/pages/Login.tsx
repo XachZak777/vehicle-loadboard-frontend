@@ -1,3 +1,4 @@
+import { MapBackground } from '../components/MapBackground';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
@@ -111,7 +112,8 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <AuthNavbar showSignup={true} />
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">
         <div className="w-full max-w-md">

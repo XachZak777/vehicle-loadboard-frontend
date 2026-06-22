@@ -1,6 +1,8 @@
 // Email Notification Service — stub for frontend-side email triggers.
 // All real sending is handled by the Spring Boot backend (Spring Mail + Gmail SMTP).
 
+import { emailColors } from '../../styles/theme';
+
 interface EmailParams {
   to: string;
   subject: string;
@@ -36,13 +38,13 @@ export async function sendLoadBookingRequestEmail(
     <html>
     <head>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: ${emailColors.text}; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; }
-        .content { background-color: #f9fafb; padding: 20px; margin-top: 20px; }
+        .header { background-color: ${emailColors.headerBlue}; color: white; padding: 20px; text-align: center; }
+        .content { background-color: ${emailColors.background}; padding: 20px; margin-top: 20px; }
         .detail-row { margin: 10px 0; }
         .label { font-weight: bold; }
-        .footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
+        .footer { margin-top: 30px; font-size: 12px; color: ${emailColors.footer}; text-align: center; }
       </style>
     </head>
     <body>
@@ -80,13 +82,13 @@ export async function sendBookingConfirmationEmail(
     <html>
     <head>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: ${emailColors.text}; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: ${isApproved ? '#10b981' : '#ef4444'}; color: white; padding: 20px; text-align: center; }
-        .content { background-color: #f9fafb; padding: 20px; margin-top: 20px; }
+        .header { background-color: ${isApproved ? emailColors.statusGreen : emailColors.statusRed}; color: white; padding: 20px; text-align: center; }
+        .content { background-color: ${emailColors.background}; padding: 20px; margin-top: 20px; }
         .detail-row { margin: 10px 0; }
         .label { font-weight: bold; }
-        .footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
+        .footer { margin-top: 30px; font-size: 12px; color: ${emailColors.footer}; text-align: center; }
       </style>
     </head>
     <body>
@@ -121,14 +123,14 @@ export async function sendStatusUpdateEmail(
     <html>
     <head>
       <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: ${emailColors.text}; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; }
-        .content { background-color: #f9fafb; padding: 20px; margin-top: 20px; }
+        .header { background-color: ${emailColors.headerBlue}; color: white; padding: 20px; text-align: center; }
+        .content { background-color: ${emailColors.background}; padding: 20px; margin-top: 20px; }
         .detail-row { margin: 10px 0; }
         .label { font-weight: bold; }
-        .status { background-color: #10b981; color: white; padding: 8px 16px; border-radius: 20px; display: inline-block; margin-top: 10px; }
-        .footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
+        .status { background-color: ${emailColors.statusGreen}; color: white; padding: 8px 16px; border-radius: 20px; display: inline-block; margin-top: 10px; }
+        .footer { margin-top: 30px; font-size: 12px; color: ${emailColors.footer}; text-align: center; }
       </style>
     </head>
     <body>

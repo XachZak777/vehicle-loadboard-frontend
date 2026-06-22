@@ -1,3 +1,4 @@
+import { MapBackground } from '../components/MapBackground';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Mail, ArrowLeft, RefreshCw, CheckCircle } from 'lucide-react';
@@ -30,7 +31,8 @@ export function CheckEmail() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <AuthNavbar />
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">
       <div className="w-full max-w-md">

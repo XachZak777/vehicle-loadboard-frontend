@@ -1,9 +1,10 @@
-import { useState, useMemo, memo } from 'react';
+import { useState, useMemo, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import {
   useGetLoadsQuery, usePlaceBidMutation, useUpdateBidMutation,
   useGetBrokerPublicInfoQuery, useGetMyCarrierBidsQuery, useGetMyCarrierProfileQuery,
+  useGetSavedLoadIdsQuery, useAddSavedLoadMutation, useRemoveSavedLoadMutation,
   type LoadDto, type CarrierBidWithLoadDto,
 } from '../store/services/hauliusApi';
 import { useAppSelector } from '../store/hooks';
@@ -11,10 +12,12 @@ import { Navbar } from '../components/Navbar';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Button } from '../components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../components/ui/sheet';
-import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star, SlidersHorizontal } from 'lucide-react';
-import { formatPhone } from '../utils/phone';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../components/ui/sheet';
+import { MapPin, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, Star, SlidersHorizontal, X, Bookmark, ArrowUp } from 'lucide-react';
+import { useGetSavedLoadsQuery } from '../store/services/hauliusApi';
+import { formatPhone, formatPaymentLabel, calcPricePerMile } from '../utils/phone';
 import { MapBackground } from '../components/MapBackground';
+import { CityMapModal } from '../components/CityMapModal';
 
 const VEHICLE_TYPES = ['All Types', 'Sedan', 'SUV', 'Truck', 'Van', 'Motorcycle', 'RV', 'Boat', 'ATV'];
 const TRAILER_TYPES = ['All Types', 'Open Trailer', 'Enclosed Trailer'];
@@ -34,9 +37,6 @@ function formatDate(dateStr?: string) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function formatPaymentLabel(value: string) {
-  return value.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-}
 
 function BrokerSummaryRow({ brokerId }: { brokerId: string }) {
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ function BrokerSummaryRow({ brokerId }: { brokerId: string }) {
       onClick={(e) => { e.stopPropagation(); navigate(`/company/broker/${brokerId}`); }}
     >
       <span className="text-sm font-semibold text-amber-600 hover:underline">{name}</span>
-      <span className="flex items-center gap-1 text-sm text-muted-foreground">
+      <span className="flex items-center gap-1 text-sm font-bold text-black dark:text-white">
         <Star className="size-3.5 fill-amber-400 text-amber-400" />
         {rating != null ? `${Math.round(rating)}%` : 'N/A'}
       </span>
@@ -74,12 +74,8 @@ function InfoField({ label, value }: { label: string; value?: string }) {
 }
 
 function ConditionIcon({ condition }: { condition: string }) {
-  const isRunning = condition.toLowerCase() === 'running';
-  return isRunning ? (
-    <span className="inline-flex size-4 rounded-full items-center justify-center bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-      <CheckCircle className="size-3" />
-    </span>
-  ) : (
+  if (condition.toLowerCase() === 'running') return null;
+  return (
     <span className="inline-flex size-4 rounded-full items-center justify-center bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
       <AlertCircle className="size-3" />
     </span>
@@ -87,12 +83,21 @@ function ConditionIcon({ condition }: { condition: string }) {
 }
 
 export function LoadBoard() {
-  const { data: loads = [], isLoading, isError, error, refetch } = useGetLoadsQuery();
+  const { data: loads = [], isLoading, isFetching, isError, error, refetch } = useGetLoadsQuery();
   const user = useAppSelector(s => s.auth.user);
   const isCarrier = user?.role === 'carrier';
   const { data: myCarrierProfile } = useGetMyCarrierProfileQuery(undefined, { skip: !isCarrier });
   const { data: myCarrierBids = [] } = useGetMyCarrierBidsQuery(undefined, { skip: !isCarrier });
+  const { data: savedLoadIds = [] } = useGetSavedLoadIdsQuery(undefined, { skip: !isCarrier });
   const myCarrierId = myCarrierProfile?.id;
+
+  const [activeTab, setActiveTab] = useState<'all' | 'saved' | 'requested'>('all');
+  const { data: savedLoads = [] } = useGetSavedLoadsQuery(undefined, { skip: !isCarrier });
+
+  const requestedLoads = useMemo(
+    () => loads.filter(l => myCarrierBids.some(b => b.bidStatus === 'PENDING' && b.loadId === l.id)),
+    [loads, myCarrierBids]
+  );
 
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -107,6 +112,15 @@ export function LoadBoard() {
   const [minPrice, setMinPrice] = useState('');
   const [minPricePerMile, setMinPricePerMile] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 300);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -120,7 +134,20 @@ export function LoadBoard() {
     setMinPrice('');
     setMinPricePerMile('');
     setSortBy('newest');
+    setPage(1);
   };
+
+  const activeFilterCount = [
+    searchTerm,
+    pickupLocation,
+    deliveryLocation,
+    vehicleType !== 'All Types' ? vehicleType : '',
+    trailerType !== 'All Types' ? trailerType : '',
+    condition !== 'All Conditions' ? condition : '',
+    minPrice,
+    minPricePerMile,
+    sortBy !== 'newest' ? sortBy : '',
+  ].filter(Boolean).length;
 
   const filteredLoads = useMemo(() => {
     const q = searchTerm.toLowerCase();
@@ -169,7 +196,12 @@ export function LoadBoard() {
 
       if (condition !== 'All Conditions') {
         const cond = condition === 'Running' ? 'running' : 'non-running';
-        if ((load.vehicleCondition ?? '').toLowerCase() !== cond) return false;
+        const allVehicleConditions = [
+          load.vehicleCondition,
+          ...(load.additionalVehicles ?? []).map(v => v.vehicleCondition),
+        ];
+        const anyMatch = allVehicleConditions.some(c => (c ?? '').toLowerCase() === cond);
+        if (!anyMatch) return false;
       }
 
       if (minPrice && load.price != null) {
@@ -177,8 +209,8 @@ export function LoadBoard() {
       }
 
       if (minPricePerMile && load.price != null && load.distance != null && load.distance > 0) {
-        const ppm = load.price / load.distance;
-        if (ppm < parseFloat(minPricePerMile)) return false;
+        const ppm = calcPricePerMile(load.price, load.distance, load.additionalVehicles);
+        if (ppm == null || ppm < parseFloat(minPricePerMile)) return false;
       }
 
       return true;
@@ -190,8 +222,8 @@ export function LoadBoard() {
       if (sortBy === 'price-asc') return (a.price ?? 0) - (b.price ?? 0);
       if (sortBy === 'price-desc') return (b.price ?? 0) - (a.price ?? 0);
       if (sortBy === 'ppm-desc' || sortBy === 'ppm-asc') {
-        const ppmA = a.price != null && a.distance != null && a.distance > 0 ? a.price / a.distance : null;
-        const ppmB = b.price != null && b.distance != null && b.distance > 0 ? b.price / b.distance : null;
+        const ppmA = calcPricePerMile(a.price, a.distance, a.additionalVehicles);
+        const ppmB = calcPricePerMile(b.price, b.distance, b.additionalVehicles);
         if (ppmA == null && ppmB == null) return 0;
         if (ppmA == null) return 1;
         if (ppmB == null) return -1;
@@ -202,6 +234,15 @@ export function LoadBoard() {
 
     return result;
   }, [loads, searchTerm, pickupLocation, deliveryLocation, vehicleType, trailerType, condition, minPrice, minPricePerMile, sortBy]);
+
+  useEffect(() => { setPage(1); }, [filteredLoads, activeTab]);
+
+  const activeTabLoads = activeTab === 'saved' ? savedLoads
+    : activeTab === 'requested' ? requestedLoads
+    : filteredLoads;
+  const totalPages = Math.max(1, Math.ceil(activeTabLoads.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pagedLoads = activeTabLoads.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const fetchError = isError ? ((error as any)?.message || 'Failed to load data.') : '';
 
@@ -227,40 +268,19 @@ export function LoadBoard() {
 
         {!isLoading && !fetchError && (
           <>
-            {/* Mobile filter sheet */}
+            {/* ── Mobile filter sheet ── */}
             <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-              <SheetContent side="left" className="w-[300px] overflow-y-auto">
-                <SheetHeader className="mb-4">
-                  <SheetTitle className="text-amber-500">Filters</SheetTitle>
+              <SheetContent side="bottom" className="h-[90dvh] flex flex-col p-0 rounded-t-2xl sm:hidden">
+                <SheetHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
+                  <SheetTitle className="text-base font-semibold">
+                    Filters {activeFilterCount > 0 && (
+                      <span className="ml-1.5 inline-flex items-center justify-center size-5 rounded-full bg-amber-500 text-white text-xs font-bold">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </SheetTitle>
                 </SheetHeader>
-                <FilterPanel
-                  sortBy={sortBy} setSortBy={setSortBy}
-                  searchTerm={searchTerm} setSearchTerm={setSearchTerm}
-                  pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
-                  pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
-                  deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
-                  deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
-                  vehicleType={vehicleType} setVehicleType={setVehicleType}
-                  trailerType={trailerType} setTrailerType={setTrailerType}
-                  condition={condition} setCondition={setCondition}
-                  minPrice={minPrice} setMinPrice={setMinPrice}
-                  minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
-                  clearFilters={clearFilters}
-                />
-              </SheetContent>
-            </Sheet>
-
-            <div className="flex gap-6">
-              {/* Filters Sidebar — desktop only */}
-              <aside
-                className="hidden sm:block flex-shrink-0 overflow-hidden transition-[width] duration-300 ease-out border-r border-r-amber-200 dark:border-r-amber-900"
-                style={{ width: filtersOpen ? 272 : 0 }}
-              >
-                <div
-                  className="w-[272px] pr-4 transition-transform duration-300 ease-out"
-                  style={{ transform: filtersOpen ? 'translateX(0)' : 'translateX(-100%)' }}
-                >
-                  <h2 className="text-lg font-bold text-amber-500 mb-4">Filters</h2>
+                <div className="flex-1 overflow-y-auto px-5 py-4">
                   <FilterPanel
                     sortBy={sortBy} setSortBy={setSortBy}
                     searchTerm={searchTerm} setSearchTerm={setSearchTerm}
@@ -276,60 +296,260 @@ export function LoadBoard() {
                     clearFilters={clearFilters}
                   />
                 </div>
-              </aside>
+                <SheetFooter className="px-5 py-4 border-t border-border shrink-0 grid grid-cols-2 gap-3 sm:justify-start">
+                  <Button variant="outline" onClick={clearFilters}
+                    className="border-amber-500 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10">
+                    Clear All
+                  </Button>
+                  <Button onClick={() => setMobileFiltersOpen(false)}
+                    className="bg-amber-500 hover:bg-amber-600 text-white">
+                    Show {filteredLoads.length} Load{filteredLoads.length !== 1 ? 's' : ''}
+                  </Button>
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
 
-              {/* Load List */}
+            <div className="flex gap-6">
+              {/* ── Desktop filter sidebar ── */}
+              <div className="hidden sm:block flex-shrink-0 self-start sticky top-16">
+                <aside
+                  className="overflow-hidden transition-[width] duration-300 ease-out"
+                  style={{ width: filtersOpen ? 272 : 0 }}
+                >
+                  <div
+                    className="w-[272px] transition-transform duration-300 ease-out"
+                    style={{ transform: filtersOpen ? 'translateX(0)' : 'translateX(-100%)' }}
+                  >
+                    <div className="rounded-xl border border-border/60 bg-card shadow-sm flex flex-col" style={{ maxHeight: 'calc(100vh - 4rem - 3.75rem)' }}>
+                      <h2 className="text-base font-bold text-foreground p-4 pb-3 flex-shrink-0 border-b border-border/50">Filters</h2>
+                      <div className="overflow-y-auto p-4 pt-3 flex-1 scrollbar-thin">
+                      <FilterPanel
+                        sortBy={sortBy} setSortBy={setSortBy}
+                        searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+                        pickupLocation={pickupLocation} setPickupLocation={setPickupLocation}
+                        pickupRadius={pickupRadius} setPickupRadius={setPickupRadius}
+                        deliveryLocation={deliveryLocation} setDeliveryLocation={setDeliveryLocation}
+                        deliveryRadius={deliveryRadius} setDeliveryRadius={setDeliveryRadius}
+                        vehicleType={vehicleType} setVehicleType={setVehicleType}
+                        trailerType={trailerType} setTrailerType={setTrailerType}
+                        condition={condition} setCondition={setCondition}
+                        minPrice={minPrice} setMinPrice={setMinPrice}
+                        minPricePerMile={minPricePerMile} setMinPricePerMile={setMinPricePerMile}
+                        clearFilters={clearFilters}
+                      />
+                      </div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+
+              {/* ── Load list ── */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-4">
-                  <button
-                    onClick={() => setMobileFiltersOpen(true)}
-                    title="Filters"
-                    className="sm:hidden p-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground flex-shrink-0"
-                  >
-                    <SlidersHorizontal className="size-4" />
-                  </button>
-                  <button
-                    onClick={() => setFiltersOpen(v => !v)}
-                    title={filtersOpen ? 'Hide filters' : 'Show filters'}
-                    className="hidden sm:block p-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground flex-shrink-0"
-                  >
-                    {filtersOpen ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
-                  </button>
-                  <p className="text-sm text-muted-foreground">
-                    Showing <span className="font-semibold text-amber-600">{filteredLoads.length}</span> available load{filteredLoads.length !== 1 ? 's' : ''}
+                {/* Tabs — carriers only */}
+                {isCarrier && (
+                  <div className="flex gap-1 mb-4 p-1 bg-muted rounded-lg w-fit">
+                    <button
+                      onClick={() => setActiveTab('all')}
+                      className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'all' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                      All Loads
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('saved')}
+                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'saved' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                      <Bookmark className={`size-3.5 ${activeTab === 'saved' ? 'fill-amber-500 text-amber-500' : ''}`} />
+                      Saved
+                      {savedLoads.length > 0 && (
+                        <span className="inline-flex items-center justify-center size-4 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">
+                          {savedLoads.length}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('requested')}
+                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === 'requested' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                      <CheckCircle className={`size-3.5 ${activeTab === 'requested' ? 'text-amber-500' : ''}`} />
+                      Requested
+                      {requestedLoads.length > 0 && (
+                        <span className="inline-flex items-center justify-center size-4 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">
+                          {requestedLoads.length}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* Toolbar */}
+                <div className="flex items-center gap-2 mb-4">
+                  {/* Filter controls — all tab only */}
+                  {activeTab === 'all' && (
+                    <>
+                      <button
+                        onClick={() => setMobileFiltersOpen(true)}
+                        className="sm:hidden inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-background hover:bg-muted transition-colors text-sm text-foreground shadow-sm"
+                      >
+                        <SlidersHorizontal className="size-4 text-amber-500" />
+                        Filters
+                        {activeFilterCount > 0 && (
+                          <span className="inline-flex items-center justify-center size-5 rounded-full bg-amber-500 text-white text-xs font-bold">
+                            {activeFilterCount}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setFiltersOpen(v => !v)}
+                        title={filtersOpen ? 'Hide filters' : 'Show filters'}
+                        className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-sm text-muted-foreground"
+                      >
+                        <SlidersHorizontal className="size-4" />
+                        {filtersOpen ? <ChevronLeft className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                        {!filtersOpen && activeFilterCount > 0 && (
+                          <span className="inline-flex items-center justify-center size-5 rounded-full bg-amber-500 text-white text-xs font-bold">
+                            {activeFilterCount}
+                          </span>
+                        )}
+                      </button>
+                    </>
+                  )}
+
+                  <p className="text-sm text-muted-foreground whitespace-nowrap">
+                    <span className="font-semibold text-amber-600">{activeTabLoads.length}</span>
+                    <span className="sm:hidden"> loads</span>
+                    <span className="hidden sm:inline">
+                      {activeTab === 'all'
+                        ? ` available load${filteredLoads.length !== 1 ? 's' : ''}`
+                        : ` load${activeTabLoads.length !== 1 ? 's' : ''}`}
+                    </span>
                   </p>
+
+                  <div className="ml-auto flex items-center gap-2">
+                    {activeTab === 'all' && activeFilterCount > 0 && (
+                      <button onClick={clearFilters} className="hidden sm:inline-flex items-center gap-1 text-xs text-amber-600 hover:underline">
+                        <X className="size-3" />
+                        Clear all filters
+                      </button>
+                    )}
+                    <button
+                      onClick={() => refetch()}
+                      disabled={isFetching}
+                      className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-sm text-foreground disabled:opacity-50"
+                    >
+                      <Loader2 className={`size-4 ${isFetching ? 'animate-spin text-amber-500' : 'text-muted-foreground'}`} />
+                      <span className="hidden sm:inline">Refresh</span>
+                    </button>
+                    <Select value={String(pageSize)} onValueChange={v => { setPageSize(Number(v)); setPage(1); }}>
+                      <SelectTrigger className="h-8 w-[5.5rem]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {[10, 20, 50, 100].map(n => (
+                          <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="space-y-3">
-                  {filteredLoads.map(load => (
-                    <LoadCard
-                      key={load.id}
-                      load={load}
-                      myCarrierId={myCarrierId}
-                      existingBid={myCarrierBids.find(b => b.loadId === load.id)}
-                    />
-                  ))}
-
-                  {filteredLoads.length === 0 && (
-                    <div className="border border-gray-200 dark:border-gray-700 p-12 text-center">
+                  {activeTab === 'saved' && pagedLoads.length === 0 && (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
+                      <Bookmark className="size-10 mx-auto mb-3 text-muted-foreground opacity-30" />
+                      <h3 className="text-base font-semibold mb-1">No saved loads</h3>
+                      <p className="text-sm text-muted-foreground">Bookmark loads from the All Loads tab to save them here.</p>
+                    </div>
+                  )}
+                  {activeTab === 'requested' && pagedLoads.length === 0 && (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
+                      <CheckCircle className="size-10 mx-auto mb-3 text-muted-foreground opacity-30" />
+                      <h3 className="text-base font-semibold mb-1">No pending requests</h3>
+                      <p className="text-sm text-muted-foreground">Loads you've requested will appear here.</p>
+                    </div>
+                  )}
+                  {activeTab === 'all' && filteredLoads.length === 0 && (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
                       <h3 className="text-lg font-semibold text-foreground mb-2">No loads found</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Try adjusting your filters to find available loads.
-                      </p>
+                      <p className="text-muted-foreground mb-4">Try adjusting your filters to find available loads.</p>
                       <Button onClick={clearFilters} className="bg-amber-500 hover:bg-amber-600 text-white">
                         Clear Filters
                       </Button>
                     </div>
                   )}
+                  {pagedLoads.map(load => (
+                    <LoadCard
+                      key={load.id}
+                      load={load}
+                      myCarrierId={myCarrierId}
+                      existingBid={myCarrierBids.find(b => b.loadId === load.id)}
+                      isSaved={activeTab === 'saved' ? true : savedLoadIds.includes(load.id)}
+                    />
+                  ))}
                 </div>
+
+                {activeTabLoads.length > 0 && totalPages > 1 && (
+                  <div className="flex justify-center pt-4 pb-2">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={safePage === 1}
+                        className="px-3 py-1.5 rounded-md border border-border text-sm text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Previous
+                      </button>
+
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                        .reduce<(number | '…')[]>((acc, p, idx, arr) => {
+                          if (idx > 0 && typeof arr[idx - 1] === 'number' && (p as number) - (arr[idx - 1] as number) > 1) acc.push('…');
+                          acc.push(p);
+                          return acc;
+                        }, [])
+                        .map((p, idx) =>
+                          p === '…' ? (
+                            <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground text-sm">…</span>
+                          ) : (
+                            <button
+                              key={p}
+                              onClick={() => { setPage(p as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                              className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
+                                safePage === p
+                                  ? 'bg-amber-500 border-amber-500 text-white font-semibold'
+                                  : 'border-border text-muted-foreground hover:bg-muted'
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          )
+                        )}
+
+                      <button
+                        onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={safePage === totalPages}
+                        className="px-3 py-1.5 rounded-md border border-border text-sm text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </>
         )}
       </div>
+
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="!fixed bottom-6 right-6 !z-40 flex items-center justify-center size-10 rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-lg transition-all duration-200"
+          aria-label="Back to top"
+        >
+          <ArrowUp className="size-5" />
+        </button>
+      )}
     </div>
   );
 }
+
 
 type FilterPanelProps = {
   sortBy: string; setSortBy: (v: string) => void;
@@ -346,107 +566,141 @@ type FilterPanelProps = {
   clearFilters: () => void;
 };
 
+function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <label className="text-sm text-foreground">{label}</label>
+      {children}
+    </div>
+  );
+}
+
 function FilterPanel({
   sortBy, setSortBy, searchTerm, setSearchTerm,
   pickupLocation, setPickupLocation, pickupRadius, setPickupRadius,
   deliveryLocation, setDeliveryLocation, deliveryRadius, setDeliveryRadius,
   vehicleType, setVehicleType, trailerType, setTrailerType,
   condition, setCondition, minPrice, setMinPrice,
-  minPricePerMile, setMinPricePerMile, clearFilters,
-}: FilterPanelProps) {
+  minPricePerMile, setMinPricePerMile,
+}: Omit<FilterPanelProps, 'clearFilters'>) {
   return (
-    <div className="space-y-5">
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Sort By</label>
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {SORT_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Search</label>
-        <Input placeholder="Make, model, city..." value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)} className="h-9" />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-foreground">Pickup Location</label>
-        <Input placeholder="City, State, or Zip" value={pickupLocation}
-          onChange={e => setPickupLocation(e.target.value)} className="h-9" />
-        <div className="space-y-0.5">
-          <label className="text-xs text-muted-foreground">Radius (miles)</label>
-          <Input value={pickupRadius} onChange={e => setPickupRadius(e.target.value)} className="h-9" />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-foreground">Delivery Location</label>
-        <Input placeholder="City, State, or Zip" value={deliveryLocation}
-          onChange={e => setDeliveryLocation(e.target.value)} className="h-9" />
-        <div className="space-y-0.5">
-          <label className="text-xs text-muted-foreground">Radius (miles)</label>
-          <Input value={deliveryRadius} onChange={e => setDeliveryRadius(e.target.value)} className="h-9" />
-        </div>
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Vehicle Type</label>
-        <Select value={vehicleType} onValueChange={setVehicleType}>
-          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {VEHICLE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Trailer Type</label>
-        <Select value={trailerType} onValueChange={setTrailerType}>
-          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {TRAILER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Condition</label>
-        <Select value={condition} onValueChange={setCondition}>
-          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Min Price ($)</label>
-        <Input type="number" placeholder="0" value={minPrice}
-          onChange={e => setMinPrice(e.target.value)} className="h-9" />
-      </div>
-      <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">Min Price Per Mile ($)</label>
-        <Input type="number" placeholder="0.00" step="0.01" value={minPricePerMile}
-          onChange={e => setMinPricePerMile(e.target.value)} className="h-9" />
-      </div>
-      <Button variant="outline" onClick={clearFilters}
-        className="w-full border-amber-500 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10">
-        Clear All Filters
-      </Button>
+    <div className="space-y-6">
+      <FilterSection title="Sort & Search">
+        <FilterField label="Sort By">
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </FilterField>
+        <FilterField label="Keyword">
+          <Input placeholder="Make, model, city…" value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)} className="h-9" />
+        </FilterField>
+      </FilterSection>
+
+      <div className="border-t border-border/40" />
+
+      <FilterSection title="Location">
+        <FilterField label="Pickup">
+          <Input placeholder="City, State, or ZIP" value={pickupLocation}
+            onChange={e => setPickupLocation(e.target.value)} className="h-9" />
+        </FilterField>
+        <FilterField label="Pickup Radius (mi)">
+          <div className="flex items-center gap-2">
+            <Input type="number" min="0" value={pickupRadius}
+              onChange={e => setPickupRadius(e.target.value)} className="h-9 w-24" />
+            <span className="text-sm text-muted-foreground">miles</span>
+          </div>
+        </FilterField>
+        <FilterField label="Delivery">
+          <Input placeholder="City, State, or ZIP" value={deliveryLocation}
+            onChange={e => setDeliveryLocation(e.target.value)} className="h-9" />
+        </FilterField>
+        <FilterField label="Delivery Radius (mi)">
+          <div className="flex items-center gap-2">
+            <Input type="number" min="0" value={deliveryRadius}
+              onChange={e => setDeliveryRadius(e.target.value)} className="h-9 w-24" />
+            <span className="text-sm text-muted-foreground">miles</span>
+          </div>
+        </FilterField>
+      </FilterSection>
+
+      <div className="border-t border-border/40" />
+
+      <FilterSection title="Vehicle">
+        <FilterField label="Type">
+          <Select value={vehicleType} onValueChange={setVehicleType}>
+            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {VEHICLE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </FilterField>
+        <FilterField label="Trailer">
+          <Select value={trailerType} onValueChange={setTrailerType}>
+            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {TRAILER_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </FilterField>
+        <FilterField label="Condition">
+          <Select value={condition} onValueChange={setCondition}>
+            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </FilterField>
+      </FilterSection>
+
+      <div className="border-t border-border/40" />
+
+      <FilterSection title="Price">
+        <FilterField label="Min Price ($)">
+          <Input type="number" placeholder="0" min="0" value={minPrice}
+            onChange={e => setMinPrice(e.target.value)} className="h-9" />
+        </FilterField>
+        <FilterField label="Min $/Mile">
+          <Input type="number" placeholder="0.00" step="0.01" min="0" value={minPricePerMile}
+            onChange={e => setMinPricePerMile(e.target.value)} className="h-9" />
+        </FilterField>
+      </FilterSection>
     </div>
   );
 }
 
 const LoadCard = memo(function LoadCard({
-  load, myCarrierId, existingBid,
+  load, myCarrierId, existingBid, isSaved = false,
 }: {
   load: LoadDto;
   myCarrierId?: string;
   existingBid?: CarrierBidWithLoadDto;
+  isSaved?: boolean;
 }) {
+  const navigate = useNavigate();
   const user = useAppSelector(s => s.auth.user);
   const isCarrier = user?.role === 'carrier';
   const [placeBid, { isLoading: isBidding }] = usePlaceBidMutation();
   const [updateBid, { isLoading: isUpdating }] = useUpdateBidMutation();
+  const [addSaved, { isLoading: isSaving }] = useAddSavedLoadMutation();
+  const [removeSaved, { isLoading: isRemoving }] = useRemoveSavedLoadMutation();
 
   const isAssigned = !!myCarrierId && load.assignedCarrierId === myCarrierId;
+  const isBooked = !!load.status && load.status !== 'OPEN';
   const hasPendingBid = existingBid?.bidStatus === 'PENDING';
+  const [cityMap, setCityMap] = useState<{ city: string; state: string; label: string } | null>(null);
 
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'vehicle'>('general');
@@ -457,13 +711,13 @@ const LoadCard = memo(function LoadCard({
   const [requestedPickupTime, setRequestedPickupTime] = useState('');
   const [requestedDropDate, setRequestedDropDate] = useState('');
   const [requestedDropTime, setRequestedDropTime] = useState('');
+  const [bidNotes, setBidNotes] = useState('');
 
   const pickupDateStr = formatDate(load.pickupDate);
   const deliveryDateStr = formatDate(load.deliveryDate);
   const vehicleCount = 1 + (load.additionalVehicles?.length ?? 0);
   const isMulti = vehicleCount > 1;
-  const ppm = load.price != null && load.distance != null && load.distance > 0
-    ? load.price / load.distance : null;
+  const ppm = calcPricePerMile(load.price, load.distance, load.additionalVehicles);
 
   const vehicleTitle = isMulti
     ? 'Multi-Vehicle Load'
@@ -490,6 +744,8 @@ const LoadCard = memo(function LoadCard({
   const dropLoc = [load.dropCity, load.dropState].filter(Boolean).join(', ');
   const pickupLocFull = [pickupLoc, load.pickupZip].filter(Boolean).join(' ');
   const dropLocFull = [dropLoc, load.dropZip].filter(Boolean).join(' ');
+  const pickupExact = isBooked ? [load.pickupStreet, pickupLocFull].filter(Boolean).join(', ') : null;
+  const dropExact = isBooked ? [load.dropStreet, dropLocFull].filter(Boolean).join(', ') : null;
 
   const openBidForm = (editMode: boolean) => {
     setIsEditMode(editMode);
@@ -499,12 +755,14 @@ const LoadCard = memo(function LoadCard({
       setRequestedPickupTime(existingBid.requestedPickupTime ?? '');
       setRequestedDropDate(existingBid.requestedDropDate ?? '');
       setRequestedDropTime(existingBid.requestedDropTime ?? '');
+      setBidNotes(existingBid.notes ?? '');
     } else {
       setBidAmount('');
       setRequestedPickupDate(load.pickupDate ?? '');
       setRequestedPickupTime('');
       setRequestedDropDate(load.deliveryDate ?? '');
       setRequestedDropTime('');
+      setBidNotes('');
     }
     setShowBidForm(true);
   };
@@ -516,6 +774,7 @@ const LoadCard = memo(function LoadCard({
     setRequestedPickupTime('');
     setRequestedDropDate('');
     setRequestedDropTime('');
+    setBidNotes('');
   };
 
   const handleBidSubmit = async () => {
@@ -533,6 +792,7 @@ const LoadCard = memo(function LoadCard({
           requestedPickupTime: requestedPickupTime || undefined,
           requestedDropDate: requestedDropDate || undefined,
           requestedDropTime: requestedDropTime || undefined,
+          notes: bidNotes.trim() || undefined,
         }).unwrap();
         toast.success('Bid updated!');
       } else {
@@ -542,6 +802,7 @@ const LoadCard = memo(function LoadCard({
           requestedPickupTime: requestedPickupTime || undefined,
           requestedDropDate: requestedDropDate || undefined,
           requestedDropTime: requestedDropTime || undefined,
+          notes: bidNotes.trim() || undefined,
         }).unwrap();
         toast.success('Request submitted!');
       }
@@ -552,18 +813,19 @@ const LoadCard = memo(function LoadCard({
   };
 
   return (
-    <div className="border-2 border-gray-200 dark:border-gray-700 bg-card hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 overflow-hidden rounded-xl">
+    <div className="border-2 border-gray-200 dark:border-gray-700 bg-card hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 overflow-hidden rounded-none">
       <div
         className="p-4 cursor-pointer select-none"
         onClick={() => setExpanded(v => !v)}
       >
-        {expanded && load.brokerId && (
-          <div className="mb-3 px-3 py-2 bg-gray-50/80 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50">
+        {load.brokerId && (
+          <div className="mb-3 px-3 py-2 bg-gray-50/80 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 rounded-md">
             <BrokerSummaryRow brokerId={load.brokerId} />
           </div>
         )}
 
-        <div className="flex items-start gap-3">
+        {/* ── Desktop layout (sm+): original unchanged ── */}
+        <div className="hidden sm:flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-0.5">
               <span className="text-base font-semibold text-foreground">{vehicleTitle}</span>
@@ -572,20 +834,38 @@ const LoadCard = memo(function LoadCard({
                   {vehicleCount} Vehicles
                 </span>
               )}
+              {load.trailerType === 'enclosed' && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                  Enclosed Trailer
+                </span>
+              )}
+              {hasPendingBid && (
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+                  <CheckCircle className="size-3" />
+                  Requested
+                </span>
+              )}
               {allConditions.map((c, i) => <ConditionIcon key={i} condition={c} />)}
             </div>
-
             {isMulti && vehicleListText && (
               <p className="text-xs text-muted-foreground mb-1.5">{vehicleListText}</p>
             )}
-
-            <div className="flex items-start gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1">
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
                   <MapPin className="size-3.5 text-amber-500 flex-shrink-0" />
-                  <span className="text-sm text-muted-foreground truncate">
-                    {(expanded ? pickupLocFull : pickupLoc) || '—'}
-                  </span>
+                  {pickupExact ? (
+                    <span className="text-sm text-muted-foreground truncate">{pickupExact}</span>
+                  ) : load.pickupCity ? (
+                    <button
+                      onClick={e => { e.stopPropagation(); setCityMap({ city: load.pickupCity!, state: load.pickupState!, label: `Pickup — ${pickupLoc}` }); }}
+                      className="text-sm text-muted-foreground truncate hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left"
+                    >
+                      {pickupLocFull || '—'}
+                    </button>
+                  ) : (
+                    <span className="text-sm text-muted-foreground truncate">—</span>
+                  )}
                 </div>
                 {pickupDateStr && <p className="text-xs text-muted-foreground pl-4">{pickupDateStr}</p>}
               </div>
@@ -593,15 +873,23 @@ const LoadCard = memo(function LoadCard({
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
                   <MapPin className="size-3.5 text-amber-500 flex-shrink-0" />
-                  <span className="text-sm text-muted-foreground truncate">
-                    {(expanded ? dropLocFull : dropLoc) || '—'}
-                  </span>
+                  {dropExact ? (
+                    <span className="text-sm text-muted-foreground truncate">{dropExact}</span>
+                  ) : load.dropCity ? (
+                    <button
+                      onClick={e => { e.stopPropagation(); setCityMap({ city: load.dropCity!, state: load.dropState!, label: `Delivery — ${dropLoc}` }); }}
+                      className="text-sm text-muted-foreground truncate hover:underline decoration-muted-foreground underline-offset-2 cursor-pointer text-left"
+                    >
+                      {dropLocFull || '—'}
+                    </button>
+                  ) : (
+                    <span className="text-sm text-muted-foreground truncate">—</span>
+                  )}
                 </div>
                 {deliveryDateStr && <p className="text-xs text-muted-foreground pl-4">{deliveryDateStr}</p>}
               </div>
             </div>
           </div>
-
           <div className="flex-shrink-0 text-right">
             {load.price != null && (
               <div className="text-lg font-bold text-foreground leading-tight">
@@ -614,11 +902,133 @@ const LoadCard = memo(function LoadCard({
               </div>
             )}
           </div>
-
+          {isCarrier && (
+            <button
+              onClick={e => { e.stopPropagation(); isSaved ? removeSaved(load.id) : addSaved(load.id); }}
+              disabled={isSaving || isRemoving}
+              title={isSaved ? 'Remove from saved' : 'Save load'}
+              className="flex-shrink-0 p-1 self-start text-muted-foreground hover:text-amber-500 transition-colors disabled:opacity-50"
+            >
+              <Bookmark className={`size-4 transition-colors ${isSaved ? 'fill-amber-500 text-amber-500' : ''}`} />
+            </button>
+          )}
           <div className="flex-shrink-0 p-1 self-start">
             <ChevronDown className={`size-4 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
           </div>
         </div>
+
+        {/* ── Mobile layout (< sm): stacked rows ── */}
+        <div className="flex flex-col gap-1.5 sm:hidden">
+          {/* Row 1: title + price + actions */}
+          <div className="flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-semibold text-foreground leading-snug">{vehicleTitle}</span>
+            </div>
+            <div className="flex-shrink-0 text-right">
+              {load.price != null && (
+                <div className="text-base font-bold text-foreground leading-tight">
+                  ${load.price.toLocaleString()}
+                </div>
+              )}
+              {ppm != null && load.distance != null && (
+                <div className="text-xs text-muted-foreground whitespace-nowrap">
+                  {load.distance.toLocaleString()} mi · ${ppm.toFixed(2)}/mi
+                </div>
+              )}
+            </div>
+            {isCarrier && (
+              <button
+                onClick={e => { e.stopPropagation(); isSaved ? removeSaved(load.id) : addSaved(load.id); }}
+                disabled={isSaving || isRemoving}
+                title={isSaved ? 'Remove from saved' : 'Save load'}
+                className="flex-shrink-0 p-1 self-start text-muted-foreground hover:text-amber-500 transition-colors disabled:opacity-50"
+              >
+                <Bookmark className={`size-4 transition-colors ${isSaved ? 'fill-amber-500 text-amber-500' : ''}`} />
+              </button>
+            )}
+            <div className="flex-shrink-0 p-1 self-start">
+              <ChevronDown className={`size-4 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
+            </div>
+          </div>
+
+          {/* Row 2: chips */}
+          {(isMulti || load.trailerType === 'enclosed' || hasPendingBid) && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {isMulti && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                  {vehicleCount} Vehicles
+                </span>
+              )}
+              {load.trailerType === 'enclosed' && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                  Enclosed Trailer
+                </span>
+              )}
+              {hasPendingBid && (
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+                  <CheckCircle className="size-3" />
+                  Requested
+                </span>
+              )}
+              {allConditions.map((c, i) => <ConditionIcon key={i} condition={c} />)}
+            </div>
+          )}
+
+          {/* Row 3: vehicle list */}
+          {isMulti && vehicleListText && (
+            <p className="text-xs text-muted-foreground">{vehicleListText}</p>
+          )}
+
+          {/* Row 4: full-width lane */}
+          <div className="flex items-center gap-2 mt-0.5">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <MapPin className="size-3 text-amber-500 flex-shrink-0" />
+                {pickupExact ? (
+                  <span className="text-xs text-muted-foreground truncate">{pickupExact}</span>
+                ) : load.pickupCity ? (
+                  <button
+                    onClick={e => { e.stopPropagation(); setCityMap({ city: load.pickupCity!, state: load.pickupState!, label: `Pickup — ${pickupLoc}` }); }}
+                    className="text-xs text-muted-foreground hover:underline underline-offset-2 cursor-pointer text-left truncate"
+                  >
+                    {pickupLocFull || '—'}
+                  </button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
+              </div>
+              {pickupDateStr && <p className="text-xs text-muted-foreground pl-4">{pickupDateStr}</p>}
+            </div>
+            <span className="text-amber-500 font-bold flex-shrink-0 text-sm">→</span>
+            <div className="min-w-0 flex-1 text-right">
+              <div className="flex items-center gap-1 justify-end">
+                {dropExact ? (
+                  <span className="text-xs text-muted-foreground truncate">{dropExact}</span>
+                ) : load.dropCity ? (
+                  <button
+                    onClick={e => { e.stopPropagation(); setCityMap({ city: load.dropCity!, state: load.dropState!, label: `Delivery — ${dropLoc}` }); }}
+                    className="text-xs text-muted-foreground hover:underline underline-offset-2 cursor-pointer text-right truncate"
+                  >
+                    {dropLocFull || '—'}
+                  </button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
+                <MapPin className="size-3 text-amber-500 flex-shrink-0" />
+              </div>
+              {deliveryDateStr && <p className="text-xs text-muted-foreground pr-4">{deliveryDateStr}</p>}
+            </div>
+          </div>
+        </div>
+
+        {cityMap && (
+          <CityMapModal
+            city={cityMap.city}
+            state={cityMap.state}
+            label={cityMap.label}
+            onClose={() => setCityMap(null)}
+          />
+        )}
       </div>
 
       {expanded && (
@@ -644,14 +1054,30 @@ const LoadCard = memo(function LoadCard({
 
           {activeTab === 'general' && (
             <div className="p-5 space-y-6">
+              {isAssigned && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Pickup & Delivery Address</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <InfoField label="Pickup"
+                      value={[load.pickupStreet, load.pickupCity, load.pickupState, load.pickupZip].filter(Boolean).join(', ') || '—'} />
+                    <InfoField label="Delivery"
+                      value={[load.dropStreet, load.dropCity, load.dropState, load.dropZip].filter(Boolean).join(', ') || '—'} />
+                  </div>
+                </div>
+              )}
+
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Broker Contact</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {load.brokerId && <BrokerNameField brokerId={load.brokerId} />}
                   <InfoField label="Phone" value={load.contactPhone ? formatPhone(load.contactPhone) : undefined} />
                   <InfoField label="Email" value={load.contactEmail} />
-                  <InfoField label="Order ID" value={load.orderId ? `#${load.orderId}` : undefined} />
                 </div>
+                {load.orderId && (
+                  <div className="mt-3">
+                    <InfoField label="Order ID" value={`#${load.orderId}`} />
+                  </div>
+                )}
               </div>
 
               {(load.paymentMethod || load.paymentTiming) && (
@@ -678,11 +1104,20 @@ const LoadCard = memo(function LoadCard({
                 </Button>
               )}
 
-              {isCarrier && !showBidForm && hasPendingBid && (
-                <Button size="sm" variant="outline" onClick={() => openBidForm(true)}
-                  className="border-amber-500 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 text-xs">
-                  Edit My Bid
-                </Button>
+              {isCarrier && hasPendingBid && (
+                <div className="flex items-center justify-between gap-3 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="size-4 text-green-600 dark:text-green-400 flex-shrink-0" />
+                    <span className="text-xs text-green-700 dark:text-green-400 font-medium">
+                      You've already requested this load
+                    </span>
+                  </div>
+                  <Button size="sm" variant="outline"
+                    onClick={() => navigate('/carrier/requested')}
+                    className="text-xs border-green-500 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/20 flex-shrink-0 whitespace-nowrap">
+                    My Bids →
+                  </Button>
+                </div>
               )}
 
               {isCarrier && showBidForm && (
@@ -721,6 +1156,17 @@ const LoadCard = memo(function LoadCard({
                         onChange={e => setRequestedDropTime(e.target.value)}
                         className="h-8 text-xs" />
                     </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground block mb-1">Notes (optional)</label>
+                    <textarea
+                      value={bidNotes}
+                      onChange={e => setBidNotes(e.target.value)}
+                      placeholder="Any questions, special requests, or details for the broker…"
+                      maxLength={500}
+                      rows={2}
+                      className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                    />
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleBidSubmit} disabled={isBidding || isUpdating}
@@ -781,7 +1227,7 @@ function VehicleRow({ index, year, make, model, type, condition, vin }: {
   const condLabel = condition ? (isRunning ? 'Running' : 'Non-Running') : null;
   const condColor = isRunning
     ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-    : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
 
   return (
     <div className="flex items-start gap-3">

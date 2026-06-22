@@ -56,7 +56,7 @@ export function AIBackhaul() {
   };
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-background map-background-detailed">
       <MapBackground />
 
       <div className="relative z-10">
@@ -82,7 +82,7 @@ export function AIBackhaul() {
               <MapPin className="size-8 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold">Backhaul Recommendations</h1>
+              <h1 className="text-2xl sm:text-4xl font-bold">Backhaul Recommendations</h1>
               <p className="text-muted-foreground">Eliminate empty miles with smart return load suggestions</p>
             </div>
           </div>

@@ -12,6 +12,7 @@ export type AuthResponse = {
   email: string;
   role: string;
   adminApproved: boolean;
+  companyName?: string;
 };
 
 export type LoginPendingResponse = {
@@ -33,6 +34,7 @@ export type MeResponse = {
 
 export type ProfileUpdatePayload = {
   companyName?: string;
+  dbaName?: string;
   dotNumber?: string;
   mcNumber?: string;
   phoneNumber?: string;
@@ -65,92 +67,6 @@ export type DocumentUploadResponse = {
   uploadedAt: string;
 };
 
-export type LookupRequest = {
-  lookupValue: string;
-  lookupType: 'DOT' | 'MC';
-};
-
-export type FmcsaInspectionStats = {
-  inspections?: string;
-  outOfService?: string;
-  outOfServicePercent?: string;
-  nationalAverage?: string;
-};
-
-export type FmcsaInspections = {
-  vehicle?: FmcsaInspectionStats;
-  driver?: FmcsaInspectionStats;
-  hazmat?: FmcsaInspectionStats;
-  iep?: FmcsaInspectionStats;
-};
-
-export type FmcsaCrashes = {
-  tow?: number;
-  fatal?: number;
-  injury?: number;
-  total?: number;
-};
-
-export type LookupResponse = {
-  // Session
-  validationId: string;
-  lookupType: string;
-  lookupValue: string;
-  // Identity
-  dotNumber: string;
-  mcNumber: string;
-  legalName: string;
-  dbaName?: string;
-  entityType?: string;
-  // Status
-  operatingStatus?: string;
-  allowedToOperate?: string;
-  outOfServiceDate?: string;
-  latestUpdate?: string;
-  // Physical address
-  phyStreet?: string;
-  phyCity?: string;
-  phyState?: string;
-  phyZip?: string;
-  phyCountry?: string;
-  // Mailing address
-  mailingStreet?: string;
-  mailingCity?: string;
-  mailingState?: string;
-  mailingZip?: string;
-  mailingCountry?: string;
-  // Contact / Fleet
-  phone?: string;
-  totalDrivers?: number;
-  totalPowerUnits?: number;
-  // Operation
-  operationClassification?: string[];
-  carrierOperation?: string[];
-  cargoCarried?: string[];
-  // MCS-150
-  mcs150Date?: string;
-  mcs150Mileage?: number;
-  mcs150Year?: number;
-  // Safety
-  safetyRating?: string;
-  safetyRatingDate?: string;
-  safetyReviewDate?: string;
-  safetyType?: string;
-  // Inspections & Crashes
-  usInspections?: FmcsaInspections;
-  canadaInspections?: FmcsaInspections;
-  usCrashes?: FmcsaCrashes;
-  canadaCrashes?: FmcsaCrashes;
-  // Broker-specific
-  brokerAuthorityActive?: boolean;
-};
-
-export type SaveFromValidationRequest = {
-  validationId: string;
-  email: string;
-  password: string;
-};
-
 export type RegisterDealerPayload = {
   email: string;
   password: string;
@@ -166,6 +82,49 @@ export type RegisterDealerPayload = {
   dealerLicenseNumber?: string;
   auctionAccessNumber?: string;
   howDidYouHear?: string;
+};
+
+export type RegisterCarrierFullPayload = {
+  email: string;
+  password: string;
+  companyName: string;
+  dbaName?: string;
+  dotNumber: string;
+  mcNumber?: string;
+  phoneNumber: string;
+  insuranceCompany: string;
+  cargoInsurance: number;
+  liabilityInsurance: number;
+  taxIdType: string;
+  taxId: string;
+  mailingAddress: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  preferredLines?: string;
+};
+
+export type RegisterBrokerFullPayload = {
+  email: string;
+  password: string;
+  companyName: string;
+  dotNumber: string;
+  mcNumber: string;
+  phoneNumber: string;
+  taxIdType: string;
+  taxId: string;
+  mailingAddress: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  bondCompany?: string;
+  bondPolicyNumber?: string;
+  bondCoverage?: string;
+  bondEffectiveDate?: string;
+  bondAgentFirstName?: string;
+  bondAgentLastName?: string;
+  bondAgentEmail?: string;
+  bondAgentPhone?: string;
 };
 
 export type AdditionalVehicle = {
@@ -207,6 +166,7 @@ export type CreateLoadPayload = {
   trailerType?: string;
   vehicleAdditionalInfo?: string;
   description?: string;
+  paymentNotes?: string;
   weight?: number;
   price?: number;
   pickupDate?: string;
@@ -251,6 +211,7 @@ export type LoadDto = {
   vin?: string;
   trailerType?: string;
   description?: string;
+  paymentNotes?: string;
   weight?: number;
   price?: number;
   distance?: number;
@@ -328,6 +289,7 @@ export type BidPayload = {
   requestedPickupTime?: string;
   requestedDropDate?: string;
   requestedDropTime?: string;
+  notes?: string;
 };
 
 export type UpdateBidPayload = {
@@ -337,6 +299,7 @@ export type UpdateBidPayload = {
   requestedPickupTime?: string;
   requestedDropDate?: string;
   requestedDropTime?: string;
+  notes?: string;
 };
 
 export type BidDto = {
@@ -352,10 +315,11 @@ export type BidDto = {
   requestedPickupTime?: string;
   requestedDropDate?: string;
   requestedDropTime?: string;
+  notes?: string;
 };
 
 export type CarrierBidWithLoadDto = {
-  bidId: string;
+  bidId: string | null;
   loadId: string;
   amount: number;
   bookNow: boolean;
@@ -371,14 +335,19 @@ export type CarrierBidWithLoadDto = {
   vehicleYear?: number;
   pickupCity?: string;
   pickupState?: string;
+  pickupZip?: string;
   dropCity?: string;
   dropState?: string;
+  dropZip?: string;
   price?: number;
   loadCreatedAt?: string;
   pickupDate?: string;
   deliveryDate?: string;
   loadStatus?: string;
   brokerId?: string;
+  orderId?: string;
+  notes?: string;
+  additionalVehicles?: AdditionalVehicle[];
 };
 
 export type BrokerProfile = {
@@ -408,6 +377,20 @@ export type BrokerProfile = {
   bondAgentLastName?: string;
   bondAgentEmail?: string;
   bondAgentPhone?: string;
+};
+
+export type DealerProfile = {
+  companyName?: string;
+  ownerFirstName?: string;
+  ownerLastName?: string;
+  businessPhone?: string;
+  companyAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  yearEstablished?: string;
+  dealerLicenseNumber?: string;
+  auctionAccessNumber?: string;
 };
 
 export type CarrierProfile = {
@@ -449,8 +432,10 @@ export type CarrierPublicInfo = {
   companyName?: string;
   operatingStatus?: string;
   safetyRating?: string;
+  phyStreet?: string;
   phyCity?: string;
   phyState?: string;
+  phyZip?: string;
   totalPowerUnits?: number;
   phoneNumber?: string;
   ratingScore?: number | null;
@@ -463,11 +448,18 @@ export type BrokerPublicInfo = {
   legalName?: string;
   companyName?: string;
   operatingStatus?: string;
+  mailingAddress?: string;
   city?: string;
   state?: string;
+  zipCode?: string;
   phoneNumber?: string;
   email?: string;
   ratingScore?: number | null;
+  // Bond — company and agent contact only (policy/coverage/dates are private)
+  bondCompany?: string;
+  bondAgentFirstName?: string;
+  bondAgentLastName?: string;
+  bondAgentPhone?: string;
 };
 
 export type SubmitRatingPayload = {
@@ -512,6 +504,60 @@ export type AdminDocumentDto = {
   uploadedAt: string;
 };
 
+export type AdminCarrierProfilePayload = {
+  companyName?: string;
+  dbaName?: string;
+  dotNumber?: string;
+  mcNumber?: string;
+  phoneNumber?: string;
+  insuranceCompany?: string;
+  cargoInsurance?: number;
+  liabilityInsurance?: number;
+  taxIdType?: string;
+  taxId?: string;
+  mailingAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  preferredLines?: string;
+};
+
+export type AdminBrokerProfilePayload = {
+  companyName?: string;
+  dotNumber?: string;
+  mcNumber?: string;
+  phoneNumber?: string;
+  taxIdType?: string;
+  taxId?: string;
+  mailingAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  bondCompany?: string;
+  bondPolicyNumber?: string;
+  bondCoverage?: string;
+  bondEffectiveDate?: string;
+  bondAgentFirstName?: string;
+  bondAgentLastName?: string;
+  bondAgentEmail?: string;
+  bondAgentPhone?: string;
+};
+
+export type AdminDealerProfilePayload = {
+  companyName?: string;
+  ownerFirstName?: string;
+  ownerLastName?: string;
+  businessPhone?: string;
+  companyAddress?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  yearEstablished?: string;
+  dealerLicenseNumber?: string;
+  auctionAccessNumber?: string;
+  howDidYouHear?: string;
+};
+
 export type AdminUserDto = {
   userId: string;
   email: string;
@@ -522,7 +568,6 @@ export type AdminUserDto = {
   /** True when admin actively declined this registration (distinct from "never reviewed"). */
   declined: boolean;
   declinedAt?: string;
-  fmcsaVerified?: boolean;
   verificationDate?: string;
   createdAt?: string;
   profileId?: string;
@@ -541,6 +586,23 @@ export type AdminUserDto = {
   taxIdType?: string;
   taxId?: string;
   carrierOperation?: string;
+  preferredLines?: string;
+  // Broker-only bond fields
+  bondCompany?: string;
+  bondPolicyNumber?: string;
+  bondCoverage?: string;
+  bondEffectiveDate?: string;
+  bondAgentFirstName?: string;
+  bondAgentLastName?: string;
+  bondAgentEmail?: string;
+  bondAgentPhone?: string;
+  // Dealer-only fields
+  ownerFirstName?: string;
+  ownerLastName?: string;
+  yearEstablished?: string;
+  dealerLicenseNumber?: string;
+  auctionAccessNumber?: string;
+  howDidYouHear?: string;
   documents: AdminDocumentDto[];
 };
 
@@ -569,7 +631,7 @@ const baseQueryWith401Intercept: BaseQueryFn<string | FetchArgs, unknown, FetchB
 export const hauliusApi = createApi({
   reducerPath: 'hauliusApi',
   baseQuery: baseQueryWith401Intercept,
-  tagTypes: ['Load', 'Bid', 'Profile', 'Rating'],
+  tagTypes: ['Load', 'Bid', 'Profile', 'Rating', 'Document', 'NotificationCount'],
   endpoints: (builder) => ({
     // ── Auth ──────────────────────────────────────────────────────────────
     register: builder.mutation<
@@ -577,6 +639,12 @@ export const hauliusApi = createApi({
       { email: string; password: string; role: AuthRole }
     >({
       query: (body) => ({ url: '/api/auth/register', method: 'POST', body }),
+    }),
+    registerCarrierFull: builder.mutation<AuthResponse, RegisterCarrierFullPayload>({
+      query: (body) => ({ url: '/api/carriers/register', method: 'POST', body }),
+    }),
+    registerBrokerFull: builder.mutation<AuthResponse, RegisterBrokerFullPayload>({
+      query: (body) => ({ url: '/api/brokers/register', method: 'POST', body }),
     }),
     registerDealer: builder.mutation<AuthResponse, RegisterDealerPayload>({
       query: (body) => ({ url: '/api/dealers/register', method: 'POST', body }),
@@ -597,33 +665,6 @@ export const hauliusApi = createApi({
       query: () => ({ url: '/api/auth/logout', method: 'POST' }),
     }),
 
-    // ── FMCSA Validation ──────────────────────────────────────────────────
-    validateCarrier: builder.mutation<LookupResponse, LookupRequest>({
-      query: (body) => ({ url: '/api/validate/carrier', method: 'POST', body }),
-    }),
-    validateBroker: builder.mutation<LookupResponse, LookupRequest>({
-      query: (body) => ({ url: '/api/validate/broker', method: 'POST', body }),
-    }),
-    saveCarrierFromValidation: builder.mutation<
-      AuthResponse,
-      SaveFromValidationRequest
-    >({
-      query: (body) => ({
-        url: '/api/validate/carrier/save',
-        method: 'POST',
-        body,
-      }),
-    }),
-    saveBrokerFromValidation: builder.mutation<
-      AuthResponse,
-      SaveFromValidationRequest
-    >({
-      query: (body) => ({
-        url: '/api/validate/broker/save',
-        method: 'POST',
-        body,
-      }),
-    }),
     verifyEmail: builder.query<void, string>({
       query: (token) => `/api/auth/verify-email?token=${token}`,
     }),
@@ -709,6 +750,22 @@ export const hauliusApi = createApi({
       query: () => '/api/loads/carrier/preferred-loads',
       providesTags: ['Load'],
     }),
+    getSavedLoads: builder.query<LoadDto[], void>({
+      query: () => '/api/carriers/preferred-loads',
+      providesTags: ['Load', { type: 'Load', id: 'SAVED' }],
+    }),
+    getSavedLoadIds: builder.query<string[], void>({
+      query: () => '/api/carriers/preferred-loads/ids',
+      providesTags: [{ type: 'Load', id: 'SAVED_IDS' }],
+    }),
+    addSavedLoad: builder.mutation<void, string>({
+      query: (loadId) => ({ url: `/api/carriers/preferred-loads/${loadId}`, method: 'POST' }),
+      invalidatesTags: [{ type: 'Load', id: 'SAVED' }, { type: 'Load', id: 'SAVED_IDS' }],
+    }),
+    removeSavedLoad: builder.mutation<void, string>({
+      query: (loadId) => ({ url: `/api/carriers/preferred-loads/${loadId}`, method: 'DELETE' }),
+      invalidatesTags: [{ type: 'Load', id: 'SAVED' }, { type: 'Load', id: 'SAVED_IDS' }],
+    }),
     placeBid: builder.mutation<BidDto, BidPayload>({
       query: (body) => ({ url: '/api/loads/bid', method: 'POST', body }),
       invalidatesTags: (_result, _error, { loadId }) => [
@@ -723,6 +780,16 @@ export const hauliusApi = createApi({
     approveBid: builder.mutation<void, { loadId: string; bidId: string }>({
       query: ({ loadId, bidId }) => ({
         url: `/api/loads/${loadId}/approve/${bidId}`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_result, _error, { loadId }) => [
+        { type: 'Bid', id: loadId },
+        'Load',
+      ],
+    }),
+    rejectBid: builder.mutation<void, { loadId: string; bidId: string }>({
+      query: ({ loadId, bidId }) => ({
+        url: `/api/loads/${loadId}/reject/${bidId}`,
         method: 'POST',
       }),
       invalidatesTags: (_result, _error, { loadId }) => [
@@ -756,7 +823,7 @@ export const hauliusApi = createApi({
         url: `/api/loads/${loadId}/status`,
         method: 'PATCH',
       }),
-      invalidatesTags: ['Load', 'Bid'],
+      invalidatesTags: ['Load', 'Bid', 'NotificationCount'],
     }),
     // ── Admin — user management ───────────────────────────────────────────
     getAdminUsers: builder.query<AdminUserDto[], void>({
@@ -829,8 +896,59 @@ export const hauliusApi = createApi({
       }),
       invalidatesTags: ['Profile'],
     }),
+    approveDealer: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/admin/dealers/${id}/approve`, method: 'POST' }),
+      invalidatesTags: ['Profile'],
+    }),
+    declineDealer: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/admin/dealers/${id}/decline`, method: 'POST' }),
+      invalidatesTags: ['Profile'],
+    }),
+    revokeDealer: builder.mutation<{ message: string }, string>({
+      query: (id) => ({ url: `/api/admin/dealers/${id}/revoke`, method: 'POST' }),
+      invalidatesTags: ['Profile'],
+    }),
     deleteAdminBroker: builder.mutation<void, string>({
       query: (id) => ({ url: `/api/admin/brokers/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Profile'],
+    }),
+    adminUpdateCarrierProfile: builder.mutation<{ message: string }, { id: string; body: AdminCarrierProfilePayload }>({
+      query: ({ id, body }) => ({ url: `/api/admin/carriers/${id}/profile`, method: 'PATCH', body }),
+      invalidatesTags: ['Profile'],
+    }),
+    adminUpdateBrokerProfile: builder.mutation<{ message: string }, { id: string; body: AdminBrokerProfilePayload }>({
+      query: ({ id, body }) => ({ url: `/api/admin/brokers/${id}/profile`, method: 'PATCH', body }),
+      invalidatesTags: ['Profile'],
+    }),
+    adminUpdateDealerProfile: builder.mutation<{ message: string }, { id: string; body: AdminDealerProfilePayload }>({
+      query: ({ id, body }) => ({ url: `/api/admin/dealers/${id}/profile`, method: 'PATCH', body }),
+      invalidatesTags: ['Profile'],
+    }),
+    adminUploadCarrierDocument: builder.mutation<DocumentUploadResponse, { carrierId: string; type: 'w9' | 'insurance' | 'mc-authority'; file: FormData }>({
+      query: ({ carrierId, type, file }) => ({
+        url: `/api/admin/carriers/${carrierId}/documents/${type}`,
+        method: 'POST',
+        body: file,
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
+    adminUploadBrokerDocument: builder.mutation<DocumentUploadResponse, { brokerId: string; type: 'w9' | 'mc-authority'; file: FormData }>({
+      query: ({ brokerId, type, file }) => ({
+        url: `/api/admin/brokers/${brokerId}/documents/${type}`,
+        method: 'POST',
+        body: file,
+        formData: true,
+      }),
+      invalidatesTags: ['Profile'],
+    }),
+    adminUploadDealerDocument: builder.mutation<DocumentUploadResponse, { dealerId: string; type: 'dealer-license' | 'corporate-paperwork'; file: FormData }>({
+      query: ({ dealerId, type, file }) => ({
+        url: `/api/admin/dealers/${dealerId}/documents/${type}`,
+        method: 'POST',
+        body: file,
+        formData: true,
+      }),
       invalidatesTags: ['Profile'],
     }),
 
@@ -845,6 +963,10 @@ export const hauliusApi = createApi({
     }),
     getMyCarrierProfile: builder.query<CarrierProfile, void>({
       query: () => '/api/carriers/me',
+      providesTags: ['Profile'],
+    }),
+    getMyDealerProfile: builder.query<DealerProfile, void>({
+      query: () => '/api/dealers/me',
       providesTags: ['Profile'],
     }),
     getCarrierPublicInfo: builder.query<CarrierPublicInfo, string>({
@@ -892,7 +1014,7 @@ export const hauliusApi = createApi({
         // Do NOT set Content-Type — browser sets multipart boundary automatically
         formData: true,
       }),
-      invalidatesTags: ['Profile'],
+      invalidatesTags: ['Profile', 'Document'],
     }),
     uploadDealerLicense: builder.mutation<DocumentUploadResponse, FormData>({
       query: (body) => ({
@@ -920,7 +1042,7 @@ export const hauliusApi = createApi({
           body,
           formData: true,
         }),
-        invalidatesTags: ['Profile'],
+        invalidatesTags: ['Profile', 'Document'],
       },
     ),
     uploadCarrierW9: builder.mutation<DocumentUploadResponse, FormData>({
@@ -930,7 +1052,7 @@ export const hauliusApi = createApi({
         body,
         formData: true,
       }),
-      invalidatesTags: ['Profile'],
+      invalidatesTags: ['Profile', 'Document'],
     }),
     uploadCarrierInsurance: builder.mutation<DocumentUploadResponse, FormData>({
       query: (body) => ({
@@ -939,7 +1061,7 @@ export const hauliusApi = createApi({
         body,
         formData: true,
       }),
-      invalidatesTags: ['Profile'],
+      invalidatesTags: ['Profile', 'Document'],
     }),
     uploadCarrierMcAuthority: builder.mutation<
       DocumentUploadResponse,
@@ -951,7 +1073,31 @@ export const hauliusApi = createApi({
         body,
         formData: true,
       }),
-      invalidatesTags: ['Profile'],
+      invalidatesTags: ['Profile', 'Document'],
+    }),
+
+    // ── Document management ───────────────────────────────────────────────
+    getMyBrokerDocuments: builder.query<AdminDocumentDto[], void>({
+      query: () => '/api/brokers/documents',
+      providesTags: ['Document'],
+    }),
+    getMyCarrierDocuments: builder.query<AdminDocumentDto[], void>({
+      query: () => '/api/carriers/documents',
+      providesTags: ['Document'],
+    }),
+    deleteBrokerDocument: builder.mutation<void, string>({
+      query: (documentId) => ({
+        url: `/api/brokers/documents/${documentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Document'],
+    }),
+    deleteCarrierDocument: builder.mutation<void, string>({
+      query: (documentId) => ({
+        url: `/api/carriers/documents/${documentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Document'],
     }),
 
     // ── Ratings ───────────────────────────────────────────────────────────
@@ -971,19 +1117,87 @@ export const hauliusApi = createApi({
       query: () => '/api/ratings/my-submitted-load-ids',
       providesTags: ['Rating'],
     }),
+
+    getAiUsage: builder.query<AiUsageResponse, void>({
+      query: () => '/api/ai/usage',
+    }),
+
+    aiChat: builder.mutation<AiChatResponse, AiChatRequest>({
+      query: (body) => ({ url: '/api/ai/chat', method: 'POST', body }),
+    }),
+
+    getNotificationCount: builder.query<NotificationCountResponse, void>({
+      query: () => '/api/notifications/count',
+      providesTags: ['NotificationCount'],
+    }),
+
+    rejectAssignedLoad: builder.mutation<void, string>({
+      query: (loadId) => ({ url: `/api/loads/${loadId}/carrier/reject`, method: 'POST' }),
+      invalidatesTags: ['Bid', 'Load', 'NotificationCount'],
+    }),
   }),
 });
 
+export type AiChatRequest = {
+  message: string;
+  conversationId?: string;
+  metadata?: {
+    timestamp?: string;
+    userRole?: string;
+    equipmentType?: string;
+  };
+};
+
+export type AiUsageResponse = {
+  messagesUsed: number;
+  messagesLimit: number;
+  limitReached: boolean;
+  resetAt: string;
+};
+
+export type NotificationCountResponse = {
+  pendingBids: number;
+  loadsNeedingAction: number;
+  newAssignments: number;
+  total: number;
+};
+
+export type AiChatResponse = {
+  success: boolean;
+  conversationId?: string;
+  response?: {
+    messageId: string;
+    content: string;
+    timestamp: string;
+    relatedLoadIds: string[];
+    confidence: number;
+  };
+  metadata?: {
+    processingTimeMs: number;
+    loadsQueried: number;
+    loadsMatched: number;
+    aiModel: string;
+    messagesUsed: number;
+    messagesLimit: number;
+    resetAt: string;
+  };
+  error?: {
+    code: string;
+    message: string;
+    details?: string;
+    timestamp?: string;
+    resetAt?: string;
+  };
+};
+
 export const {
   useRegisterMutation,
+  useRegisterCarrierFullMutation,
+  useRegisterBrokerFullMutation,
   useRegisterDealerMutation,
   useUploadDealerW9Mutation,
   useLoginUserMutation,
   useLogoutUserMutation,
-  useValidateCarrierMutation,
-  useValidateBrokerMutation,
-  useSaveCarrierFromValidationMutation,
-  useSaveBrokerFromValidationMutation,
   useVerifyEmailQuery,
   useResendVerificationMutation,
   useForgotPasswordMutation,
@@ -991,6 +1205,7 @@ export const {
   useRequestLoginCodeMutation,
   useVerifyLoginCodeMutation,
   useGetMeQuery,
+  useLazyGetMeQuery,
   useLazyVinLookupQuery,
   useGetLoadsQuery,
   useGetMyBrokerLoadsQuery,
@@ -1001,15 +1216,21 @@ export const {
   useGetBidsForLoadQuery,
   useGetMyCarrierBidsQuery,
   useGetPreferredLineLoadsQuery,
+  useGetSavedLoadsQuery,
+  useGetSavedLoadIdsQuery,
+  useAddSavedLoadMutation,
+  useRemoveSavedLoadMutation,
   usePlaceBidMutation,
   useUpdateBidMutation,
   useApproveBidMutation,
+  useRejectBidMutation,
   useCancelBookingMutation,
   useAutoAssignCarrierMutation,
   useGetLoadQuery,
   useUpdateLoadStatusMutation,
   useGetMyBrokerProfileQuery,
   useGetMyCarrierProfileQuery,
+  useGetMyDealerProfileQuery,
   useGetCarrierPublicInfoQuery,
   useSearchCarriersQuery,
   useLazySearchCarriersQuery,
@@ -1041,8 +1262,25 @@ export const {
   useDeclineBrokerMutation,
   useRevokeBrokerMutation,
   useDeleteAdminBrokerMutation,
+  useApproveDealerMutation,
+  useDeclineDealerMutation,
+  useRevokeDealerMutation,
+  useAdminUpdateCarrierProfileMutation,
+  useAdminUpdateBrokerProfileMutation,
+  useAdminUpdateDealerProfileMutation,
+  useAdminUploadCarrierDocumentMutation,
+  useAdminUploadBrokerDocumentMutation,
+  useAdminUploadDealerDocumentMutation,
   useGetMyRatingsQuery,
   useGetCompanyRatingsQuery,
   useSubmitRatingMutation,
   useGetMySubmittedLoadIdsQuery,
+  useGetMyBrokerDocumentsQuery,
+  useGetMyCarrierDocumentsQuery,
+  useDeleteBrokerDocumentMutation,
+  useDeleteCarrierDocumentMutation,
+  useAiChatMutation,
+  useGetAiUsageQuery,
+  useGetNotificationCountQuery,
+  useRejectAssignedLoadMutation,
 } = hauliusApi;

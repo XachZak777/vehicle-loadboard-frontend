@@ -1,13 +1,14 @@
+import { MapBackground } from '../components/MapBackground';
 import { Link, useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { MapPin, DollarSign, Shield, Clock, Users, CheckCircle, ArrowRight, Menu, X, Truck } from 'lucide-react';
+import { MapPin, DollarSign, Shield, Clock, Users, CheckCircle, ArrowRight, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { mockLoads } from '../data/mockLoads';
-import { APP_NAME, APP_TAGLINE } from '../constants';
+import { BrandLogo } from '../components/BrandLogo';
+import { APP_NAME } from '../constants';
 
 export function Welcome() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -29,15 +30,6 @@ export function Welcome() {
     return () => clearInterval(interval);
   }, []);
 
-  // Get top 3 loads by price per mile
-  const topLoads = [...mockLoads]
-    .map(load => ({
-      ...load,
-      pricePerMile: load.price / load.distance
-    }))
-    .sort((a, b) => b.pricePerMile - a.pricePerMile)
-    .slice(0, 3);
-
   // ── Smooth-scroll helpers ──────────────────────────────────────────────────
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
@@ -49,17 +41,15 @@ export function Welcome() {
   const postTo    = user ? '/post-load' : '/login';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       {/* Navigation Bar */}
       <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div>
-                <h1 className="text-lg font-bold">{APP_NAME}</h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">{APP_TAGLINE}</p>
-              </div>
+            <div className="flex items-center gap-2">
+              <BrandLogo className="h-8 w-auto" />
             </div>
 
             {/* Desktop Navigation */}
@@ -78,6 +68,9 @@ export function Welcome() {
               >
                 How It Works
               </a>
+              <Link to="/faq" className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors">FAQ</Link>
+              <Link to="/resources" className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors">Resources</Link>
+              <Link to="/contact" className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors">Help Center</Link>
               <ThemeToggle />
               {user ? (
                 <Button
@@ -132,6 +125,27 @@ export function Welcome() {
               >
                 How It Works
               </a>
+              <Link
+                to="/faq"
+                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                FAQ
+              </Link>
+              <Link
+                to="/resources"
+                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Resources
+              </Link>
+              <Link
+                to="/contact"
+                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Help Center
+              </Link>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm text-muted-foreground">Theme</span>
                 <ThemeToggle />
@@ -188,11 +202,11 @@ export function Welcome() {
           <div className="grid lg:grid-cols-2 gap-10 xl:gap-16 items-center">
             {/* Left: copy + CTAs */}
             <div className="flex flex-col items-start">
-              <h2 className="text-4xl lg:text-5xl font-bold text-foreground mb-5 leading-tight">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-5 leading-tight">
                 Professional Vehicle<br />Transport Network
               </h2>
               <p className="text-lg text-foreground/90 mb-8 leading-relaxed max-w-lg">
-                Connect with verified carriers and brokers nationwide. Streamline your vehicle transport operations with real-time load tracking and secure transactions.
+                Connect with verified carriers and brokers nationwide. Streamline your vehicle transport operations with direct communication and nationwide load coverage.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Link to={browseTo} className="w-full sm:w-auto">
@@ -212,20 +226,18 @@ export function Welcome() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <Badge className="mb-3 bg-amber-500 text-white border-0">Features</Badge>
-            <h3 className="text-3xl font-bold mb-3">Industry-Leading Platform</h3>
+            <h3 className="text-xl sm:text-3xl font-bold mb-3">Industry-Leading Platform</h3>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Everything you need to manage vehicle transportation efficiently
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { icon: MapPin,      title: 'Nationwide Coverage',    desc: 'Access loads from coast to coast with real-time availability updates' },
               { icon: Shield,      title: 'FMCSA Verified',         desc: 'All carriers verified through FMCSA database for compliance' },
               { icon: DollarSign,  title: 'Transparent Pricing',    desc: 'Clear pricing with no hidden fees or surprise charges' },
-              { icon: Clock,       title: 'Real-Time Tracking',     desc: 'Track every load from pickup to delivery with status updates' },
               { icon: Users,       title: 'Direct Communication',   desc: 'Connect directly with carriers and brokers through the platform' },
-              { icon: CheckCircle, title: 'Secure Payments',        desc: 'Protected transactions with automated payment processing' },
             ].map(({ icon: Icon, title, desc }) => (
               <Card key={title} className="border border-border hover:border-amber-500 transition-all hover:shadow-md">
                 <CardHeader className="px-5 pt-5 pb-5 gap-3">
@@ -246,7 +258,7 @@ export function Welcome() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <Badge className="mb-3 bg-amber-500 text-white border-0">Process</Badge>
-            <h3 className="text-3xl font-bold mb-3">How It Works</h3>
+            <h3 className="text-xl sm:text-3xl font-bold mb-3">How It Works</h3>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Get started in three simple steps
             </p>
@@ -256,7 +268,7 @@ export function Welcome() {
             {[
               { n: '1', title: 'Create Account',      desc: 'Complete carrier verification and email confirmation' },
               { n: '2', title: 'Find or Post Loads',  desc: 'Browse available loads or post vehicle transport requests' },
-              { n: '3', title: 'Connect & Ship',      desc: 'Coordinate pickup, track delivery, and process payment' },
+              { n: '3', title: 'Connect & Ship',      desc: 'Coordinate directly with your carrier and manage pickup and delivery' },
             ].map(({ n, title, desc }) => (
               <div key={n} className="text-center">
                 <div className="bg-amber-500 text-white rounded-full size-14 flex items-center justify-center text-xl font-bold mx-auto mb-5 shadow-lg">
@@ -273,7 +285,7 @@ export function Welcome() {
       {/* CTA Section */}
       <section className="py-16 bg-background border-y border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h3 className="text-3xl lg:text-4xl font-bold mb-4">
+          <h3 className="text-xl sm:text-3xl lg:text-4xl font-bold mb-4">
             Ready to Get Started?
           </h3>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
@@ -311,14 +323,27 @@ export function Welcome() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="bg-amber-500 p-1.5 rounded-lg">
-                  <Truck className="size-5 text-white" />
-                </div>
-                <span className="text-base font-bold">{APP_NAME}</span>
+                <BrandLogo className="h-7 w-auto" />
               </div>
               <p className="text-sm text-muted-foreground">
                 Professional vehicle transport marketplace connecting carriers and brokers nationwide.
               </p>
+              <div className="flex items-center gap-2 mt-4">
+                <span className="text-xs text-muted-foreground">Follow us:</span>
+                <a
+                  href="https://www.instagram.com/haul1us"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Haulius on Instagram"
+                  className="text-muted-foreground hover:text-pink-500 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="size-4">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <circle cx="12" cy="12" r="4" />
+                    <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+                  </svg>
+                </a>
+              </div>
             </div>
             <div>
               <h4 className="font-semibold mb-3 text-sm">Company</h4>
@@ -337,9 +362,9 @@ export function Welcome() {
             <div>
               <h4 className="font-semibold mb-3 text-sm">Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/privacy" className="hover:text-amber-500 transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/terms" className="hover:text-amber-500 transition-colors">Terms of Service</Link></li>
-                <li><Link to="/cookies" className="hover:text-amber-500 transition-colors">Cookie Policy</Link></li>
+                <li><a href="/privacy" className="hover:text-amber-500 transition-colors">Privacy Policy</a></li>
+                <li><a href="/terms" className="hover:text-amber-500 transition-colors">Terms of Service</a></li>
+                <li><a href="/cookies" className="hover:text-amber-500 transition-colors">Cookie Policy</a></li>
               </ul>
             </div>
           </div>

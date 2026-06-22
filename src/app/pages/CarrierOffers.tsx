@@ -45,7 +45,7 @@ export function CarrierOffers() {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Load Offers</h1>
+          <h1 className="text-xl sm:text-3xl font-bold mb-2">Load Offers</h1>
           <p className="text-muted-foreground">Loads directly assigned to you</p>
         </div>
 

@@ -4,8 +4,7 @@ import { toast } from 'sonner';
 import { useAppDispatch } from '../store/hooks';
 import { setCredentials } from '../store/slices/authSlice';
 import {
-  useRegisterMutation,
-  useUpdateBrokerProfileMutation,
+  useRegisterBrokerFullMutation,
   useUploadBrokerW9Mutation,
   useUploadBrokerMcAuthorityMutation,
 } from '../store/services/hauliusApi';
@@ -15,6 +14,7 @@ import {
   isValidMcNumber, isValidDotNumber, isValidCompanyName,
   isBusinessEmail, businessEmailError, isValidEIN, isValidSSN,
   isStrongPassword, passwordRequirementsText, buildErrors, type FieldErrors,
+  isValidPhone, isValidStreetAddress, isValidCity, isValidZip,
 } from '../utils/validation';
 import { SignupStepIndicator } from '../components/signup/SignupStepIndicator';
 import { CompanyInfoStep } from '../components/signup/CompanyInfoStep';
@@ -34,8 +34,7 @@ const STEPS = [
 export function BrokerSignup() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [register] = useRegisterMutation();
-  const [updateProfile] = useUpdateBrokerProfileMutation();
+  const [registerBrokerFull] = useRegisterBrokerFullMutation();
   const [uploadW9] = useUploadBrokerW9Mutation();
   const [uploadMcAuthority] = useUploadBrokerMcAuthorityMutation();
 
@@ -63,9 +62,19 @@ export function BrokerSignup() {
     const errs = buildErrors([
       [!formData.companyName.trim(), 'companyName', 'Company name is required.'],
       [!!formData.companyName.trim() && !isValidCompanyName(formData.companyName), 'companyName', 'Company name must be 2–100 characters.'],
+      [!formData.dotNumber.trim(), 'dotNumber', 'DOT number is required.'],
+      [!!formData.dotNumber.trim() && !isValidDotNumber(formData.dotNumber), 'dotNumber', 'DOT number must be 1–8 digits with no letters.'],
       [!formData.mcNumber.trim(), 'mcNumber', 'MC number is required.'],
       [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
-      [!!formData.dotNumber.trim() && !isValidDotNumber(formData.dotNumber), 'dotNumber', 'DOT number must be 1–8 digits with no letters.'],
+      [!formData.phoneNumber.trim(), 'phoneNumber', 'Phone number is required.'],
+      [!!formData.phoneNumber.trim() && !isValidPhone(formData.phoneNumber), 'phoneNumber', 'Enter a valid US phone number.'],
+      [!formData.mailingAddress.trim(), 'mailingAddress', 'Street address is required.'],
+      [!!formData.mailingAddress.trim() && !isValidStreetAddress(formData.mailingAddress), 'mailingAddress', 'Address must be 5–200 characters.'],
+      [!formData.city.trim(), 'city', 'City is required.'],
+      [!!formData.city.trim() && !isValidCity(formData.city), 'city', 'Enter a valid city name.'],
+      [!formData.state, 'state', 'State is required.'],
+      [!formData.zipCode.trim(), 'zipCode', 'ZIP code is required.'],
+      [!!formData.zipCode.trim() && !isValidZip(formData.zipCode), 'zipCode', 'ZIP code must be 5 digits.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
@@ -124,31 +133,43 @@ export function BrokerSignup() {
     setFieldErrors({});
     setIsLoading(true);
     try {
-      const res = await register({ email: formData.email.trim(), password: formData.password, role: 'BROKER' }).unwrap();
+      const res = await registerBrokerFull({
+        email: formData.email.trim(),
+        password: formData.password,
+        companyName: formData.companyName,
+        dotNumber: formData.dotNumber,
+        mcNumber: formData.mcNumber,
+        phoneNumber: formData.phoneNumber,
+        taxIdType: formData.taxIdType,
+        taxId: formData.taxId,
+        mailingAddress: formData.mailingAddress,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        bondCompany: formData.bondCompany || undefined,
+        bondPolicyNumber: formData.bondPolicyNumber || undefined,
+        bondCoverage: formData.bondCoverage || undefined,
+        bondEffectiveDate: formData.bondEffectiveDate || undefined,
+        bondAgentFirstName: formData.bondAgentFirstName || undefined,
+        bondAgentLastName: formData.bondAgentLastName || undefined,
+        bondAgentEmail: formData.bondAgentEmail || undefined,
+        bondAgentPhone: formData.bondAgentPhone || undefined,
+      }).unwrap();
+
       dispatch(setCredentials({
         user: { id: res.userId, role: 'broker', email: res.email, createdAt: new Date().toISOString() },
         token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved,
       }));
 
-      try {
-        await updateProfile({
-          companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
-          phoneNumber: formData.phoneNumber, taxIdType: formData.taxIdType, taxId: formData.taxId,
-          mailingAddress: formData.mailingAddress, city: formData.city, state: formData.state, zipCode: formData.zipCode,
-          bondCompany: formData.bondCompany || undefined, bondPolicyNumber: formData.bondPolicyNumber || undefined,
-          bondCoverage: formData.bondCoverage || undefined, bondEffectiveDate: formData.bondEffectiveDate || undefined,
-          bondAgentFirstName: formData.bondAgentFirstName || undefined, bondAgentLastName: formData.bondAgentLastName || undefined,
-          bondAgentEmail: formData.bondAgentEmail || undefined, bondAgentPhone: formData.bondAgentPhone || undefined,
-        }).unwrap();
-      } catch { toast.warning('Profile data will be saved once your email is verified.'); }
-
-      for (const [file, upload, msg] of [
-        [w9File, uploadW9, 'W9 upload will be available once your email is verified.'],
-        [mcAuthorityFile, uploadMcAuthority, 'MC Authority upload will be available once your email is verified.'],
-      ] as [File | null, (fd: FormData) => any, string][]) {
+      for (const [file, upload] of [
+        [w9File, uploadW9],
+        [mcAuthorityFile, uploadMcAuthority],
+      ] as [File | null, (fd: FormData) => any][]) {
         if (file) {
           try { const fd = new FormData(); fd.append('file', file); await upload(fd).unwrap(); }
-          catch { toast.warning(msg); }
+          catch (uploadErr: any) {
+            toast.warning(uploadErr?.data?.message || 'Document upload failed. You can upload it from your profile.');
+          }
         }
       }
 

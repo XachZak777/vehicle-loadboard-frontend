@@ -1,15 +1,14 @@
-/**
- * Legacy mock type used only by the Welcome page demo carousel.
- * Do NOT use for real API data — use LoadPostingDto from hauliusApi instead.
- */
 export interface Load {
   id: string;
   brokerId?: string;
   brokerEmail?: string;
+  orderId?: string;
   vehicleType: string;
   make: string;
   model: string;
   year: number;
+  vin?: string;
+  vehicleAdditionalInfo?: string;
   pickupCity: string;
   pickupState: string;
   deliveryCity: string;
@@ -19,11 +18,22 @@ export interface Load {
   price: number;
   distance: number;
   condition: 'running' | 'non-running';
+  trailerType?: string;
   isOpen: boolean;
   contactName: string;
   contactPhone: string;
   contactEmail: string;
   notes?: string;
+  vehicles?: Array<{
+    vehicleType: string;
+    make: string;
+    model: string;
+    year: number;
+    vin?: string;
+    condition: 'running' | 'non-running';
+    vehicleAdditionalInfo?: string;
+  }>;
+  additionalVehicles?: Array<{ [key: string]: unknown }>;
 }
 
 export type VehicleType = 'sedan' | 'suv' | 'truck' | 'van' | 'motorcycle' | 'rv' | 'boat' | 'atv';

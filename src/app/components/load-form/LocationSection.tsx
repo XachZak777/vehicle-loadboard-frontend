@@ -3,10 +3,11 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { PhoneInput } from '../ui/PhoneInput';
+import { CityAutocomplete } from '../ui/CityAutocomplete';
 import { US_STATES } from '../../constants';
 import { sanitizeDigits, type FieldErrors } from '../../utils/validation';
 
-const LOCATION_TYPES = ['BUSINESS', 'RESIDENCE', 'AUCTION', 'PORT', 'OTHER'] as const;
+const LOCATION_TYPES = ['BUSINESS', 'RESIDENCE', 'AUCTION', 'PORT', 'DEALER', 'OTHER'] as const;
 
 type Prefix = 'pickup' | 'drop';
 
@@ -28,9 +29,10 @@ interface Props {
   };
   fieldErrors: FieldErrors;
   onChange: (field: string, value: string) => void;
+  minDate?: string;
 }
 
-export function LocationSection({ prefix, title, description, formData, fieldErrors, onChange }: Props) {
+export function LocationSection({ prefix, title, description, formData, fieldErrors, onChange, minDate }: Props) {
   const field = (name: string) => `${prefix}${name.charAt(0).toUpperCase() + name.slice(1)}`;
   const dateField = prefix === 'pickup' ? 'pickupDate' : 'deliveryDate';
   const dateLabel = prefix === 'pickup' ? 'Pickup Date' : 'Delivery Date';
@@ -48,12 +50,15 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label htmlFor={field('city')}>City *</Label>
-            <Input
+            <CityAutocomplete
               id={field('city')}
-              placeholder="e.g., Chicago"
               value={formData.city}
-              onChange={(e) => onChange(field('city'), e.target.value.trimStart().replace(/[^a-zA-Z\s'\-.]/g, ''))}
-              maxLength={100}
+              onChange={(city) => onChange(field('city'), city)}
+              onSelect={(city, state, zip) => {
+                onChange(field('city'), city);
+                onChange(field('state'), state);
+                if (zip) onChange(field('zip'), zip);
+              }}
               aria-invalid={!!fieldErrors[field('city')]}
             />
             {fieldErrors[field('city')] && (
@@ -101,6 +106,7 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
               id={dateField}
               type="date"
               value={formData.date}
+              min={minDate && minDate > new Date().toISOString().split('T')[0] ? minDate : new Date().toISOString().split('T')[0]}
               onChange={(e) => onChange(dateField, e.target.value)}
               aria-invalid={!!fieldErrors[dateField]}
             />

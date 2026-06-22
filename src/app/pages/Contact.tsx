@@ -1,7 +1,8 @@
+import { MapBackground } from '../components/MapBackground';
 import { Link } from 'react-router';
 import { Button } from '../components/ui/button';
-import { ArrowLeft, Mail, Phone, MapPin, Clock } from 'lucide-react';
-import { ThemeToggle } from '../components/ThemeToggle';
+import { Mail, Phone, MapPin, Clock } from 'lucide-react';
+import { Navbar } from '../components/Navbar';
 import { APP_NAME } from '../constants';
 import { useState } from 'react';
 import { isBusinessEmail, businessEmailError, isValidName, buildErrors, type FieldErrors } from '../utils/validation';
@@ -40,29 +41,9 @@ export function Contact() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation Bar */}
-      <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-3">
-              <div>
-                <h1 className="text-lg font-bold">{APP_NAME}</h1>
-                <p className="text-xs text-muted-foreground">Vehicle Transport Network</p>
-              </div>
-            </Link>
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              <Link to="/">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <ArrowLeft className="size-4" />
-                  Back to Home
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
+      <Navbar />
 
       {/* Hero */}
       <div className="bg-amber-500/10 border-b border-border py-16">
@@ -70,7 +51,7 @@ export function Contact() {
           <div className="bg-amber-500 p-4 rounded-2xl w-fit mx-auto mb-6">
             <Mail className="size-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-4">Contact Us</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Have a question, suggestion, or need support? We'd love to hear from you. Our team typically responds within one business day.
           </p>
@@ -230,42 +211,6 @@ export function Contact() {
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-muted text-foreground py-12 border-t border-border mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-base font-bold">{APP_NAME}</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Professional vehicle transport marketplace connecting carriers and brokers nationwide.
-              </p>
-            </div>
-            <div className="flex gap-8 md:gap-12 md:col-span-2">
-              <div>
-                <h4 className="font-semibold mb-3 text-sm">Company</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><Link to="/about" className="hover:text-amber-500 transition-colors">About Us</Link></li>
-                  <li><Link to="/contact" className="hover:text-amber-500 transition-colors">Contact</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-3 text-sm">Legal</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><Link to="/privacy" className="hover:text-amber-500 transition-colors">Privacy Policy</Link></li>
-                  <li><Link to="/terms" className="hover:text-amber-500 transition-colors">Terms of Service</Link></li>
-                  <li><Link to="/cookies" className="hover:text-amber-500 transition-colors">Cookie Policy</Link></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-border pt-6 text-center text-sm text-muted-foreground">
-            <p>© 2026 {APP_NAME}. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

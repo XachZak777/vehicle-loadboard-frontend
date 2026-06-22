@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Navbar } from '../components/Navbar';
+import { MapBackground } from '../components/MapBackground';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -68,20 +69,21 @@ export function Settings() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <Navbar />
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-5">
 
           <div className="pb-2">
-            <h1 className="text-3xl font-bold">Settings</h1>
+            <h1 className="text-xl sm:text-3xl font-bold">Settings</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Manage your account settings and preferences</p>
           </div>
 
           {/* Email */}
           <Card>
-            <CardHeader className="pb-2 pt-5 px-6">
+            <CardHeader className="pb-2 pt-5 px-4 sm:px-6">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
                 Email Address
@@ -89,7 +91,7 @@ export function Settings() {
               <CardDescription>Your login email address</CardDescription>
             </CardHeader>
             <Separator />
-            <CardContent className="px-6 py-4 space-y-3">
+            <CardContent className="px-4 sm:px-6 py-4 space-y-3">
               <div className="flex items-center gap-3 px-3 py-2.5 rounded-md border bg-muted/40">
                 <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="text-sm font-medium break-all">{user.email}</span>
@@ -103,7 +105,7 @@ export function Settings() {
 
           {/* Phone */}
           <Card>
-            <CardHeader className="pb-2 pt-5 px-6">
+            <CardHeader className="pb-2 pt-5 px-4 sm:px-6">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Phone className="h-4 w-4 text-muted-foreground" />
                 Phone Number
@@ -111,7 +113,7 @@ export function Settings() {
               <CardDescription>Update your contact phone number</CardDescription>
             </CardHeader>
             <Separator />
-            <CardContent className="px-6 py-4">
+            <CardContent className="px-4 sm:px-6 py-4">
               {currentPhone && (
                 <p className="text-sm text-muted-foreground mb-3">
                   Current: <span className="font-medium text-foreground">{currentPhone}</span>
@@ -137,7 +139,7 @@ export function Settings() {
 
           {/* Password */}
           <Card>
-            <CardHeader className="pb-2 pt-5 px-6">
+            <CardHeader className="pb-2 pt-5 px-4 sm:px-6">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Lock className="h-4 w-4 text-muted-foreground" />
                 Change Password
@@ -145,7 +147,7 @@ export function Settings() {
               <CardDescription>Reset your password via email confirmation</CardDescription>
             </CardHeader>
             <Separator />
-            <CardContent className="px-6 py-4 space-y-4">
+            <CardContent className="px-4 sm:px-6 py-4 space-y-4">
               {resetEmailSent ? (
                 <div className="flex items-start gap-3 rounded-md border bg-muted/40 px-4 py-3">
                   <CheckCircle className="size-4 shrink-0 mt-0.5 text-muted-foreground" />
@@ -176,11 +178,11 @@ export function Settings() {
 
           {/* Account info */}
           <Card>
-            <CardHeader className="pb-2 pt-5 px-6">
+            <CardHeader className="pb-2 pt-5 px-4 sm:px-6">
               <CardTitle className="text-base font-semibold">Account Information</CardTitle>
             </CardHeader>
             <Separator />
-            <CardContent className="px-6 py-4">
+            <CardContent className="px-4 sm:px-6 py-4">
               <div className="text-sm text-muted-foreground space-y-1.5">
                 {profile?.companyName && (
                   <p>Company: <span className="font-medium text-foreground">{profile.companyName}</span></p>

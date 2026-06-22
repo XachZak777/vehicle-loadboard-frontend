@@ -1,38 +1,16 @@
-import { Link } from 'react-router';
-import { Button } from '../components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { ThemeToggle } from '../components/ThemeToggle';
+import { MapBackground } from '../components/MapBackground';
+import { Navbar } from '../components/Navbar';
 
 export function CookiePolicy() {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation Bar */}
-      <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-3">
-              <div>
-                <h1 className="text-lg font-bold">Haulius</h1>
-                <p className="text-xs text-muted-foreground">Vehicle Transport Network</p>
-              </div>
-            </Link>
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              <Link to="/">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <ArrowLeft className="size-4" />
-                  Back to Home
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
+      <Navbar />
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-card border border-border rounded-lg p-8 md:p-12">
-          <h1 className="text-4xl font-bold mb-4">Cookie Policy</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-4">Cookie Policy</h1>
           <p className="text-muted-foreground mb-8">Last Updated: April 13, 2026</p>
 
           <div className="space-y-8 text-foreground">

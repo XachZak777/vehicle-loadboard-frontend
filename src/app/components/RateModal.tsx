@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ThumbsUp, ThumbsDown, Star, Send, Loader2, CheckCircle, MessageSquare } from 'lucide-react';
+import { colors } from '../styles/colors';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
@@ -91,8 +92,8 @@ export function RateModal({ open, onClose, onSubmitted, targetId, targetType, ta
       <DialogContent className="max-w-[calc(100vw-24px)] sm:max-w-md p-0 overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-start gap-3 px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
-          <div className="flex-shrink-0 size-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-            <Star className="size-6 text-amber-500" />
+          <div className={`flex-shrink-0 size-12 rounded-xl ${colors.accentBgLightDual} flex items-center justify-center`}>
+            <Star className={`size-6 ${colors.accentText}`} />
           </div>
           <div>
             <DialogTitle className="text-lg font-bold">Rate Your Experience</DialogTitle>
@@ -114,27 +115,27 @@ export function RateModal({ open, onClose, onSubmitted, targetId, targetType, ta
           {/* Rating type */}
           <div>
             <p className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-              <Star className="size-4 text-amber-500" />
-              How was your experience? <span className="text-red-500">*</span>
+              <Star className={`size-4 ${colors.accentText}`} />
+              How was your experience? <span className={colors.errorText}>*</span>
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleTypeSelect('positive')}
                 className={`relative flex flex-col items-center gap-3 rounded-xl border-2 py-6 transition-all ${
                   ratingType === 'positive'
-                    ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                    : 'border-border bg-background hover:border-amber-300 hover:bg-amber-50/50 dark:hover:bg-amber-900/10'
+                    ? `${colors.accentBorder} ${colors.accentBgFaint} dark:bg-amber-900/20`
+                    : `border-border bg-background hover:${colors.accentBorderFaint} hover:bg-amber-50/50 dark:hover:bg-amber-900/10`
                 }`}
               >
                 {ratingType === 'positive' && (
-                  <span className="absolute top-2 right-2 size-5 rounded-full border-2 border-amber-500 bg-background flex items-center justify-center">
-                    <CheckCircle className="size-3.5 text-amber-500 fill-amber-500" />
+                  <span className={`absolute top-2 right-2 size-5 rounded-full border-2 ${colors.accentBorder} bg-background flex items-center justify-center`}>
+                    <CheckCircle className={`size-3.5 ${colors.accentText} fill-amber-500`} />
                   </span>
                 )}
-                <span className={`size-14 rounded-full flex items-center justify-center transition-colors ${ratingType === 'positive' ? 'bg-amber-500' : 'bg-muted'}`}>
+                <span className={`size-14 rounded-full flex items-center justify-center transition-colors ${ratingType === 'positive' ? colors.accentBg : 'bg-muted'}`}>
                   <ThumbsUp className={`size-7 ${ratingType === 'positive' ? 'text-white' : 'text-muted-foreground'}`} />
                 </span>
-                <span className={`font-semibold text-base ${ratingType === 'positive' ? 'text-amber-600' : 'text-muted-foreground'}`}>Positive</span>
+                <span className={`font-semibold text-base ${ratingType === 'positive' ? colors.accentTextStrong : 'text-muted-foreground'}`}>Positive</span>
                 <span className="text-xs text-muted-foreground">Great experience</span>
               </button>
 
@@ -154,7 +155,7 @@ export function RateModal({ open, onClose, onSubmitted, targetId, targetType, ta
                 <span className={`size-14 rounded-full flex items-center justify-center transition-colors ${ratingType === 'negative' ? 'bg-red-500' : 'bg-muted'}`}>
                   <ThumbsDown className={`size-7 ${ratingType === 'negative' ? 'text-white' : 'text-muted-foreground'}`} />
                 </span>
-                <span className={`font-semibold text-base ${ratingType === 'negative' ? 'text-red-500' : 'text-muted-foreground'}`}>Negative</span>
+                <span className={`font-semibold text-base ${ratingType === 'negative' ? colors.errorText : 'text-muted-foreground'}`}>Negative</span>
                 <span className="text-xs text-muted-foreground">Had issues</span>
               </button>
             </div>
@@ -164,7 +165,7 @@ export function RateModal({ open, onClose, onSubmitted, targetId, targetType, ta
           {ratingType && (
             <div className="bg-muted rounded-xl p-4">
               <p className="text-sm font-semibold mb-3 flex items-center gap-1.5">
-                <CheckCircle className="size-4 text-amber-500" />
+                <CheckCircle className={`size-4 ${colors.accentText}`} />
                 {ratingType === 'positive' ? 'What went well?' : 'What went wrong?'}
                 <span className="text-muted-foreground font-normal">(Optional)</span>
               </p>
@@ -190,7 +191,7 @@ export function RateModal({ open, onClose, onSubmitted, targetId, targetType, ta
           {/* Comment */}
           <div>
             <p className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-              <MessageSquare className="size-4 text-amber-500" />
+              <MessageSquare className={`size-4 ${colors.accentText}`} />
               Share Your Experience
               <span className="text-muted-foreground font-normal">(Optional)</span>
             </p>
@@ -210,7 +211,7 @@ export function RateModal({ open, onClose, onSubmitted, targetId, targetType, ta
           <Button
             onClick={handleSubmit}
             disabled={!ratingType || isLoading}
-            className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-semibold"
+            className={`flex-1 ${colors.accentBtn} font-semibold`}
           >
             {isLoading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Send className="size-4 mr-2" />}
             Submit Rating

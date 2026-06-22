@@ -4,17 +4,20 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Separator } from '../ui/separator';
 import {
-  Search, MapPin, ArrowRight, Loader2, Truck, ShieldCheck,
-  Star, CheckCircle, AlertCircle, Users,
+  Search, MapPin, Loader2, Truck, ShieldCheck,
+  Star, CheckCircle, AlertCircle, Users, Pencil, RotateCcw,
 } from 'lucide-react';
 import { Checkbox } from '../ui/checkbox';
 import { toast } from 'sonner';
 import {
   useLazySearchCarriersQuery,
   useDirectAssignCarrierMutation,
+  useUpdateLoadMutation,
 } from '../../store/services/hauliusApi';
 import type { LoadDto, CarrierPublicInfo } from '../../store/services/hauliusApi';
+import { LoadEditForm, initEditForm } from './LoadEditForm';
 import { formatPhone } from '../../utils/phone';
+import { colors } from '../../styles/colors';
 
 interface Props {
   load: LoadDto;
@@ -63,25 +66,25 @@ function CarrierResultCard({
           <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
             {location && (
               <span className="flex items-center gap-1">
-                <MapPin className="size-3 text-amber-500" />
+                <MapPin className={`size-3 ${colors.accentText}`} />
                 {location}
               </span>
             )}
             {carrier.totalPowerUnits != null && (
               <span className="flex items-center gap-1">
-                <Truck className="size-3 text-amber-500" />
+                <Truck className={`size-3 ${colors.accentText}`} />
                 {carrier.totalPowerUnits} unit{carrier.totalPowerUnits !== 1 ? 's' : ''}
               </span>
             )}
             {carrier.safetyRating && (
               <span className="flex items-center gap-1">
-                <ShieldCheck className="size-3 text-amber-500" />
+                <ShieldCheck className={`size-3 ${colors.accentText}`} />
                 Safety: {carrier.safetyRating}
               </span>
             )}
             {carrier.ratingScore != null && (
               <span className="flex items-center gap-1">
-                <Star className="size-3 text-amber-500" />
+                <Star className={`size-3 ${colors.accentText}`} />
                 {carrier.ratingScore}% positive
               </span>
             )}
@@ -94,7 +97,7 @@ function CarrierResultCard({
         <Button
           size="sm"
           onClick={() => onSelect(carrier)}
-          className="bg-amber-500 hover:bg-amber-600 text-white shrink-0 gap-1.5"
+          className={`${colors.accentBtn} shrink-0 gap-1.5`}
         >
           <CheckCircle className="size-3.5" />
           Select
@@ -109,10 +112,13 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
   const [selected, setSelected] = useState<CarrierPublicInfo | null>(null);
   const [assigning, setAssigning] = useState(false);
   const [consent, setConsent] = useState(false);
+  const [editForm, setEditForm] = useState(() => initEditForm(load));
+  const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [triggerSearch, { data: results = [], isFetching, isUninitialized }] = useLazySearchCarriersQuery();
   const [directAssign] = useDirectAssignCarrierMutation();
+  const [updateLoad] = useUpdateLoadMutation();
 
   const vehicleTitle = [load.vehicleYear, load.vehicleMake, load.vehicleModel].filter(Boolean).join(' ')
     || `Load #${load.id.slice(0, 8)}`;
@@ -131,6 +137,10 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
     if (!selected?.id) return;
     setAssigning(true);
     try {
+      const original = initEditForm(load);
+      if (JSON.stringify(editForm) !== JSON.stringify(original)) {
+        await updateLoad({ id: load.id, body: editForm }).unwrap();
+      }
       await directAssign({ loadId: load.id, carrierId: selected.id }).unwrap();
       toast.success('Carrier assigned successfully');
       handleClose();
@@ -145,6 +155,7 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
     setQuery('');
     setSelected(null);
     setConsent(false);
+    setIsEditing(false);
     onClose();
   };
 
@@ -158,7 +169,7 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
         {/* Header */}
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg">
-            <Users className="size-5 text-amber-500" />
+            <Users className={`size-5 ${colors.accentText}`} />
             Assign Carrier
           </DialogTitle>
           <p className="text-sm text-muted-foreground mt-1">
@@ -187,7 +198,7 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
                 <Button
                   onClick={handleSearch}
                   disabled={query.trim().length < 2 || isFetching}
-                  className="bg-amber-500 hover:bg-amber-600 text-white shrink-0 gap-1.5"
+                  className={`${colors.accentBtn} shrink-0 gap-1.5`}
                 >
                   {isFetching ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
                   Search
@@ -238,16 +249,20 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
           </>
         ) : (
           /* Confirmation step */
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4">
             {/* Load */}
             <div className="p-3 bg-muted/40 rounded-lg">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Load</p>
               <p className="font-semibold text-sm">{vehicleTitle}</p>
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
-                <MapPin className="size-3.5 flex-shrink-0" />
-                <span>{load.pickupCity}, {load.pickupState}</span>
-                <ArrowRight className="size-3.5" />
-                <span>{load.dropCity}, {load.dropState}</span>
+              <div className="flex flex-col gap-0.5 text-sm text-muted-foreground mt-1">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <MapPin className="size-3.5 flex-shrink-0" />
+                  <span className="truncate">{load.pickupCity}, {load.pickupState}</span>
+                </div>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <MapPin className="size-3.5 flex-shrink-0" />
+                  <span className="truncate">{load.dropCity}, {load.dropState}</span>
+                </div>
               </div>
               {load.price != null && (
                 <p className="text-xs text-muted-foreground mt-1">
@@ -272,6 +287,43 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
               </div>
               {selected.operatingStatus && (
                 <p className="text-xs mt-1 text-muted-foreground">Status: <span className="font-medium text-foreground">{selected.operatingStatus}</span></p>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Edit load details toggle */}
+            <div className="rounded-lg border border-border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setIsEditing(v => !v)}
+                className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+              >
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <Pencil className="size-3.5 text-amber-500" />
+                  Edit Load Details
+                </span>
+                <div className="flex items-center gap-2">
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setEditForm(initEditForm(load)); }}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground px-2 py-0.5 rounded hover:bg-muted transition-colors"
+                    >
+                      <RotateCcw className="size-3" />
+                      Reset
+                    </button>
+                  )}
+                  <span className="text-xs text-muted-foreground">{isEditing ? 'Hide ▲' : 'Show ▼'}</span>
+                </div>
+              </button>
+              {isEditing && (
+                <div className="px-4 py-4 border-t border-border">
+                  <LoadEditForm
+                    form={editForm}
+                    onChange={patch => setEditForm(prev => ({ ...prev, ...patch }))}
+                  />
+                </div>
               )}
             </div>
 
@@ -306,7 +358,7 @@ export function AssignCarrierModal({ load, open, onClose }: Props) {
               <Button
                 onClick={handleConfirmAssign}
                 disabled={assigning || !consent}
-                className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                className={`${colors.accentBtn} gap-2`}
               >
                 {assigning ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle className="size-4" />}
                 {assigning ? 'Assigning…' : 'Confirm Assignment'}

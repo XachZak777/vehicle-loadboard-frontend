@@ -68,7 +68,7 @@ export function EditLoad() {
     pickupDate: '', pickupTime: '', pickupFacilityName: '', pickupLocationContactName: '', pickupLocationContactPhone: '',
     dropStreet: '', dropCity: '', dropState: '', dropZip: '', dropType: 'RESIDENCE',
     deliveryDate: '', deliveryTime: '', dropFacilityName: '', dropLocationContactName: '', dropLocationContactPhone: '',
-    price: '', paymentMethod: '', paymentTiming: '', description: '',
+    price: '', paymentMethod: '', paymentTiming: '', paymentNotes: '', description: '',
     contactName: '', contactPhone: '', contactEmail: '', orderId: '', additionalNotes: '',
   });
 
@@ -133,12 +133,13 @@ export function EditLoad() {
         price: load.price?.toString() ?? '',
         paymentMethod: load.paymentMethod ?? '',
         paymentTiming: load.paymentTiming ?? '',
-        description: load.description ?? '',
+        paymentNotes: load.paymentNotes ?? '',
+        description: '',
         contactName: load.contactName ?? '',
         contactPhone: load.contactPhone ?? '',
         contactEmail: load.contactEmail ?? '',
         orderId: load.orderId ?? '',
-        additionalNotes: '',
+        additionalNotes: load.description ?? '',
       });
       initializedRef.current = { id: load.id, vehicleCount: serverCount };
     }
@@ -239,6 +240,7 @@ export function EditLoad() {
       [!formData.pickupZip.trim(), 'pickupZip', 'Pickup ZIP code is required.'],
       [!!formData.pickupZip.trim() && !isValidZip(formData.pickupZip), 'pickupZip', 'ZIP code must be 5 digits.'],
       [!formData.pickupDate, 'pickupDate', 'Pickup date is required.'],
+      [!!formData.pickupDate && formData.pickupDate < new Date().toISOString().split('T')[0], 'pickupDate', 'Pickup date cannot be in the past.'],
       [!formData.dropStreet.trim(), 'dropStreet', 'Delivery street address is required.'],
       [!!formData.dropStreet.trim() && formData.dropStreet.trim().length < 5, 'dropStreet', 'Street address must be at least 5 characters.'],
       [!formData.dropCity.trim(), 'dropCity', 'Delivery city is required.'],
@@ -247,10 +249,13 @@ export function EditLoad() {
       [!formData.dropZip.trim(), 'dropZip', 'Delivery ZIP code is required.'],
       [!!formData.dropZip.trim() && !isValidZip(formData.dropZip), 'dropZip', 'ZIP code must be 5 digits.'],
       [!formData.deliveryDate, 'deliveryDate', 'Delivery date is required.'],
+      [!!formData.deliveryDate && formData.deliveryDate < new Date().toISOString().split('T')[0], 'deliveryDate', 'Delivery date cannot be in the past.'],
+      [!!formData.deliveryDate && !!formData.pickupDate && formData.deliveryDate < formData.pickupDate, 'deliveryDate', 'Delivery date cannot be earlier than pickup date.'],
       [!formData.price.trim(), 'price', 'Price is required.'],
       [!!formData.price.trim() && !isValidPrice(formData.price), 'price', 'Price must be between $1 and $999,999.'],
       [!formData.orderId.trim(), 'orderId', 'Order ID is required.'],
-      [!!formData.description.trim() && formData.description.trim().length > 1000, 'description', 'Notes must be 1,000 characters or fewer.'],
+      [!!formData.paymentNotes.trim() && formData.paymentNotes.trim().length > 1000, 'paymentNotes', 'Payment notes must be 1,000 characters or fewer.'],
+      [!!formData.additionalNotes.trim() && formData.additionalNotes.trim().length > 1000, 'additionalNotes', 'Notes must be 1,000 characters or fewer.'],
       [!formData.contactName.trim(), 'contactName', 'Contact name is required.'],
       [!!formData.contactName.trim() && !isValidName(formData.contactName, 2, 100), 'contactName', 'Contact name must be 2–100 characters.'],
       [!formData.contactPhone.trim(), 'contactPhone', 'Phone number is required.'],
@@ -316,7 +321,8 @@ export function EditLoad() {
           paymentMethod: formData.paymentMethod || undefined,
           paymentTiming: formData.paymentTiming || undefined,
           weight: vehicles[0].weight ? parseFloat(vehicles[0].weight) : undefined,
-          description: formData.description || undefined,
+          paymentNotes: formData.paymentNotes.trim() || undefined,
+          description: formData.additionalNotes.trim() || undefined,
           pickupDate: formData.pickupDate,
           pickupTime: formData.pickupTime,
           deliveryDate: formData.deliveryDate,
@@ -344,7 +350,7 @@ export function EditLoad() {
 
   if (loadingLoads) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background map-background-detailed">
         <Navbar />
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -355,7 +361,7 @@ export function EditLoad() {
 
   if (!load) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background map-background-detailed">
         <Navbar />
         <div className="container mx-auto px-4 py-16 text-center">
           <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
@@ -386,7 +392,7 @@ export function EditLoad() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold">Edit Load</h1>
+              <h1 className="text-xl sm:text-3xl font-bold">Edit Load</h1>
               {routeLabel && (
                 <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
                   <MapPin className="size-3.5 text-amber-500" />
@@ -488,9 +494,10 @@ export function EditLoad() {
               formData={{ street: formData.dropStreet, city: formData.dropCity, state: formData.dropState, zip: formData.dropZip, type: formData.dropType, date: formData.deliveryDate, time: formData.deliveryTime, facilityName: formData.dropFacilityName, locationContactName: formData.dropLocationContactName, locationContactPhone: formData.dropLocationContactPhone }}
               fieldErrors={sharedErrors}
               onChange={handleSharedChange}
+              minDate={formData.pickupDate || undefined}
             />
             <PricingNotesSection
-              formData={{ price: formData.price, paymentMethod: formData.paymentMethod, paymentTiming: formData.paymentTiming, description: formData.description }}
+              formData={{ price: formData.price, paymentMethod: formData.paymentMethod, paymentTiming: formData.paymentTiming, paymentNotes: formData.paymentNotes }}
               fieldErrors={sharedErrors}
               onChange={handleSharedChange}
             />

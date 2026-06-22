@@ -53,7 +53,7 @@ export function AIInsights() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-background map-background-detailed">
       <MapBackground />
 
       <div className="relative z-10">
@@ -80,7 +80,7 @@ export function AIInsights() {
                 <TrendingUp className="size-8 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold">AI Insights & Intelligence</h1>
+                <h1 className="text-2xl sm:text-4xl font-bold">AI Insights & Intelligence</h1>
                 <p className="text-muted-foreground">Market alerts, reports, and security features</p>
               </div>
             </div>
@@ -92,29 +92,29 @@ export function AIInsights() {
         </motion.div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
-            <TabsTrigger value="market-alerts" className="gap-2">
-              <Bell className="size-4" />
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
+            <TabsTrigger value="market-alerts" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Bell className="size-3 sm:size-4" />
               Alerts
             </TabsTrigger>
-            <TabsTrigger value="market-reports" className="gap-2">
-              <TrendingUp className="size-4" />
+            <TabsTrigger value="market-reports" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+              <TrendingUp className="size-3 sm:size-4" />
               Reports
             </TabsTrigger>
-            <TabsTrigger value="compatibility" className="gap-2">
-              <Users className="size-4" />
+            <TabsTrigger value="compatibility" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Users className="size-3 sm:size-4" />
               Match
             </TabsTrigger>
-            <TabsTrigger value="fraud" className="gap-2">
-              <ShieldAlert className="size-4" />
+            <TabsTrigger value="fraud" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+              <ShieldAlert className="size-3 sm:size-4" />
               Security
             </TabsTrigger>
-            <TabsTrigger value="ratings" className="gap-2">
-              <Star className="size-4" />
+            <TabsTrigger value="ratings" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Star className="size-3 sm:size-4" />
               Ratings
             </TabsTrigger>
-            <TabsTrigger value="fuel" className="gap-2">
-              <Fuel className="size-4" />
+            <TabsTrigger value="fuel" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Fuel className="size-3 sm:size-4" />
               Fuel
             </TabsTrigger>
           </TabsList>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import {
   useGetAdminUsersQuery,
@@ -11,6 +11,9 @@ import {
   useApproveBrokerMutation,
   useDeclineBrokerMutation,
   useRevokeBrokerMutation,
+  useApproveDealerMutation,
+  useDeclineDealerMutation,
+  useRevokeDealerMutation,
   useDeleteAdminUserMutation,
   type AdminUserDto,
 } from '../store/services/hauliusApi';
@@ -19,11 +22,12 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Loader2, AlertCircle, Users, Truck, Building2, Clock, XCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Users, Truck, Building2, Clock, XCircle, Store } from 'lucide-react';
 import { toast } from 'sonner';
 import { UserDetailDialog } from '../components/admin/UserDetailDialog';
 import { DeleteConfirmDialog } from '../components/admin/DeleteConfirmDialog';
 import { UserRow } from '../components/admin/UserRow';
+import { MapBackground } from '../components/MapBackground';
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -42,6 +46,9 @@ export function AdminDashboard() {
   const [approveBroker]   = useApproveBrokerMutation();
   const [declineBroker]   = useDeclineBrokerMutation();
   const [revokeBroker]    = useRevokeBrokerMutation();
+  const [approveDealer]   = useApproveDealerMutation();
+  const [declineDealer]   = useDeclineDealerMutation();
+  const [revokeDealer]    = useRevokeDealerMutation();
   const [deleteUser]      = useDeleteAdminUserMutation();
 
   const [selectedUser, setSelectedUser]   = useState<AdminUserDto | null>(null);
@@ -49,8 +56,16 @@ export function AdminDashboard() {
   const [isActing, setIsActing]           = useState(false);
   const [isDeleting, setIsDeleting]       = useState(false);
 
+  // Keep selectedUser in sync with fresh data after any mutation triggers a refetch
+  useEffect(() => {
+    if (!selectedUser) return;
+    const updated = allUsers.find(u => u.userId === selectedUser.userId);
+    if (updated && updated !== selectedUser) setSelectedUser(updated);
+  }, [allUsers]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const carriers = allUsers.filter(u => u.role === 'CARRIER');
   const brokers  = allUsers.filter(u => u.role === 'BROKER');
+  const dealers  = allUsers.filter(u => u.role === 'DEALER');
 
   const refetchAll_ = () => {
     refetchAll();
@@ -64,6 +79,7 @@ export function AdminDashboard() {
     try {
       if (!user.profileId) throw new Error('No profile ID');
       if (user.role === 'CARRIER') await approveCarrier(user.profileId).unwrap();
+      else if (user.role === 'DEALER') await approveDealer(user.profileId).unwrap();
       else await approveBroker(user.profileId).unwrap();
       toast.success('Registration approved', { description: user.email });
       setSelectedUser(null);
@@ -79,6 +95,7 @@ export function AdminDashboard() {
     try {
       if (!user.profileId) throw new Error('No profile ID');
       if (user.role === 'CARRIER') await declineCarrier(user.profileId).unwrap();
+      else if (user.role === 'DEALER') await declineDealer(user.profileId).unwrap();
       else await declineBroker(user.profileId).unwrap();
       toast.success('Registration declined', { description: user.email });
       setSelectedUser(null);
@@ -94,6 +111,7 @@ export function AdminDashboard() {
     try {
       if (!user.profileId) throw new Error('No profile ID');
       if (user.role === 'CARRIER') await revokeCarrier(user.profileId).unwrap();
+      else if (user.role === 'DEALER') await revokeDealer(user.profileId).unwrap();
       else await revokeBroker(user.profileId).unwrap();
       refetchAll_();
       toast.success('Approval revoked — moved back to Pending', { description: user.email });
@@ -129,6 +147,7 @@ export function AdminDashboard() {
     { label: 'Rejected',       value: rejected.length,  icon: XCircle,   color: 'text-red-500' },
     { label: 'Carriers',       value: carriers.length,  icon: Truck,     color: 'text-green-500' },
     { label: 'Brokers',        value: brokers.length,   icon: Building2, color: 'text-purple-500' },
+    { label: 'Dealers',        value: dealers.length,   icon: Store,     color: 'text-orange-500' },
   ];
 
   const UserTable = ({ rows }: { rows: AdminUserDto[] }) =>
@@ -144,10 +163,10 @@ export function AdminDashboard() {
             <tr className="bg-muted/50 text-muted-foreground text-left">
               <th className="py-3 px-4 font-medium">Email</th>
               <th className="py-3 px-4 font-medium">Role</th>
-              <th className="py-3 px-4 font-medium">Company</th>
+              <th className="py-3 px-4 font-medium hidden sm:table-cell">Company</th>
               <th className="py-3 px-4 font-medium">Status</th>
-              <th className="py-3 px-4 font-medium">Docs</th>
-              <th className="py-3 px-4 font-medium">Registered</th>
+              <th className="py-3 px-4 font-medium hidden md:table-cell">Docs</th>
+              <th className="py-3 px-4 font-medium hidden md:table-cell">Registered</th>
               <th className="py-3 px-4 font-medium"></th>
             </tr>
           </thead>
@@ -161,13 +180,14 @@ export function AdminDashboard() {
     );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold">Admin Dashboard</h1>
+            <h1 className="text-2xl sm:text-4xl font-bold">Admin Dashboard</h1>
             <p className="text-muted-foreground mt-1">Review registrations, approve or decline users</p>
           </div>
           <Button variant="outline" size="sm" onClick={refetchAll_}>
@@ -176,7 +196,7 @@ export function AdminDashboard() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {statsCards.map(({ label, value, icon: Icon, color }) => (
             <Card key={label}>
               <CardContent className="flex items-center gap-3 p-4">
@@ -203,7 +223,7 @@ export function AdminDashboard() {
           </div>
         ) : (
           <Tabs defaultValue="pending">
-            <TabsList className="mb-4">
+            <TabsList className="mb-4 flex-wrap h-auto gap-1">
               <TabsTrigger value="pending">
                 Pending
                 <Badge className="ml-2 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
@@ -220,6 +240,24 @@ export function AdminDashboard() {
                 Rejected
                 <Badge className="ml-2 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
                   {rejected.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="carriers">
+                Carriers
+                <Badge className="ml-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                  {carriers.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="brokers">
+                Brokers
+                <Badge className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                  {brokers.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="dealers">
+                Dealers
+                <Badge className="ml-2 bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                  {dealers.length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="all">
@@ -246,6 +284,18 @@ export function AdminDashboard() {
                 </span>
               </div>
               <UserTable rows={rejected} />
+            </TabsContent>
+
+            <TabsContent value="carriers">
+              <UserTable rows={carriers} />
+            </TabsContent>
+
+            <TabsContent value="brokers">
+              <UserTable rows={brokers} />
+            </TabsContent>
+
+            <TabsContent value="dealers">
+              <UserTable rows={dealers} />
             </TabsContent>
 
             <TabsContent value="all">

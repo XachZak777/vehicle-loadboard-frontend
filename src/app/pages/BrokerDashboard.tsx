@@ -7,23 +7,6 @@ import {
 } from '../store/services/hauliusApi';
 import type { LoadDto, BidDto } from '../store/services/hauliusApi';
 
-// Set to true to show a mock completed load for UI testing (no backend needed)
-const USE_MOCK = false;
-
-const MOCK_COMPLETED_LOAD: LoadDto = {
-  id: 'mock-completed-001',
-  brokerId: 'mock-broker',
-  assignedCarrierId: 'mock-carrier-001',
-  pickupCity: 'Los Angeles',
-  pickupState: 'CA',
-  dropCity: 'Phoenix',
-  dropState: 'AZ',
-  vehicleMake: 'Ford',
-  vehicleModel: 'F-150',
-  vehicleYear: 2021,
-  price: 1200,
-  status: 'DELIVERED',
-};
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -93,14 +76,11 @@ export function BrokerDashboard() {
 
   const openLoads = loads.filter((l) => !l.status || l.status === 'OPEN');
   const activeLoads = loads.filter((l) => ACTIVE_STATUSES.has(l.status ?? ''));
-  const completedLoads = [
-    ...(USE_MOCK ? [MOCK_COMPLETED_LOAD] : []),
-    ...loads.filter((l) => COMPLETED_STATUSES.has(l.status ?? '') && !!l.assignedCarrierId),
-  ];
+  const completedLoads = loads.filter((l) => COMPLETED_STATUSES.has(l.status ?? '') && !!l.assignedCarrierId);
 
   const getStatusBadge = (load: LoadDto) => {
     if (!load.status || load.status === 'OPEN') {
-      return <Badge className='bg-amber-500 text-white'>Open</Badge>;
+      return <Badge className='bg-amber-500 text-white'>Active</Badge>;
     }
     if (
       load.status === 'DELIVERED' ||
@@ -131,18 +111,19 @@ export function BrokerDashboard() {
     );
   }
 
-  // if (isError) {
-  //   return (
-  //     <div className="min-h-screen bg-background">
-  //       <Navbar />
-  //       <div className="container mx-auto px-4 py-16 text-center">
-  //         <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
-  //         <p className="text-lg font-semibold text-red-600">{(error as any)?.message ?? 'Failed to load dashboard'}</p>
-  //         <Button className="mt-4" onClick={refetch}>Retry</Button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (isError) {
+    return (
+      <div className='min-h-screen bg-background map-background-detailed'>
+        <MapBackground />
+        <Navbar />
+        <div className='container mx-auto px-4 py-16 text-center'>
+          <AlertCircle className='w-12 h-12 mx-auto mb-4 text-red-500' />
+          <p className='text-lg font-semibold text-red-600'>{(error as any)?.message ?? 'Failed to load dashboard'}</p>
+          <Button className='mt-4' onClick={refetch}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen bg-background map-background-detailed'>
@@ -150,7 +131,7 @@ export function BrokerDashboard() {
       <Navbar />
 
       <div className='container mx-auto px-4 py-8'>
-        <h1 className='text-4xl font-bold mb-2'>Broker Dashboard</h1>
+        <h1 className='text-2xl sm:text-4xl font-bold mb-2'>Broker Dashboard</h1>
         {user?.email && (
           <p className='text-muted-foreground mb-8'>{user.email}</p>
         )}
@@ -161,19 +142,19 @@ export function BrokerDashboard() {
           assignedLoads={activeLoads}
         />
 
-        <Tabs defaultValue='pending' className='space-y-4'>
-          <TabsList>
-            <TabsTrigger value='pending'>Pending Bids</TabsTrigger>
+        <Tabs defaultValue='myloads' className='space-y-4'>
+          <TabsList className="flex-wrap h-auto gap-1">
+            <TabsTrigger value='myloads'>All Loads ({loads.length})</TabsTrigger>
             <TabsTrigger value='active'>Active ({activeLoads.length})</TabsTrigger>
             <TabsTrigger value='completed'>Completed ({completedLoads.length})</TabsTrigger>
-            <TabsTrigger value='myloads'>All Loads ({loads.length})</TabsTrigger>
+            <TabsTrigger value='pending'>Pending Bids</TabsTrigger>
           </TabsList>
 
-          <TabsContent value='pending' className='space-y-4'>
-            <PendingBidsTab
-              openLoads={openLoads}
+          <TabsContent value='myloads' className='space-y-4'>
+            <AllLoadsTab
+              loads={loads}
               getStatusBadge={getStatusBadge}
-              onApproveBid={handleApproveBid}
+              onDeleteLoad={handleDeleteLoad}
               actionLoading={actionLoading}
             />
           </TabsContent>
@@ -196,11 +177,11 @@ export function BrokerDashboard() {
             />
           </TabsContent>
 
-          <TabsContent value='myloads' className='space-y-4'>
-            <AllLoadsTab
-              loads={loads}
+          <TabsContent value='pending' className='space-y-4'>
+            <PendingBidsTab
+              openLoads={openLoads}
               getStatusBadge={getStatusBadge}
-              onDeleteLoad={handleDeleteLoad}
+              onApproveBid={handleApproveBid}
               actionLoading={actionLoading}
             />
           </TabsContent>

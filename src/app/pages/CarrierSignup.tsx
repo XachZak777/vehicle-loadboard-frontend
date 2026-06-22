@@ -4,8 +4,7 @@ import { toast } from 'sonner';
 import { useAppDispatch } from '../store/hooks';
 import { setCredentials } from '../store/slices/authSlice';
 import {
-  useRegisterMutation,
-  useUpdateCarrierProfileMutation,
+  useRegisterCarrierFullMutation,
   useUploadCarrierW9Mutation,
   useUploadCarrierInsuranceMutation,
   useUploadCarrierMcAuthorityMutation,
@@ -17,6 +16,7 @@ import {
   isValidMcNumber, isValidDotNumber, isValidCompanyName, isValidInsuranceAmount,
   isBusinessEmail, businessEmailError, isValidEIN, isValidSSN,
   isStrongPassword, passwordRequirementsText, buildErrors, type FieldErrors,
+  isValidPhone, isValidStreetAddress, isValidCity, isValidZip,
 } from '../utils/validation';
 import { SignupStepIndicator } from '../components/signup/SignupStepIndicator';
 import { CompanyInfoStep } from '../components/signup/CompanyInfoStep';
@@ -36,8 +36,7 @@ const STEPS = [
 export function CarrierSignup() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [register] = useRegisterMutation();
-  const [updateProfile] = useUpdateCarrierProfileMutation();
+  const [registerCarrierFull] = useRegisterCarrierFullMutation();
   const [uploadW9] = useUploadCarrierW9Mutation();
   const [uploadInsurance] = useUploadCarrierInsuranceMutation();
   const [uploadMcAuthority] = useUploadCarrierMcAuthorityMutation();
@@ -67,9 +66,18 @@ export function CarrierSignup() {
     const errs = buildErrors([
       [!formData.companyName.trim(), 'companyName', 'Company name is required.'],
       [!!formData.companyName.trim() && !isValidCompanyName(formData.companyName), 'companyName', 'Company name must be 2–100 characters.'],
-      [!formData.mcNumber.trim(), 'mcNumber', 'MC number is required.'],
-      [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
+      [!formData.dotNumber.trim(), 'dotNumber', 'DOT number is required.'],
       [!!formData.dotNumber.trim() && !isValidDotNumber(formData.dotNumber), 'dotNumber', 'DOT number must be 1–8 digits with no letters.'],
+      [!!formData.mcNumber.trim() && !isValidMcNumber(formData.mcNumber), 'mcNumber', 'MC number must be 1–7 digits (e.g. 123456).'],
+      [!formData.phoneNumber.trim(), 'phoneNumber', 'Phone number is required.'],
+      [!!formData.phoneNumber.trim() && !isValidPhone(formData.phoneNumber), 'phoneNumber', 'Enter a valid US phone number.'],
+      [!formData.mailingAddress.trim(), 'mailingAddress', 'Street address is required.'],
+      [!!formData.mailingAddress.trim() && !isValidStreetAddress(formData.mailingAddress), 'mailingAddress', 'Address must be 5–200 characters.'],
+      [!formData.city.trim(), 'city', 'City is required.'],
+      [!!formData.city.trim() && !isValidCity(formData.city), 'city', 'Enter a valid city name.'],
+      [!formData.state, 'state', 'State is required.'],
+      [!formData.zipCode.trim(), 'zipCode', 'ZIP code is required.'],
+      [!!formData.zipCode.trim() && !isValidZip(formData.zipCode), 'zipCode', 'ZIP code must be 5 digits.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setFieldErrors({});
@@ -88,7 +96,7 @@ export function CarrierSignup() {
       [!formData.taxId.trim(), 'taxId', `${formData.taxIdType} is required.`],
       [!!taxId && formData.taxIdType === 'EIN' && !isValidEIN(taxId), 'taxId', 'EIN must be in the format XX-XXXXXXX (9 digits).'],
       [!!taxId && formData.taxIdType === 'SSN' && !isValidSSN(taxId), 'taxId', 'SSN must be in the format XXX-XX-XXXX (9 digits).'],
-      [preferredLines.length === 0, 'preferredLines', 'At least one preferred lane is required.'],
+      [preferredLines.length < 3, 'preferredLines', 'At least 3 preferred lanes are required.'],
       [preferredLines.some(l => !l.fromState || !l.toState), 'preferredLines', 'All lanes must have both a from and to state selected.'],
     ]);
     if (Object.keys(errs).length) { setFieldErrors(errs); return; }
@@ -129,33 +137,41 @@ export function CarrierSignup() {
     setFieldErrors({});
     setIsLoading(true);
     try {
-      const res = await register({ email: formData.email.trim(), password: formData.password, role: 'CARRIER' }).unwrap();
+      const res = await registerCarrierFull({
+        email: formData.email.trim(),
+        password: formData.password,
+        companyName: formData.companyName,
+        dbaName: formData.dbaName || undefined,
+        dotNumber: formData.dotNumber,
+        mcNumber: formData.mcNumber || undefined,
+        phoneNumber: formData.phoneNumber,
+        insuranceCompany: formData.insuranceCompany,
+        cargoInsurance: parseFloat(formData.cargoInsurance),
+        liabilityInsurance: parseFloat(formData.liabilityInsurance),
+        taxIdType: formData.taxIdType,
+        taxId: formData.taxId,
+        mailingAddress: formData.mailingAddress,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        preferredLines: preferredLines.length > 0 ? JSON.stringify(preferredLines) : undefined,
+      }).unwrap();
+
       dispatch(setCredentials({
         user: { id: res.userId, role: 'carrier', email: res.email, createdAt: new Date().toISOString() },
         token: res.token, userId: res.userId, email: res.email, role: res.role, adminApproved: res.adminApproved,
       }));
 
-      try {
-        await updateProfile({
-          companyName: formData.companyName, dotNumber: formData.dotNumber, mcNumber: formData.mcNumber,
-          phoneNumber: formData.phoneNumber, insuranceCompany: formData.insuranceCompany,
-          cargoInsurance: formData.cargoInsurance ? parseFloat(formData.cargoInsurance) : undefined,
-          liabilityInsurance: formData.liabilityInsurance ? parseFloat(formData.liabilityInsurance) : undefined,
-          taxIdType: formData.taxIdType, taxId: formData.taxId,
-          mailingAddress: formData.mailingAddress, city: formData.city,
-          state: formData.state, zipCode: formData.zipCode,
-          preferredLines: preferredLines.length > 0 ? JSON.stringify(preferredLines) : undefined,
-        }).unwrap();
-      } catch { toast.warning('Profile data will be saved once your email is verified.'); }
-
-      for (const [file, upload, msg] of [
-        [w9File, uploadW9, 'W9 upload will be available once your email is verified.'],
-        [insuranceFile, uploadInsurance, 'Insurance certificate upload will be available once your email is verified.'],
-        [mcAuthorityFile, uploadMcAuthority, 'MC Authority upload will be available once your email is verified.'],
-      ] as [File | null, (fd: FormData) => any, string][]) {
+      for (const [file, upload] of [
+        [w9File, uploadW9],
+        [insuranceFile, uploadInsurance],
+        [mcAuthorityFile, uploadMcAuthority],
+      ] as [File | null, (fd: FormData) => any][]) {
         if (file) {
           try { const fd = new FormData(); fd.append('file', file); await upload(fd).unwrap(); }
-          catch { toast.warning(msg); }
+          catch (uploadErr: any) {
+            toast.warning(uploadErr?.data?.message || 'Document upload failed. You can re-upload from your profile.');
+          }
         }
       }
 

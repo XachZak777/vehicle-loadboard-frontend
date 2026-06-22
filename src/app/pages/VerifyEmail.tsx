@@ -1,3 +1,4 @@
+import { MapBackground } from '../components/MapBackground';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -31,7 +32,8 @@ export function VerifyEmail() {
   const noToken = !token;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background map-background-detailed">
+      <MapBackground />
       <AuthNavbar />
       <div className="flex items-center justify-center p-4 min-h-[calc(100vh-64px)]">
       <div className="w-full max-w-md">
