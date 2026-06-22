@@ -1,20 +1,29 @@
 import { MapBackground } from '../components/MapBackground';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { MapPin, DollarSign, Shield, Clock, Users, CheckCircle, ArrowRight, Menu, X } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { MapPin, DollarSign, Shield, Clock, Users, CheckCircle, ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useAppSelector } from '../store/hooks';
-import { ThemeToggle } from '../components/ThemeToggle';
+import { PublicNavbar } from '../components/PublicNavbar';
 import { BrandLogo } from '../components/BrandLogo';
 import { APP_NAME } from '../constants';
 
 export function Welcome() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const user = useAppSelector((s) => s.auth.user);
   const navigate = useNavigate();
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (!hash) return;
+    const id = hash.slice(1);
+    const t = setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+    return () => clearTimeout(t);
+  }, [hash]);
 
   const backgroundImages = [
     'https://images.unsplash.com/photo-1772852336286-933f5b460e33?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx2ZWhpY2xlJTIwdHJhbnNwb3J0JTIwdHJhaWxlcnxlbnwxfHx8fDE3NzQzNzgxNDV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
@@ -30,12 +39,6 @@ export function Welcome() {
     return () => clearInterval(interval);
   }, []);
 
-  // ── Smooth-scroll helpers ──────────────────────────────────────────────────
-  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    e.preventDefault();
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   // ── Smart CTA targets based on auth state ─────────────────────────────────
   const browseTo  = user ? '/loads'     : '/login';
   const postTo    = user ? '/post-load' : '/login';
@@ -43,142 +46,10 @@ export function Welcome() {
   return (
     <div className="min-h-screen bg-background map-background-detailed">
       <MapBackground />
-      {/* Navigation Bar */}
-      <nav className="bg-card border-b border-border sticky top-0 z-50 backdrop-blur-sm bg-card/95">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
-              <BrandLogo className="h-8 w-auto" />
-            </div>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-6">
-              <a
-                href="#features"
-                onClick={(e) => scrollToSection(e, 'features')}
-                className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
-              >
-                Features
-              </a>
-              <a
-                href="#how-it-works"
-                onClick={(e) => scrollToSection(e, 'how-it-works')}
-                className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
-              >
-                How It Works
-              </a>
-              <Link to="/faq" className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors">FAQ</Link>
-              <Link to="/resources" className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors">Resources</Link>
-              <Link to="/contact" className="text-sm font-medium text-foreground hover:text-amber-500 transition-colors">Help Center</Link>
-              <ThemeToggle />
-              {user ? (
-                <Button
-                  size="sm"
-                  className="bg-amber-500 hover:bg-amber-600 text-white"
-                  onClick={() => navigate(browseTo)}
-                >
-                  Go to Dashboard
-                </Button>
-              ) : (
-                <>
-                  <Link to="/login">
-                    <Button variant="outline" size="sm">Log In</Button>
-                  </Link>
-                  <Link to="/signup">
-                    <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white">
-                      Sign Up
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-1.5 rounded-md hover:bg-muted transition-colors"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? (
-                <X className="size-5 text-foreground" />
-              ) : (
-                <Menu className="size-5 text-foreground" />
-              )}
-            </button>
-          </div>
-
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="md:hidden py-4 space-y-3 border-t border-border">
-              <a
-                href="#features"
-                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
-                onClick={(e) => { scrollToSection(e, 'features'); setMobileMenuOpen(false); }}
-              >
-                Features
-              </a>
-              <a
-                href="#how-it-works"
-                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
-                onClick={(e) => { scrollToSection(e, 'how-it-works'); setMobileMenuOpen(false); }}
-              >
-                How It Works
-              </a>
-              <Link
-                to="/faq"
-                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                FAQ
-              </Link>
-              <Link
-                to="/resources"
-                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Resources
-              </Link>
-              <Link
-                to="/contact"
-                className="block text-sm font-medium text-foreground hover:text-amber-500 transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Help Center
-              </Link>
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-sm text-muted-foreground">Theme</span>
-                <ThemeToggle />
-              </div>
-              <div className="flex flex-col gap-2 pt-2">
-                {user ? (
-                  <Button
-                    size="sm"
-                    className="bg-amber-500 hover:bg-amber-600 text-white w-full"
-                    onClick={() => { navigate(browseTo); setMobileMenuOpen(false); }}
-                  >
-                    Go to Dashboard
-                  </Button>
-                ) : (
-                  <>
-                    <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="outline" size="sm" className="w-full">Log In</Button>
-                    </Link>
-                    <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
-                      <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white w-full">
-                        Sign Up
-                      </Button>
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
+      <PublicNavbar />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden h-[calc(100vh-4rem)]">
         {/* Background Images with smooth transitions */}
         <div className="absolute inset-0 z-0">
           {backgroundImages.map((image, index) => (
@@ -198,8 +69,8 @@ export function Welcome() {
           <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/70 to-background/50 transition-colors duration-500" />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-          <div className="grid lg:grid-cols-2 gap-10 xl:gap-16 items-center">
+        <div className="relative z-10 h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
+          <div className="grid lg:grid-cols-2 gap-10 xl:gap-16 items-center w-full">
             {/* Left: copy + CTAs */}
             <div className="flex flex-col items-start">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-5 leading-tight">

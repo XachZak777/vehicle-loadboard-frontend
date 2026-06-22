@@ -13,6 +13,7 @@ import type { CarrierBidWithLoadDto, LoadDto } from '../store/services/hauliusAp
 import { Navbar } from '../components/Navbar';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { DatePicker } from '../components/ui/date-picker';
 import { Card, CardContent } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { US_STATES } from '../constants';
@@ -458,7 +459,7 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">Pickup Date</label>
-                  <Input type="date" value={editPickupDate} onChange={e => setEditPickupDate(e.target.value)} className="h-8 text-xs" />
+                  <DatePicker size="sm" value={editPickupDate} onChange={v => setEditPickupDate(v ?? '')} className="text-xs" />
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">Pickup Time</label>
@@ -466,7 +467,7 @@ function BidCard({ bid }: { bid: CarrierBidWithLoadDto }) {
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">Drop Date</label>
-                  <Input type="date" value={editDropDate} onChange={e => setEditDropDate(e.target.value)} className="h-8 text-xs" />
+                  <DatePicker size="sm" value={editDropDate} onChange={v => setEditDropDate(v ?? '')} className="text-xs" />
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground block mb-1">Drop Time</label>

@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { Input } from '../ui/input';
+import { DatePicker } from '../ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import type { CreateLoadPayload, LoadDto } from '../../store/services/hauliusApi';
@@ -167,7 +168,7 @@ export function LoadEditForm({ form, onChange }: Props) {
             </Select>
           </F>
           <F label="Date">
-            <Input type="date" value={form.pickupDate ?? ''} onChange={e => u({ pickupDate: e.target.value || undefined })} className="h-8 text-sm" />
+            <DatePicker size="sm" value={form.pickupDate ?? undefined} onChange={v => u({ pickupDate: v })} className="text-sm" />
           </F>
           <F label="Time">
             <Input type="time" value={form.pickupTime ?? ''} onChange={e => u({ pickupTime: e.target.value || undefined })} className="h-8 text-sm" />
@@ -220,7 +221,7 @@ export function LoadEditForm({ form, onChange }: Props) {
             </Select>
           </F>
           <F label="Date">
-            <Input type="date" value={form.deliveryDate ?? ''} onChange={e => u({ deliveryDate: e.target.value || undefined })} className="h-8 text-sm" />
+            <DatePicker size="sm" value={form.deliveryDate ?? undefined} onChange={v => u({ deliveryDate: v })} className="text-sm" />
           </F>
           <F label="Time">
             <Input type="time" value={form.deliveryTime ?? ''} onChange={e => u({ deliveryTime: e.target.value || undefined })} className="h-8 text-sm" />

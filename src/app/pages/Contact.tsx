@@ -46,7 +46,7 @@ export function Contact() {
       <Navbar />
 
       {/* Hero */}
-      <div className="bg-amber-500/10 border-b border-border py-16">
+      <div className="py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-amber-500 p-4 rounded-2xl w-fit mx-auto mb-6">
             <Mail className="size-10 text-white" />

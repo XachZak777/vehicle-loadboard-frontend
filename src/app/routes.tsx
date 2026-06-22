@@ -4,45 +4,125 @@ import { Footer } from './components/Footer';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Lazy-loaded pages — Vite splits each into its own chunk
-const Welcome         = lazy(() => import('./pages/Welcome').then(m => ({ default: m.Welcome })));
-const LoadBoard       = lazy(() => import('./pages/LoadBoard').then(m => ({ default: m.LoadBoard })));
-const LoadDetail      = lazy(() => import('./pages/LoadDetail').then(m => ({ default: m.LoadDetail })));
-const PostLoad        = lazy(() => import('./pages/PostLoad').then(m => ({ default: m.PostLoad })));
-const EditLoad        = lazy(() => import('./pages/EditLoad').then(m => ({ default: m.EditLoad })));
-const Login           = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
-const Signup          = lazy(() => import('./pages/Signup').then(m => ({ default: m.Signup })));
-const CarrierSignup   = lazy(() => import('./pages/CarrierSignup').then(m => ({ default: m.CarrierSignup })));
-const BrokerSignup    = lazy(() => import('./pages/BrokerSignup').then(m => ({ default: m.BrokerSignup })));
-const DealerSignup    = lazy(() => import('./pages/DealerSignup').then(m => ({ default: m.DealerSignup })));
-const BrokerDashboard = lazy(() => import('./pages/BrokerDashboard').then(m => ({ default: m.BrokerDashboard })));
-const CarrierHistory  = lazy(() => import('./pages/CarrierHistory').then(m => ({ default: m.CarrierHistory })));
-const CarrierLoadsPage = lazy(() => import('./pages/CarrierLoadsPage').then(m => ({ default: m.CarrierLoadsPage })));
-const CompanyProfile  = lazy(() => import('./pages/CompanyProfile').then(m => ({ default: m.CompanyProfile })));
-const PendingApproval = lazy(() => import('./pages/PendingApproval').then(m => ({ default: m.PendingApproval })));
-const AdminDashboard  = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
-const CheckEmail      = lazy(() => import('./pages/CheckEmail').then(m => ({ default: m.CheckEmail })));
-const VerifyEmail     = lazy(() => import('./pages/VerifyEmail').then(m => ({ default: m.VerifyEmail })));
-const ForgotPassword  = lazy(() => import('./pages/ForgotPassword').then(m => ({ default: m.ForgotPassword })));
-const ResetPassword   = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
-const SessionExpired  = lazy(() => import('./pages/SessionExpired').then(m => ({ default: m.SessionExpired })));
-const VerifyLogin     = lazy(() => import('./pages/VerifyLogin').then(m => ({ default: m.VerifyLogin })));
-const MyRatings          = lazy(() => import('./pages/MyRatings').then(m => ({ default: m.MyRatings })));
-const CompanyRating      = lazy(() => import('./pages/CompanyRating').then(m => ({ default: m.CompanyRating })));
-const CompanyPublicPage  = lazy(() => import('./pages/CompanyPublicPage').then(m => ({ default: m.CompanyPublicPage })));
-const SearchPage         = lazy(() => import('./pages/SearchPage').then(m => ({ default: m.SearchPage })));
-const PrivacyPolicy   = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
-const TermsOfService  = lazy(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
-const CookiePolicy    = lazy(() => import('./pages/CookiePolicy').then(m => ({ default: m.CookiePolicy })));
-const AboutUs         = lazy(() => import('./pages/AboutUs').then(m => ({ default: m.AboutUs })));
-const Contact         = lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
-const Settings        = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
-const DispatchSheetPage = lazy(() => import('./pages/DispatchSheetPage').then(m => ({ default: m.DispatchSheetPage })));
-const FAQ             = lazy(() => import('./pages/FAQ').then(m => ({ default: m.FAQ })));
-const Resources       = lazy(() => import('./pages/Resources').then(m => ({ default: m.Resources })));
+const Welcome = lazy(() =>
+  import('./pages/Welcome').then((m) => ({ default: m.Welcome })),
+);
+const LoadBoard = lazy(() =>
+  import('./pages/LoadBoard').then((m) => ({ default: m.LoadBoard })),
+);
+const LoadDetail = lazy(() =>
+  import('./pages/LoadDetail').then((m) => ({ default: m.LoadDetail })),
+);
+const PostLoad = lazy(() =>
+  import('./pages/PostLoad').then((m) => ({ default: m.PostLoad })),
+);
+const EditLoad = lazy(() =>
+  import('./pages/EditLoad').then((m) => ({ default: m.EditLoad })),
+);
+const Login = lazy(() =>
+  import('./pages/Login').then((m) => ({ default: m.Login })),
+);
+const Signup = lazy(() =>
+  import('./pages/Signup').then((m) => ({ default: m.Signup })),
+);
+const CarrierSignup = lazy(() =>
+  import('./pages/CarrierSignup').then((m) => ({ default: m.CarrierSignup })),
+);
+const BrokerSignup = lazy(() =>
+  import('./pages/BrokerSignup').then((m) => ({ default: m.BrokerSignup })),
+);
+const DealerSignup = lazy(() =>
+  import('./pages/DealerSignup').then((m) => ({ default: m.DealerSignup })),
+);
+const BrokerDashboard = lazy(() =>
+  import('./pages/BrokerDashboard').then((m) => ({
+    default: m.BrokerDashboard,
+  })),
+);
+const CarrierHistory = lazy(() =>
+  import('./pages/CarrierHistory').then((m) => ({ default: m.CarrierHistory })),
+);
+const CarrierLoadsPage = lazy(() =>
+  import('./pages/CarrierLoadsPage').then((m) => ({
+    default: m.CarrierLoadsPage,
+  })),
+);
+const CompanyProfile = lazy(() =>
+  import('./pages/CompanyProfile').then((m) => ({ default: m.CompanyProfile })),
+);
+const PendingApproval = lazy(() =>
+  import('./pages/PendingApproval').then((m) => ({
+    default: m.PendingApproval,
+  })),
+);
+const AdminDashboard = lazy(() =>
+  import('./pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard })),
+);
+const CheckEmail = lazy(() =>
+  import('./pages/CheckEmail').then((m) => ({ default: m.CheckEmail })),
+);
+const VerifyEmail = lazy(() =>
+  import('./pages/VerifyEmail').then((m) => ({ default: m.VerifyEmail })),
+);
+const ForgotPassword = lazy(() =>
+  import('./pages/ForgotPassword').then((m) => ({ default: m.ForgotPassword })),
+);
+const ResetPassword = lazy(() =>
+  import('./pages/ResetPassword').then((m) => ({ default: m.ResetPassword })),
+);
+const SessionExpired = lazy(() =>
+  import('./pages/SessionExpired').then((m) => ({ default: m.SessionExpired })),
+);
+const VerifyLogin = lazy(() =>
+  import('./pages/VerifyLogin').then((m) => ({ default: m.VerifyLogin })),
+);
+const MyRatings = lazy(() =>
+  import('./pages/MyRatings').then((m) => ({ default: m.MyRatings })),
+);
+const CompanyRating = lazy(() =>
+  import('./pages/CompanyRating').then((m) => ({ default: m.CompanyRating })),
+);
+const CompanyPublicPage = lazy(() =>
+  import('./pages/CompanyPublicPage').then((m) => ({
+    default: m.CompanyPublicPage,
+  })),
+);
+const SearchPage = lazy(() =>
+  import('./pages/SearchPage').then((m) => ({ default: m.SearchPage })),
+);
+const PrivacyPolicy = lazy(() =>
+  import('./pages/PrivacyPolicy').then((m) => ({ default: m.PrivacyPolicy })),
+);
+const TermsOfService = lazy(() =>
+  import('./pages/TermsOfService').then((m) => ({ default: m.TermsOfService })),
+);
+const CookiePolicy = lazy(() =>
+  import('./pages/CookiePolicy').then((m) => ({ default: m.CookiePolicy })),
+);
+const AboutUs = lazy(() =>
+  import('./pages/AboutUs').then((m) => ({ default: m.AboutUs })),
+);
+const Contact = lazy(() =>
+  import('./pages/Contact').then((m) => ({ default: m.Contact })),
+);
+const Settings = lazy(() =>
+  import('./pages/Settings').then((m) => ({ default: m.Settings })),
+);
+const DispatchSheetPage = lazy(() =>
+  import('./pages/DispatchSheetPage').then((m) => ({
+    default: m.DispatchSheetPage,
+  })),
+);
+const FAQ = lazy(() => import('./pages/FAQ').then((m) => ({ default: m.FAQ })));
+const Resources = lazy(() =>
+  import('./pages/Resources').then((m) => ({ default: m.Resources })),
+);
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   return null;
 }
 

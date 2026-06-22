@@ -10,6 +10,7 @@ import {
 import { useAppSelector } from '../store/hooks';
 import { Navbar } from '../components/Navbar';
 import { Input } from '../components/ui/input';
+import { DatePicker } from '../components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Button } from '../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '../components/ui/sheet';
@@ -322,7 +323,7 @@ export function LoadBoard() {
                   >
                     <div className="rounded-xl border border-border/60 bg-card shadow-sm flex flex-col" style={{ maxHeight: 'calc(100vh - 4rem - 3.75rem)' }}>
                       <h2 className="text-base font-bold text-foreground p-4 pb-3 flex-shrink-0 border-b border-border/50">Filters</h2>
-                      <div className="overflow-y-auto p-4 pt-3 flex-1 scrollbar-thin">
+                      <div className="overflow-y-auto p-4 pt-3 flex-1 scrollbar-none">
                       <FilterPanel
                         sortBy={sortBy} setSortBy={setSortBy}
                         searchTerm={searchTerm} setSearchTerm={setSearchTerm}
@@ -401,7 +402,7 @@ export function LoadBoard() {
                       <button
                         onClick={() => setFiltersOpen(v => !v)}
                         title={filtersOpen ? 'Hide filters' : 'Show filters'}
-                        className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-sm text-muted-foreground"
+                        className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-input bg-[#e8e8ed] dark:bg-input/30 dark:hover:bg-input/50 hover:brightness-95 text-sm text-foreground"
                       >
                         <SlidersHorizontal className="size-4" />
                         {filtersOpen ? <ChevronLeft className="size-3.5" /> : <ChevronRight className="size-3.5" />}
@@ -434,13 +435,13 @@ export function LoadBoard() {
                     <button
                       onClick={() => refetch()}
                       disabled={isFetching}
-                      className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-sm text-foreground disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-md border border-input bg-[#e8e8ed] dark:bg-input/30 dark:hover:bg-input/50 hover:brightness-95 text-sm text-foreground disabled:opacity-50"
                     >
                       <Loader2 className={`size-4 ${isFetching ? 'animate-spin text-amber-500' : 'text-muted-foreground'}`} />
                       <span className="hidden sm:inline">Refresh</span>
                     </button>
                     <Select value={String(pageSize)} onValueChange={v => { setPageSize(Number(v)); setPage(1); }}>
-                      <SelectTrigger className="h-8 w-[5.5rem]"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-8 w-[5.5rem] bg-[#e8e8ed] dark:bg-input/30"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {[10, 20, 50, 100].map(n => (
                           <SelectItem key={n} value={String(n)}>{n}</SelectItem>
@@ -1134,9 +1135,9 @@ const LoadCard = memo(function LoadCard({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                       <label className="text-xs text-muted-foreground block mb-1">Pickup Date</label>
-                      <Input type="date" value={requestedPickupDate}
-                        onChange={e => setRequestedPickupDate(e.target.value)}
-                        className="h-8 text-xs" />
+                      <DatePicker size="sm" value={requestedPickupDate}
+                        onChange={v => setRequestedPickupDate(v ?? '')}
+                        className="text-xs" />
                     </div>
                     <div>
                       <label className="text-xs text-muted-foreground block mb-1">Pickup Time</label>
@@ -1146,9 +1147,9 @@ const LoadCard = memo(function LoadCard({
                     </div>
                     <div>
                       <label className="text-xs text-muted-foreground block mb-1">Drop Date</label>
-                      <Input type="date" value={requestedDropDate}
-                        onChange={e => setRequestedDropDate(e.target.value)}
-                        className="h-8 text-xs" />
+                      <DatePicker size="sm" value={requestedDropDate}
+                        onChange={v => setRequestedDropDate(v ?? '')}
+                        className="text-xs" />
                     </div>
                     <div>
                       <label className="text-xs text-muted-foreground block mb-1">Drop Time</label>

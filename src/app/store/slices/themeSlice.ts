@@ -8,15 +8,11 @@ interface ThemeState {
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
-  root.style.transition = 'background-color 0.5s ease, color 0.5s ease';
   if (theme === 'dark') {
     root.classList.add('dark');
   } else {
     root.classList.remove('dark');
   }
-  setTimeout(() => {
-    root.style.transition = '';
-  }, 500);
 }
 
 const saved = localStorage.getItem('theme') as Theme | null;

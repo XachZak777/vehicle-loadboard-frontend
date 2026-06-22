@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Separator } from '../components/ui/separator';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { DatePicker } from '../components/ui/date-picker';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import {
@@ -492,7 +493,7 @@ export function CompanyProfile() {
                     </div>
                     <div>
                       <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Effective Date</Label>
-                      <Input type="date" value={bondForm.bondEffectiveDate} onChange={e => setBondForm(f => ({ ...f, bondEffectiveDate: e.target.value }))} className="h-8 text-sm mt-1" />
+                      <DatePicker size="sm" value={bondForm.bondEffectiveDate} onChange={v => setBondForm(f => ({ ...f, bondEffectiveDate: v ?? '' }))} className="text-sm mt-1" />
                     </div>
                     <div>
                       <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Agent First Name</Label>

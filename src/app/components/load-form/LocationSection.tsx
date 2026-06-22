@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
+import { DatePicker } from '../ui/date-picker';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { PhoneInput } from '../ui/PhoneInput';
@@ -102,12 +103,11 @@ export function LocationSection({ prefix, title, description, formData, fieldErr
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label htmlFor={dateField}>{dateLabel} *</Label>
-            <Input
+            <DatePicker
               id={dateField}
-              type="date"
               value={formData.date}
               min={minDate && minDate > new Date().toISOString().split('T')[0] ? minDate : new Date().toISOString().split('T')[0]}
-              onChange={(e) => onChange(dateField, e.target.value)}
+              onChange={(v) => onChange(dateField, v ?? '')}
               aria-invalid={!!fieldErrors[dateField]}
             />
             {fieldErrors[dateField] && (

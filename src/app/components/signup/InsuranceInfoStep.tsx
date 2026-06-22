@@ -1,6 +1,7 @@
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
+import { DatePicker } from '../ui/date-picker';
 import { Label } from '../ui/label';
 import { PhoneInput } from '../ui/PhoneInput';
 import { HintText } from '../../styles/signup.styles';
@@ -75,11 +76,10 @@ export function InsuranceInfoStep({ formData, fieldErrors, onChange, onSubmit, o
 
         <div>
           <Label htmlFor="bondEffectiveDate">Effective Date <span className="text-destructive">*</span></Label>
-          <Input
+          <DatePicker
             id="bondEffectiveDate"
-            type="date"
             value={formData.bondEffectiveDate}
-            onChange={e => onChange('bondEffectiveDate', e.target.value)}
+            onChange={v => onChange('bondEffectiveDate', v ?? '')}
             aria-invalid={!!fieldErrors.bondEffectiveDate}
           />
           {fieldErrors.bondEffectiveDate && <p className="text-xs text-destructive mt-1">{fieldErrors.bondEffectiveDate}</p>}

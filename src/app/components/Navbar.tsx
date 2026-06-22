@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useAppSelector } from '../store/hooks';
+import { PublicNavbar } from './PublicNavbar';
 import { useGetMyBrokerProfileQuery, useGetMyCarrierProfileQuery, useGetNotificationCountQuery } from '../store/services/hauliusApi';
 import { useLogout } from '../hooks/useLogout';
 import { Button } from './ui/button';
@@ -52,7 +53,7 @@ export function Navbar() {
 
   const isActive = (path: string) => location.pathname === path;
 
-  if (!user) return null;
+  if (!user) return <PublicNavbar />;
 
   const isBrokerOrDealer = user.role === 'broker' || user.role === 'dealer';
   const isCarrier = user.role === 'carrier';

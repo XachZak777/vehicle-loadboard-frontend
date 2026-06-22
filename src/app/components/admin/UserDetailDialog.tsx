@@ -4,6 +4,7 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
+import { DatePicker } from '../ui/date-picker';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import {
@@ -521,7 +522,7 @@ export function UserDetailDialog({ user, onClose, onApprove, onDecline, onRevoke
                     {field('Bond Company', <Input className="h-8 text-sm" value={editForm.bondCompany} onChange={e => set('bondCompany', e.target.value)} />)}
                     {field('Policy Number', <Input className="h-8 text-sm" value={editForm.bondPolicyNumber} onChange={e => set('bondPolicyNumber', e.target.value)} />)}
                     {field('Coverage Amount ($)', <Input className="h-8 text-sm" value={editForm.bondCoverage} onChange={e => set('bondCoverage', e.target.value)} inputMode="numeric" />)}
-                    {field('Effective Date', <Input className="h-8 text-sm" type="date" value={editForm.bondEffectiveDate} onChange={e => set('bondEffectiveDate', e.target.value)} />)}
+                    {field('Effective Date', <DatePicker size="sm" className="text-sm" value={editForm.bondEffectiveDate} onChange={v => set('bondEffectiveDate', v ?? '')} />)}
                     {field('Agent First Name', <Input className="h-8 text-sm" value={editForm.bondAgentFirstName} onChange={e => set('bondAgentFirstName', e.target.value)} />)}
                     {field('Agent Last Name', <Input className="h-8 text-sm" value={editForm.bondAgentLastName} onChange={e => set('bondAgentLastName', e.target.value)} />)}
                     {field('Agent Email', <Input className="h-8 text-sm" type="email" value={editForm.bondAgentEmail} onChange={e => set('bondAgentEmail', e.target.value)} />)}
